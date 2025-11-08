@@ -1,0 +1,277 @@
+/* Estilos específicos para la gestión de roles */
+
+.roles-container {
+  @apply space-y-6;
+}
+
+.roles-header {
+  @apply flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4;
+}
+
+.roles-title {
+  @apply text-3xl font-bold text-slate-900;
+}
+
+.roles-subtitle {
+  @apply text-slate-600 mt-1;
+}
+
+.roles-create-btn {
+  @apply bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center gap-2;
+}
+
+.roles-stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-4 gap-6;
+}
+
+.roles-stat-card {
+  @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6;
+}
+
+.roles-stat-content {
+  @apply flex items-center justify-between;
+}
+
+.roles-stat-icon-container {
+  @apply w-12 h-12 rounded-lg flex items-center justify-center;
+}
+
+.roles-stat-text {
+  @apply text-sm font-medium text-slate-600;
+}
+
+.roles-stat-number {
+  @apply text-2xl font-bold text-slate-900;
+}
+
+.roles-filters-container {
+  @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6;
+}
+
+.roles-filters-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+}
+
+.roles-filter-input {
+  @apply w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.roles-filter-select {
+  @apply px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.roles-table-container {
+  @apply bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden;
+}
+
+.roles-table-header {
+  @apply px-6 py-4 border-b border-slate-200;
+}
+
+.roles-table-title {
+  @apply text-lg font-semibold text-slate-900;
+}
+
+.roles-table-wrapper {
+  @apply overflow-x-auto;
+}
+
+.roles-table {
+  @apply w-full;
+}
+
+.roles-table-thead {
+  @apply bg-slate-50 border-b border-slate-200;
+}
+
+.roles-table-th {
+  @apply px-6 py-4 text-left text-sm font-medium text-slate-700;
+}
+
+.roles-table-tbody {
+  @apply divide-y divide-slate-200;
+}
+
+.roles-table-tr {
+  @apply hover:bg-slate-50;
+}
+
+.roles-table-td {
+  @apply px-6 py-4;
+}
+
+.roles-role-info {
+  @apply flex items-center gap-3;
+}
+
+.roles-role-avatar {
+  @apply w-10 h-10 rounded-full flex items-center justify-center;
+}
+
+.roles-role-name {
+  @apply font-medium text-slate-900;
+}
+
+.roles-role-slug {
+  @apply text-sm text-slate-600;
+}
+
+.roles-permissions-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.roles-actions-container {
+  @apply flex items-center gap-2;
+}
+
+.roles-action-btn {
+  @apply p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors;
+}
+
+.roles-delete-btn {
+  @apply p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors;
+}
+
+.roles-modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+}
+
+.roles-modal-container {
+  @apply bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto;
+}
+
+.roles-modal-header {
+  @apply p-6 border-b border-slate-200;
+}
+
+.roles-modal-header-content {
+  @apply flex items-center justify-between;
+}
+
+.roles-modal-title {
+  @apply text-2xl font-bold text-slate-900;
+}
+
+.roles-modal-close-btn {
+  @apply p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors;
+}
+
+.roles-form {
+  @apply p-6;
+}
+
+.roles-form-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.roles-form-section {
+  @apply space-y-4;
+}
+
+.roles-form-section-title {
+  @apply text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2;
+}
+
+.roles-form-label {
+  @apply block text-sm font-medium text-slate-700 mb-2;
+}
+
+.roles-form-input {
+  @apply w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.roles-form-textarea {
+  @apply w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.roles-form-select {
+  @apply w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500;
+}
+
+.roles-form-checkbox-container {
+  @apply flex items-center;
+}
+
+.roles-form-checkbox {
+  @apply h-5 w-5 text-green-600 border-slate-300 rounded focus:ring-green-500;
+}
+
+.roles-form-checkbox-label {
+  @apply ml-2 block text-sm text-slate-700;
+}
+
+.roles-form-actions {
+  @apply flex justify-end gap-3 mt-6 pt-6 border-t border-slate-200;
+}
+
+.roles-form-cancel-btn {
+  @apply px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.roles-form-submit-btn {
+  @apply px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2;
+}
+
+.roles-form-spinner {
+  @apply w-5 h-5 animate-spin;
+}
+
+.roles-delete-modal-container {
+  @apply bg-white rounded-xl max-w-md w-full;
+}
+
+.roles-delete-modal-header {
+  @apply p-6 border-b border-slate-200;
+}
+
+.roles-delete-modal-header-content {
+  @apply flex items-start gap-4;
+}
+
+.roles-delete-modal-icon-container {
+  @apply flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center;
+}
+
+.roles-delete-modal-title {
+  @apply text-lg font-semibold text-slate-900 mb-1;
+}
+
+.roles-delete-modal-subtitle {
+  @apply text-sm text-slate-600;
+}
+
+.roles-delete-modal-body {
+  @apply p-6;
+}
+
+.roles-delete-modal-warning {
+  @apply mt-4 p-3 bg-red-50 border border-red-200 rounded-lg;
+}
+
+.roles-delete-modal-warning-text {
+  @apply text-sm text-red-700;
+}
+
+.roles-delete-modal-warning-strong {
+  @apply font-bold;
+}
+
+.roles-delete-modal-actions {
+  @apply p-6 border-t border-slate-200 flex justify-end gap-3;
+}
+
+.roles-notification-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.roles-notification-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.roles-notification-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.roles-notification-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}

@@ -1,0 +1,18 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\TicketController;
+
+// Rutas para la gestión de tickets
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    // Rutas para tickets
+    Route::apiResource('tickets', TicketController::class);
+    
+    // Rutas específicas para tickets
+    Route::patch('/tickets/{id}/update-status', [TicketController::class, 'updateStatus']);
+    Route::post('/tickets/{ticketId}/comments', [TicketController::class, 'addComment']);
+    Route::get('/tickets/{ticketId}/comments', [TicketController::class, 'getComments']);
+    Route::post('/tickets/{ticketId}/attachments', [TicketController::class, 'attachFiles']);
+    Route::delete('/tickets/{ticketId}/attachments/{attachmentId}', [TicketController::class, 'removeAttachment']);
+    Route::get('/tickets/{ticketId}/attachments/{attachmentId}/download', [TicketController::class, 'downloadAttachment']);
+});

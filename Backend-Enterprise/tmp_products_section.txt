@@ -1,0 +1,16 @@
+                'products' => $quotation->usedProducts->map(function ($product) {
+                    return [
+                        'used_product_id' => $product->used_product_id,
+                        'quotation_id' => $product->quotation_id,
+                        'product_id' => $product->product_id,
+                        'product_type' => $product->product_type,
+                        'brand' => $product->brand,
+                        'model' => $product->model,
+                        'quantity' => $product->quantity,
+                        'unit_price' => number_format($product->unit_price, 2, '.', ''),
+                        'partial_value' => number_format($product->partial_value, 2, '.', ''),
+                        'profit_percentage' => number_format($product->profit_percentage, 3, '.', ''),
+                        'profit' => number_format($product->profit, 2, '.', ''),
+                        'total_value' => number_format($product->total_value, 2, '.', '')
+                    ];
+                }),

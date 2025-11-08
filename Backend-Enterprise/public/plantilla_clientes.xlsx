@@ -1,0 +1,1120 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="ProgId" content="Excel.Sheet">
+  <meta name="Generator" content="WPS Office ET">
+  <!--[if gte mso 9]>
+   <xml>
+    <o:DocumentProperties>
+     <o:Created>2025-11-04T13:32:13</o:Created>
+     <o:LastAuthor>Jhan Martinez Gomez</o:LastAuthor>
+     <o:LastSaved>2025-11-04T13:49:45</o:LastSaved>
+    </o:DocumentProperties>
+    <o:CustomDocumentProperties>
+     <o:ICV dt:dt="string">89514AEBC6594B8E89A191E009D08C0F_12</o:ICV>
+     <o:KSOProductBuildVer dt:dt="string">2058-12.2.0.23131</o:KSOProductBuildVer>
+    </o:CustomDocumentProperties>
+   </xml>
+  <![endif]-->
+  <style>
+<!-- @page
+	{margin:1,00in 0,75in 1,00in 0,75in;
+	mso-header-margin:0,50in;
+	mso-footer-margin:0,50in;}
+tr
+	{mso-height-source:auto;
+	mso-ruby-visibility:none;}
+col
+	{mso-width-source:auto;
+	mso-ruby-visibility:none;}
+br
+	{mso-data-placement:same-cell;}
+.font0
+	{color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font1
+	{color:#000000;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font2
+	{color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Arial";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font3
+	{color:#0000FF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:underline;
+	text-underline-style:single;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font4
+	{color:#800080;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:underline;
+	text-underline-style:single;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font5
+	{color:#FF0000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font6
+	{color:#44546A;
+	font-size:18.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font7
+	{color:#7F7F7F;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:italic;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font8
+	{color:#44546A;
+	font-size:15.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font9
+	{color:#44546A;
+	font-size:13.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font10
+	{color:#44546A;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:134;}
+.font11
+	{color:#3F3F76;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font12
+	{color:#3F3F3F;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font13
+	{color:#FA7D00;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font14
+	{color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font15
+	{color:#FA7D00;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font16
+	{color:#000000;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font17
+	{color:#006100;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font18
+	{color:#9C0006;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font19
+	{color:#9C6500;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font20
+	{color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.font21
+	{color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:"Calibri";
+	mso-generic-font-family:auto;
+	mso-font-charset:0;}
+.style0
+	{mso-number-format:"General";
+	text-align:general;
+	vertical-align:middle;
+	white-space:nowrap;
+	mso-rotate:0;
+	mso-pattern:auto;
+	mso-background-source:auto;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	border:none;
+	mso-protection:locked visible;
+	mso-style-name:"Normal";
+	mso-style-id:0;}
+.style16
+	{mso-number-format:"_ * \#\,\#\#0\.00_ \;_ * \\-\#\,\#\#0\.00_ \;_ * \0022-\0022??_ \;_ \@_ ";
+	mso-style-name:"Coma";
+	mso-style-id:3;}
+.style17
+	{mso-number-format:"_\(\\$* \#\,\#\#0\.00_\)\;_\(\\$* \\\(\#\,\#\#0\.00\\\)\;_\(\\$* \0022-\0022??_\)\;_\(\@_\)";
+	mso-style-name:"Moneda";
+	mso-style-id:4;}
+.style18
+	{mso-number-format:"0%";
+	mso-style-name:"Porcentaje";
+	mso-style-id:5;}
+.style19
+	{mso-number-format:"_ * \#\,\#\#0_ \;_ * \\-\#\,\#\#0_ \;_ * \0022-\0022_ \;_ \@_ ";
+	mso-style-name:"Coma [0]";
+	mso-style-id:6;}
+.style20
+	{mso-number-format:"_\(\\$* \#\,\#\#0_\)\;_\(\\$* \\\(\#\,\#\#0\\\)\;_\(\\$* \0022-\0022_\)\;_\(\@_\)";
+	mso-style-name:"Moneda [0]";
+	mso-style-id:7;}
+.style21
+	{color:#0000FF;
+	font-size:11.0pt;
+	text-decoration:underline;
+	text-underline-style:single;
+	font-family:Calibri;
+	mso-style-name:"Hipervínculo";
+	mso-style-id:8;}
+.style22
+	{color:#800080;
+	font-size:11.0pt;
+	text-decoration:underline;
+	text-underline-style:single;
+	font-family:Calibri;
+	mso-style-name:"Hipervínculo visitado";
+	mso-style-id:9;}
+.style23
+	{mso-pattern:auto none;
+	background:#FFFFCC;
+	border:.5pt solid #B2B2B2;
+	mso-style-name:"Nota";}
+.style24
+	{color:#FF0000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Texto de advertencia";}
+.style25
+	{color:#44546A;
+	font-size:18.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	mso-style-name:"Título";}
+.style26
+	{color:#7F7F7F;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:italic;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Texto explicativo";}
+.style27
+	{color:#44546A;
+	font-size:15.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	border-bottom:1.0pt solid #5B9BD5;
+	mso-style-name:"Título 1";}
+.style28
+	{color:#44546A;
+	font-size:13.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	border-bottom:1.0pt solid #5B9BD5;
+	mso-style-name:"Título 2";}
+.style29
+	{color:#44546A;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	border-bottom:1.0pt solid #ACCCEA;
+	mso-style-name:"Título 3";}
+.style30
+	{color:#44546A;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	mso-style-name:"Título 4";}
+.style31
+	{mso-pattern:auto none;
+	background:#FFCC99;
+	color:#3F3F76;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border:.5pt solid #7F7F7F;
+	mso-style-name:"Entrada";}
+.style32
+	{mso-pattern:auto none;
+	background:#F2F2F2;
+	color:#3F3F3F;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border:.5pt solid #3F3F3F;
+	mso-style-name:"Salida";}
+.style33
+	{mso-pattern:auto none;
+	background:#F2F2F2;
+	color:#FA7D00;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border:.5pt solid #7F7F7F;
+	mso-style-name:"Cálculo";}
+.style34
+	{mso-pattern:auto none;
+	background:#A5A5A5;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border:2.0pt double #3F3F3F;
+	mso-style-name:"Celda de comprobación";}
+.style35
+	{color:#FA7D00;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border-bottom:2.0pt double #FF8001;
+	mso-style-name:"Celda vinculada";}
+.style36
+	{color:#000000;
+	font-size:11.0pt;
+	font-weight:700;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	border-top:.5pt solid #5B9BD5;
+	border-bottom:2.0pt double #5B9BD5;
+	mso-style-name:"Total";}
+.style37
+	{mso-pattern:auto none;
+	background:#C6EFCE;
+	color:#006100;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Correcto";}
+.style38
+	{mso-pattern:auto none;
+	background:#FFC7CE;
+	color:#9C0006;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Incorrecto";}
+.style39
+	{mso-pattern:auto none;
+	background:#FFEB9C;
+	color:#9C6500;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Neutro";}
+.style40
+	{mso-pattern:auto none;
+	background:#5B9BD5;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Énfasis1";}
+.style41
+	{mso-pattern:auto none;
+	background:#DDEBF7;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"20% - Énfasis1";}
+.style42
+	{mso-pattern:auto none;
+	background:#BDD7EE;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"40% - Énfasis1";}
+.style43
+	{mso-pattern:auto none;
+	background:#9BC2E6;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"60% - Énfasis1";}
+.style44
+	{mso-pattern:auto none;
+	background:#ED7D31;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Énfasis2";}
+.style45
+	{mso-pattern:auto none;
+	background:#FCE4D6;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"20% - Énfasis2";}
+.style46
+	{mso-pattern:auto none;
+	background:#F8CBAD;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"40% - Énfasis2";}
+.style47
+	{mso-pattern:auto none;
+	background:#F4B084;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"60% - Énfasis2";}
+.style48
+	{mso-pattern:auto none;
+	background:#A5A5A5;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Énfasis3";}
+.style49
+	{mso-pattern:auto none;
+	background:#EDEDED;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"20% - Énfasis3";}
+.style50
+	{mso-pattern:auto none;
+	background:#DBDBDB;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"40% - Énfasis3";}
+.style51
+	{mso-pattern:auto none;
+	background:#C9C9C9;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"60% - Énfasis3";}
+.style52
+	{mso-pattern:auto none;
+	background:#FFC000;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Énfasis4";}
+.style53
+	{mso-pattern:auto none;
+	background:#FFF2CC;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"20% - Énfasis4";}
+.style54
+	{mso-pattern:auto none;
+	background:#FFE699;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"40% - Énfasis4";}
+.style55
+	{mso-pattern:auto none;
+	background:#FFD966;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"60% - Énfasis4";}
+.style56
+	{mso-pattern:auto none;
+	background:#4472C4;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Énfasis5";}
+.style57
+	{mso-pattern:auto none;
+	background:#D9E1F2;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"20% - Énfasis5";}
+.style58
+	{mso-pattern:auto none;
+	background:#B4C6E7;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"40% - Énfasis5";}
+.style59
+	{mso-pattern:auto none;
+	background:#8EA9DB;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"60% - Énfasis5";}
+.style60
+	{mso-pattern:auto none;
+	background:#70AD47;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"Énfasis6";}
+.style61
+	{mso-pattern:auto none;
+	background:#E2EFDA;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"20% - Énfasis6";}
+.style62
+	{mso-pattern:auto none;
+	background:#C6E0B4;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"40% - Énfasis6";}
+.style63
+	{mso-pattern:auto none;
+	background:#A9D08E;
+	color:#FFFFFF;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:0;
+	mso-style-name:"60% - Énfasis6";}
+td
+	{mso-style-parent:style0;
+	padding-top:1px;
+	padding-right:1px;
+	padding-left:1px;
+	mso-ignore:padding;
+	mso-number-format:"General";
+	text-align:general;
+	vertical-align:middle;
+	white-space:nowrap;
+	mso-rotate:0;
+	mso-pattern:auto;
+	mso-background-source:auto;
+	color:#000000;
+	font-size:11.0pt;
+	font-weight:400;
+	font-style:normal;
+	text-decoration:none;
+	font-family:Calibri;
+	mso-generic-font-family:auto;
+	mso-font-charset:134;
+	border:none;
+	mso-protection:locked visible;}
+.xl65
+	{mso-style-parent:style0;
+	text-align:center;
+	mso-pattern:auto none;
+	background:#E2EFDA;
+	font-weight:700;
+	mso-font-charset:134;
+	border:.5pt solid windowtext;}
+.xl66
+	{mso-style-parent:style0;
+	text-align:center;
+	mso-pattern:auto none;
+	background:#E2EFDA;
+	font-weight:700;
+	mso-font-charset:134;
+	border:.5pt solid windowtext;}
+.xl67
+	{mso-style-parent:style0;
+	text-align:left;
+	white-space:normal;
+	font-family:Arial;
+	mso-font-charset:134;
+	border-left:1.0pt solid #DDDDDD;
+	border-right:1.0pt solid #DDDDDD;
+	border-bottom:1.0pt solid #DDDDDD;}
+.xl68
+	{mso-style-parent:style0;
+	text-align:left;
+	white-space:normal;
+	font-family:Arial;
+	mso-font-charset:134;
+	border:1.0pt solid #DDDDDD;}
+.xl69
+	{mso-style-parent:style0;
+	text-align:center;
+	font-weight:700;
+	mso-font-charset:134;}
+ -->  </style>
+  <!--[if gte mso 9]>
+   <xml>
+    <x:ExcelWorkbook>
+     <x:ExcelWorksheets>
+      <x:ExcelWorksheet>
+       <x:Name>plantilla_clientes</x:Name>
+       <x:WorksheetOptions>
+        <x:DefaultRowHeight>300</x:DefaultRowHeight>
+        <x:StandardWidth>2340</x:StandardWidth>
+        <x:Selected/>
+        <x:Panes>
+         <x:Pane>
+          <x:Number>3</x:Number>
+          <x:ActiveCol>3</x:ActiveCol>
+          <x:ActiveRow>12</x:ActiveRow>
+          <x:RangeSelection>D13</x:RangeSelection>
+         </x:Pane>
+        </x:Panes>
+        <x:DoNotDisplayGridlines/>
+        <x:ProtectContents>False</x:ProtectContents>
+        <x:ProtectObjects>False</x:ProtectObjects>
+        <x:ProtectScenarios>False</x:ProtectScenarios>
+        <x:Zoom>85</x:Zoom>
+        <x:Print>
+         <x:PaperSizeIndex>9</x:PaperSizeIndex>
+        </x:Print>
+       </x:WorksheetOptions>
+      </x:ExcelWorksheet>
+     </x:ExcelWorksheets>
+     <x:ProtectStructure>False</x:ProtectStructure>
+     <x:ProtectWindows>False</x:ProtectWindows>
+     <x:WindowHeight>7500</x:WindowHeight>
+     <x:WindowWidth>19545</x:WindowWidth>
+    </x:ExcelWorkbook>
+   </xml>
+  <![endif]-->
+ </head>
+ <body link="blue" vlink="purple">
+  <table width="1514" border="0" cellpadding="0" cellspacing="0" style='width:1135.50pt;border-collapse:collapse;table-layout:fixed;'>
+   <col width="64" style='width:48,00pt;'/>
+   <col width="143" style='mso-width-source:userset;mso-width-alt:5229;'/>
+   <col width="168" style='mso-width-source:userset;mso-width-alt:6143;'/>
+   <col width="266" style='mso-width-source:userset;mso-width-alt:9727;'/>
+   <col width="93" style='mso-width-source:userset;mso-width-alt:3401;'/>
+   <col width="78" style='mso-width-source:userset;mso-width-alt:2852;'/>
+   <col width="207" style='mso-width-source:userset;mso-width-alt:7569;'/>
+   <col width="303" style='mso-width-source:userset;mso-width-alt:11080;'/>
+   <col width="64" span="3" style='width:48,00pt;'/>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl65" height="20" width="64" style='height:15.00pt;width:48.00pt;' x:str>NIC</td>
+    <td class="xl65" width="143" style='width:107.25pt;' x:str>nombre</td>
+    <td class="xl65" width="168" style='width:126.00pt;' x:str>tipo_cliente</td>
+    <td class="xl65" width="266" style='width:199.50pt;' x:str>correo</td>
+    <td class="xl65" width="93" style='width:69.75pt;' x:str>telefono</td>
+    <td class="xl65" width="78" style='width:58.50pt;' x:str>consumo_me<span style='display:none;'>nsual</span></td>
+    <td class="xl65" width="207" style='width:155.25pt;' x:str>direccion</td>
+    <td class="xl66" width="303" style='width:227.25pt;' x:str>notas</td>
+    <td class="xl69" width="64" style='width:48.00pt;'></td>
+    <td class="xl69" width="64" style='width:48.00pt;'></td>
+    <td class="xl69" width="64" style='width:48.00pt;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl67" height="20" style='height:15.00pt;'></td>
+    <td class="xl67"></td>
+    <td class="xl67"></td>
+    <td class="xl67"></td>
+    <td class="xl67"></td>
+    <td class="xl67"></td>
+    <td class="xl67"></td>
+    <td class="xl67"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <tr height="20" style='height:15.00pt;'>
+    <td class="xl68" height="20" style='height:15.00pt;'></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td class="xl68"></td>
+    <td colspan="3" style='mso-ignore:colspan;'></td>
+   </tr>
+   <![if supportMisalignedColumns]>
+    <tr width="0" style='display:none;'>
+     <td width="143" style='width:107;'></td>
+     <td width="168" style='width:126;'></td>
+     <td width="266" style='width:200;'></td>
+     <td width="93" style='width:70;'></td>
+     <td width="78" style='width:59;'></td>
+     <td width="207" style='width:155;'></td>
+     <td width="303" style='width:227;'></td>
+    </tr>
+   <![endif]>
+  </table>
+ </body>
+</html>
