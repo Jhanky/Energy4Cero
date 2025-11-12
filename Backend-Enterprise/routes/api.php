@@ -23,6 +23,10 @@ use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\CostCenterController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\InvoiceController;
+use App\Http\Controllers\Api\WarehouseController;
+use App\Http\Controllers\Api\ToolController;
+use App\Http\Controllers\Api\MaterialController;
+use App\Http\Controllers\Api\MaintenanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +87,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [ClientController::class, 'store'])->middleware('permission:commercial.update');
         Route::post('/import', [ClientController::class, 'import'])->middleware('permission:commercial.update');
         Route::put('/{id}', [ClientController::class, 'update'])->middleware('permission:commercial.update');
+        // Bulk delete debe ir antes de {id} para evitar conflicto de rutas
+        Route::delete('/bulk', [ClientController::class, 'bulkDelete'])->middleware('permission:commercial.update');
         Route::delete('/{id}', [ClientController::class, 'destroy'])->middleware('permission:commercial.update');
         Route::patch('/{id}/toggle-status', [ClientController::class, 'toggleStatus'])->middleware('permission:commercial.update');
     });
@@ -253,6 +259,46 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/projects/{project}/validate-state-transition', [StateController::class, 'validateStateTransition'])->middleware('permission:projects.read');
     });
 
+    // Gestión de Bodegas
+    Route::prefix('warehouses')->group(function () {
+        Route::get('/', [WarehouseController::class, 'index'])->middleware('permission:inventory.read');
+        Route::get('/statistics', [WarehouseController::class, 'statistics'])->middleware('permission:inventory.read');
+        Route::get('/options', [WarehouseController::class, 'options'])->middleware('permission:inventory.read');
+        Route::get('/{id}', [WarehouseController::class, 'show'])->middleware('permission:inventory.read');
+        Route::post('/', [WarehouseController::class, 'store'])->middleware('permission:inventory.create');
+        Route::put('/{id}', [WarehouseController::class, 'update'])->middleware('permission:inventory.update');
+        Route::delete('/{id}', [WarehouseController::class, 'destroy'])->middleware('permission:inventory.delete');
+        Route::patch('/{id}/toggle-status', [WarehouseController::class, 'toggleStatus'])->middleware('permission:inventory.update');
+    });
+
+    // Gestión de Herramientas
+    Route::prefix('tools')->group(function () {
+        Route::get('/', [ToolController::class, 'index'])->middleware('permission:inventory.read');
+        Route::get('/statistics', [ToolController::class, 'statistics'])->middleware('permission:inventory.read');
+        Route::get('/options', [ToolController::class, 'options'])->middleware('permission:inventory.read');
+        Route::get('/{id}', [ToolController::class, 'show'])->middleware('permission:inventory.read');
+        Route::post('/', [ToolController::class, 'store'])->middleware('permission:inventory.create');
+        Route::put('/{id}', [ToolController::class, 'update'])->middleware('permission:inventory.update');
+        Route::patch('/{id}/move', [ToolController::class, 'move'])->middleware('permission:inventory.update');
+        Route::delete('/{id}', [ToolController::class, 'destroy'])->middleware('permission:inventory.delete');
+        Route::patch('/{id}/toggle-status', [ToolController::class, 'toggleStatus'])->middleware('permission:inventory.update');
+    });
+
+    // Gestión de Materiales
+    Route::prefix('materials')->group(function () {
+        Route::get('/', [MaterialController::class, 'index'])->middleware('permission:inventory.read');
+        Route::get('/statistics', [MaterialController::class, 'statistics'])->middleware('permission:inventory.read');
+        Route::get('/options', [MaterialController::class, 'options'])->middleware('permission:inventory.read');
+        Route::get('/export', [MaterialController::class, 'export'])->middleware('permission:inventory.read');
+        Route::get('/{id}', [MaterialController::class, 'show'])->middleware('permission:inventory.read');
+        Route::post('/', [MaterialController::class, 'store'])->middleware('permission:inventory.create');
+        Route::post('/import', [MaterialController::class, 'import'])->middleware('permission:inventory.create');
+        Route::post('/bulk-update', [MaterialController::class, 'bulkUpdate'])->middleware('permission:inventory.update');
+        Route::put('/{id}', [MaterialController::class, 'update'])->middleware('permission:inventory.update');
+        Route::delete('/{id}', [MaterialController::class, 'destroy'])->middleware('permission:inventory.delete');
+        Route::patch('/{id}/toggle-status', [MaterialController::class, 'toggleStatus'])->middleware('permission:inventory.update');
+    });
+
     // Gestión de Tickets
     Route::prefix('tickets')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->middleware('permission:support.read');
@@ -271,6 +317,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{ticketId}/attachments', [TicketController::class, 'attachFiles'])->middleware('permission:support.update');
         Route::delete('/{ticketId}/attachments/{attachmentId}', [TicketController::class, 'removeAttachment'])->middleware('permission:support.update');
         Route::get('/{ticketId}/attachments/{attachmentId}/download', [TicketController::class, 'downloadAttachment'])->middleware('permission:support.read');
+    });
+
+    // Gestión de Mantenimientos
+    Route::prefix('maintenances')->group(function () {
+        Route::get('/', [MaintenanceController::class, 'index'])->middleware('permission:support.read');
+        Route::get('/calendar', [MaintenanceController::class, 'calendar'])->middleware('permission:support.read');
+        Route::get('/statistics', [MaintenanceController::class, 'statistics'])->middleware('permission:support.read');
+        Route::get('/{id}', [MaintenanceController::class, 'show'])->middleware('permission:support.read');
+        Route::post('/', [MaintenanceController::class, 'store'])->middleware('permission:support.create');
+        Route::put('/{id}', [MaintenanceController::class, 'update'])->middleware('permission:support.update');
+        Route::patch('/{id}/status', [MaintenanceController::class, 'updateStatus'])->middleware('permission:support.update');
+        Route::delete('/{id}', [MaintenanceController::class, 'destroy'])->middleware('permission:support.delete');
     });
 }); // Cierre del grupo principal de autenticación
 

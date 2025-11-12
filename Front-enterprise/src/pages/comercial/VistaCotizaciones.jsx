@@ -1,24 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FileText, 
-  Plus, 
-  Search, 
-  Trash2, 
-  Eye, 
+import {
+  FileText,
+  Plus,
+  Trash2,
+  Eye,
   Download,
   Calendar,
   DollarSign,
   User,
   Building,
-  Filter,
   CheckCircle,
   Clock,
   XCircle
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import CotizacionModal from './CotizacionModal';
 import CotizacionDeleteModal from './CotizacionDeleteModal';
-import { Notification } from '../../shared/ui';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import { cotizacionesService } from '../../services/cotizacionesService';
 
 const VistaCotizaciones = () => {
@@ -30,9 +36,22 @@ const VistaCotizaciones = () => {
   const [quotationStatuses, setQuotationStatuses] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [estadoFilter, setEstadoFilter] = useState('');
-  const [clienteFilter, setClienteFilter] = useState('');
-  const [vendedorFilter, setVendedorFilter] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: '',
+    client_type: '',
+    seller: ''
+  });
+
+  // Estados de paginación
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
 
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
@@ -46,22 +65,7 @@ const VistaCotizaciones = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingEstado, setEditingEstado] = useState(null);
 
-  // Filtrar cotizaciones
-  const cotizacionesFiltradas = cotizaciones.filter(cotizacion => {
-    // Sanitize search term to prevent potential issues
-    const sanitizedSearchTerm = searchTerm?.toLowerCase() || '';
-    
-    const cumpleBusqueda = 
-      (cotizacion.number && cotizacion.number.toLowerCase().includes(sanitizedSearchTerm)) ||
-      (cotizacion.client?.name && cotizacion.client.name.toLowerCase().includes(sanitizedSearchTerm)) ||
-      (cotizacion.project_name && cotizacion.project_name.toLowerCase().includes(sanitizedSearchTerm));
-    
-    const cumpleEstado = !estadoFilter || (cotizacion.status?.name === estadoFilter);
-    const cumpleCliente = !clienteFilter || (cotizacion.client?.type === clienteFilter);
-    const cumpleVendedor = !vendedorFilter || (cotizacion.user?.name === vendedorFilter);
 
-    return cumpleBusqueda && cumpleEstado && cumpleCliente && cumpleVendedor;
-  });
 
   const getEstadoColor = (estadoName) => {
     switch (estadoName) {
@@ -191,7 +195,7 @@ const VistaCotizaciones = () => {
         response = await cotizacionesService.createCotizacion(cotizacionData);
         if (response.success) {
           showNotification('success', 'Cotización creada exitosamente');
-          fetchCotizaciones(); // Refresh the list
+          fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
         } else {
           showNotification('error', response.message || 'Error al crear la cotización.');
         }
@@ -206,7 +210,7 @@ const VistaCotizaciones = () => {
         response = await cotizacionesService.updateCotizacion(cotizacionId, cotizacionData);
         if (response.success) {
           showNotification('success', 'Cotización actualizada exitosamente');
-          fetchCotizaciones(); // Refresh the list
+          fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
         } else {
           showNotification('error', response.message || 'Error al actualizar la cotización.');
         }
@@ -235,7 +239,7 @@ const VistaCotizaciones = () => {
       const response = await cotizacionesService.deleteCotizacion(cotizacionToDelete.id);
       if (response.success) {
         showNotification('success', 'Cotización eliminada exitosamente');
-        fetchCotizaciones(); // Refresh the list
+        fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
       } else {
         showNotification('error', response.message || 'Error al eliminar la cotización.');
       }
@@ -302,7 +306,7 @@ const VistaCotizaciones = () => {
       const response = await cotizacionesService.changeCotizacionStatus(cotizacionId, statusId);
       if (response.success) {
         showNotification('success', `Estado actualizado a: ${status.name}`);
-        fetchCotizaciones(); // Refresh the list
+        fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
       } else {
         console.error('Error en la respuesta del backend:', response);
         showNotification('error', response.message || 'Error al actualizar el estado.');
@@ -349,25 +353,24 @@ const VistaCotizaciones = () => {
     return colorMap[statusId] || '#9ca3af';
   };
 
-  // Fetch quotations
-  const fetchCotizaciones = useCallback(async () => {
+  // Fetch quotations with pagination
+  const fetchCotizaciones = useCallback(async (page = 1, perPage = pagination.per_page) => {
     setLoading(true);
     setError(null);
     try {
       const params = {
-        search: searchTerm,
-        status: estadoFilter,
-        client_type: clienteFilter,
-        seller: vendedorFilter,
+        search: debouncedSearchTerm,
+        page,
+        per_page: perPage,
+        ...filters
       };
       const response = await cotizacionesService.getCotizaciones(params);
-       // Debug log
-      
+
       // Check if the API returned the expected WIP message instead of data
       if (response.message && response.message.includes('WIP')) {
-        
         setCotizaciones([]);
-      } 
+        setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
+      }
       // Check for success field (original logic)
       else if (response.success) {
         // Validate the response data before setting state
@@ -392,20 +395,31 @@ const VistaCotizaciones = () => {
             }
           }));
           setCotizaciones(formattedCotizaciones);
+          setPagination(response.data.pagination || {
+            current_page: 1,
+            per_page: 15,
+            total: 0,
+            last_page: 1,
+            from: 0,
+            to: 0
+          });
         } else {
           setCotizaciones([]);
-          
+          setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
         }
       } else {
         setError(response.message || 'Error al cargar las cotizaciones.');
+        setCotizaciones([]);
+        setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
       }
     } catch (err) {
       setError(err.message || 'Error de conexión al cargar cotizaciones.');
-      
+      setCotizaciones([]);
+      setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, estadoFilter, clienteFilter, vendedorFilter]);
+  }, [debouncedSearchTerm, filters, pagination.per_page]);
 
   // Fetch quotation statuses
   const fetchQuotationStatuses = useCallback(async () => {
@@ -483,10 +497,26 @@ const VistaCotizaciones = () => {
     }
   }, []);
 
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar datos iniciales
   useEffect(() => {
     fetchCotizaciones();
     fetchQuotationStatuses();
-  }, [fetchCotizaciones, fetchQuotationStatuses]);
+  }, []);
+
+  // Cargar datos cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    if (debouncedSearchTerm !== undefined) {
+      fetchCotizaciones();
+    }
+  }, [debouncedSearchTerm, filters]);
 
   const vendedores = [...new Set(cotizaciones.map(c => c.user?.name || ''))].filter(Boolean).sort();
 
@@ -514,20 +544,22 @@ const VistaCotizaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Total Cotizaciones</p>
-              <p className="text-2xl font-bold text-slate-900">{cotizaciones.length}</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : pagination.total || 0}
+              </p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <FileText className="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Aceptadas</p>
               <p className="text-2xl font-bold text-green-600">
-                {cotizaciones.filter(c => c.status?.name === 'aceptada').length}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : 'N/A'}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -535,16 +567,13 @@ const VistaCotizaciones = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Valor Total</p>
               <p className="text-2xl font-bold text-purple-600">
-                {formatPrice(cotizaciones.reduce((acc, c) => {
-                  const value = parseFloat(c.total_value);
-                  return isNaN(value) ? acc : acc + value;
-                }, 0))}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div> : 'N/A'}
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -552,16 +581,13 @@ const VistaCotizaciones = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Potencia Total</p>
               <p className="text-2xl font-bold text-orange-600">
-                {formatPower(cotizaciones.reduce((acc, c) => {
-                  const power = parseFloat(c.total_power_kw);
-                  return isNaN(power) ? acc : acc + power;
-                }, 0))}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div> : 'N/A'}
               </p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -571,120 +597,82 @@ const VistaCotizaciones = () => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Buscar cotizaciones..."
+      {/* Filtros y búsqueda */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cotizaciones</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <AdvancedSearchBar
               value={searchTerm}
-              onChange={(e) => {
-                // Limit input length to prevent potential DoS
-                if (e.target.value.length <= 100) {
-                  setSearchTerm(e.target.value);
+              onChange={setSearchTerm}
+              placeholder="Buscar cotizaciones..."
+              loading={loading && searchTerm.length > 0}
+              className="flex-1 min-w-[200px]"
+            />
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              filterOptions={[
+                {
+                  key: 'status',
+                  label: 'Estado',
+                  options: Array.isArray(quotationStatuses) ? quotationStatuses.map(status => ({
+                    value: status.name,
+                    label: status.name
+                  })) : []
+                },
+                {
+                  key: 'client_type',
+                  label: 'Tipo Cliente',
+                  options: [
+                    { value: 'empresa', label: 'Empresa' },
+                    { value: 'comercial', label: 'Comercial' },
+                    { value: 'residencial', label: 'Residencial' },
+                    { value: 'industrial', label: 'Industrial' }
+                  ]
+                },
+                {
+                  key: 'seller',
+                  label: 'Vendedor',
+                  options: vendedores.map(vendedor => ({
+                    value: vendedor,
+                    label: vendedor
+                  }))
                 }
-              }}
-              className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              ]}
             />
           </div>
-          
-          <select
-            value={estadoFilter}
-            onChange={(e) => {
-              // Only allow valid status values from the API
-              const validStatuses = Array.isArray(quotationStatuses) ? quotationStatuses.map(s => s.name) : [];
-              if (e.target.value === '' || validStatuses.includes(e.target.value)) {
-                setEstadoFilter(e.target.value);
-              }
-            }}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los estados</option>
-            {Array.isArray(quotationStatuses) ? quotationStatuses.map(status => (
-              <option key={status.id || (typeof status === 'object' ? JSON.stringify(status) : status)} value={status.name || status}>
-                {status.name || status}
-              </option>
-            )) : null}
-          </select>
-          
-          <select
-            value={clienteFilter}
-            onChange={(e) => {
-              const validValues = ['', 'empresa', 'comercial', 'residencial', 'industrial'];
-              if (validValues.includes(e.target.value)) {
-                setClienteFilter(e.target.value);
-              }
-            }}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los tipos</option>
-            <option value="empresa">Empresa</option>
-            <option value="comercial">Comercial</option>
-            <option value="residencial">Residencial</option>
-            <option value="industrial">Industrial</option>
-          </select>
-          
-          <select
-            value={vendedorFilter}
-            onChange={(e) => {
-              // Only allow valid vendedor values from the dataset
-              if (e.target.value === '' || vendedores.includes(e.target.value)) {
-                setVendedorFilter(e.target.value);
-              }
-            }}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los vendedores</option>
-            {vendedores.map(vendedor => (
-              <option key={vendedor} value={vendedor}>{vendedor}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      {/* Tabla de Cotizaciones */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Cotizaciones ({cotizacionesFiltradas.length})
-          </h3>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Cotización</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Cliente</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Proyecto</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Potencia</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Valor</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Estado</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Vendedor</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="8" className="text-center py-8 text-slate-500">Cargando cotizaciones...</td>
-                </tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan="8" className="text-center py-8 text-red-500">Error: {error}</td>
-                </tr>
-              ) : cotizacionesFiltradas.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="text-center py-8 text-slate-500">No se encontraron cotizaciones</td>
-                </tr>
-              ) : (
-                cotizacionesFiltradas.map((cotizacion) => {
-                  const EstadoIcon = getEstadoIcon(cotizacion.status?.name);
-                  return (
-                    <tr key={cotizacion.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4">
+          {/* Tabla */}
+          <div className="rounded-md border transition-opacity duration-300">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cotización</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Proyecto</TableHead>
+                  <TableHead>Potencia</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Vendedor</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                {loading ? (
+                  <SkeletonTable columns={8} rows={pagination.per_page || 15} asRows={true} />
+                ) : cotizaciones.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      No se encontraron cotizaciones
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  cotizaciones.map((cotizacion) => (
+                    <TableRow key={cotizacion.id} className="transition-all duration-200 hover:bg-gray-50">
+                      <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
                             <FileText className="w-5 h-5 text-white" />
@@ -694,8 +682,8 @@ const VistaCotizaciones = () => {
                             <p className="text-sm text-slate-600">{formatDate(cotizacion.issue_date)}</p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
                             {cotizacion.client?.type === 'empresa' || cotizacion.client?.type === 'comercial' || cotizacion.client?.type === 'industrial' ? (
@@ -709,43 +697,29 @@ const VistaCotizaciones = () => {
                             <p className="text-sm text-slate-600">{cotizacion.client?.email}</p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <p className="text-sm text-slate-900">{cotizacion.project_name}</p>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className="text-sm font-medium text-slate-900">
                           {formatPower(cotizacion.total_power_kw || 0)}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className="text-sm font-medium text-slate-900">
                           {formatPrice(cotizacion.total_value || 0)}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         {editingEstado === cotizacion.id ? (
                           <div className="relative">
                             <select
                               value={cotizacion.status?.status_id || ''}
                               onChange={(e) => {
                                 const selectedStatusId = e.target.value;
-                                
-                                console.log('🔍 Valor de estado seleccionado:', {
-                                  value: selectedStatusId,
-                                  type: typeof selectedStatusId,
-                                  parsed: parseInt(selectedStatusId, 10)
-                                });
-                                
                                 if (selectedStatusId) {
-                                  console.log('✅ Actualizando estado de cotización:', {
-                                    cotizacionId: cotizacion.id,
-                                    statusId: selectedStatusId
-                                  });
-                                  
                                   handleEstadoChange(cotizacion.id, selectedStatusId);
-                                } else {
-                                  console.error('❌ No se seleccionó un ID de estado válido:', selectedStatusId);
                                 }
                               }}
                               onBlur={handleEstadoBlur}
@@ -766,7 +740,7 @@ const VistaCotizaciones = () => {
                             </div>
                           </div>
                         ) : (
-                          <span 
+                          <span
                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:shadow-sm transition-all border ${getEstadoColor(cotizacion.status?.name)}`}
                             onClick={() => handleEstadoClick(cotizacion)}
                             title="Clic para cambiar estado"
@@ -775,27 +749,27 @@ const VistaCotizaciones = () => {
                             {getEstadoLabel(cotizacion.status?.name)}
                           </span>
                         )}
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className="text-sm text-slate-600">{cotizacion.user?.name}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button 
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
                             onClick={() => handleView(cotizacion)}
                             className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Ver detalles"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDownload(cotizacion)}
                             className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                             title="Descargar PDF"
                           >
                             <Download className="w-4 h-4" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDelete(cotizacion)}
                             className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar cotización"
@@ -803,15 +777,23 @@ const VistaCotizaciones = () => {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Paginación */}
+          <AdvancedPagination
+            pagination={pagination}
+            onPageChange={(page) => fetchCotizaciones(page)}
+            onPerPageChange={(perPage) => fetchCotizaciones(1, perPage)}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modal de Cotización */}
       <CotizacionModal

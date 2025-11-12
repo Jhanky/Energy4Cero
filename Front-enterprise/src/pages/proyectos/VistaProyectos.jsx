@@ -1,110 +1,157 @@
-import { useState, useEffect } from 'react';
-import { Search, Filter, Download, Eye, Circle } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Download, Eye } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import { calcularDiasEnEstado, calcularDiasTotales, calcularDiasRetraso, obtenerColorSemaforo, calcularPorcentajePorEstado } from '../../data/proyectos';
 import proyectosService from '../../services/proyectosService';
 import projectService from '../../services/projectService';
 import DetalleProyecto from './DetalleProyecto';
 
 const VistaProyectos = ({ estados }) => {
-  const [busqueda, setBusqueda] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState('todos');
-  const [filtroDepartamento, setFiltroDepartamento] = useState('todos');
-  const [filtroSemaforo, setFiltroSemaforo] = useState('todos');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: '',
+    department: '',
+    semaphore: ''
+  });
+
+  // Estados de paginación
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
+
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingEstado, setEditingEstado] = useState(null);
+  const [notification, setNotification] = useState(null);
 
-  useEffect(() => {
-    const cargarProyectos = async () => {
-      try {
-        const response = await proyectosService.getProjects();
-        if (response.success) {
-          // Mapear los datos del backend al formato esperado por el frontend
-          const proyectosMapeados = response.data.data.map(proyecto => ({
-            id: proyecto.code, // Usar el código del proyecto como ID para mostrar
-            backendId: proyecto.id, // Guardar el ID real del backend
-            nombre: proyecto.name,
-            cliente: proyecto.client ? {
-              id: proyecto.client.id,
-              name: proyecto.client.name,
-              client_type: proyecto.client.client_type,
-              email: proyecto.client.email,
-              phone: proyecto.client.phone,
-              nic: proyecto.client.nic,
-              address: proyecto.client.address,
-              monthly_consumption: proyecto.client.monthly_consumption,
-              notes: proyecto.client.notes,
-              is_active: proyecto.client.is_active,
-              department: proyecto.client.department,
-              city: proyecto.client.city,
-              responsibleUser: proyecto.client.responsibleUser,
-              responsible_user_id: proyecto.client.responsible_user_id,
-              department_id: proyecto.client.department_id,
-              city_id: proyecto.client.city_id
-            } : 'Cliente no especificado',
-            capacidadAC: proyecto.capacity_ac,
-            estadoActual: proyecto.current_state_id,
-            porcentajeAvance: proyecto.progress_percentage || 0, // Usar el porcentaje de avance del backend
-            departamento: proyecto.department,
-            municipio: proyecto.municipality,
-            direccion: proyecto.address,
-            responsableActual: proyecto.current_responsible || 'No asignado',
-            fechaInicio: proyecto.start_date,
-            fechaEstimadaFinalizacion: proyecto.estimated_completion_date,
-            fechaSolicitudPresentada: proyecto.application_date,
-            fechaRevisionCompletiudIniciada: proyecto.completeness_start_date,
-            fechaRevisionCompletiudFinalizada: proyecto.completeness_end_date,
-            fechaRevisionTecnicaIniciada: proyecto.technical_review_start_date,
-            fechaRevisionTecnicaFinalizada: proyecto.technical_review_end_date,
-            fechaConceptoViabilidad: proyecto.feasibility_concept_date,
-            fechaInstalacionIniciada: proyecto.installation_start_date,
-            fechaInstalacionFinalizada: proyecto.installation_end_date,
-            fechaInspeccionSolicitada: proyecto.inspection_requested_date,
-            fechaInspeccionRealizada: proyecto.inspection_performed_date,
-            fechaAprobacionFinal: proyecto.final_approval_date,
-            fechaConexion: proyecto.connection_date,
-            observacionesAire: proyecto.aire_observations || '',
-            accionesCorrectivas: proyecto.corrective_actions || '',
-            comentariosInternos: proyecto.internal_comments || '',
-            proximaAccion: proyecto.next_action || '',
-            fechaProximaAccion: proyecto.next_action_date
-          }));
-          setProyectos(proyectosMapeados);
-        } else {
-          console.error('Error al cargar los proyectos:', response.message);
-        }
-      } catch (error) {
-        console.error('Error al cargar los proyectos:', error);
-      } finally {
-        setLoading(false);
+  // Fetch proyectos with pagination
+  const fetchProyectos = useCallback(async (page = 1, perPage = pagination.per_page) => {
+    setLoading(true);
+    try {
+      const params = {
+        search: debouncedSearchTerm,
+        page,
+        per_page: perPage,
+        ...filters
+      };
+      const response = await proyectosService.getProjects(params);
+
+      if (response.success) {
+        // Mapear los datos del backend al formato esperado por el frontend
+        const proyectosMapeados = response.data.data.map(proyecto => ({
+          id: proyecto.code, // Usar el código del proyecto como ID para mostrar
+          backendId: proyecto.id, // Guardar el ID real del backend
+          nombre: proyecto.name,
+          cliente: proyecto.client ? {
+            id: proyecto.client.id,
+            name: proyecto.client.name,
+            client_type: proyecto.client.client_type,
+            email: proyecto.client.email,
+            phone: proyecto.client.phone,
+            nic: proyecto.client.nic,
+            address: proyecto.client.address,
+            monthly_consumption: proyecto.client.monthly_consumption,
+            notes: proyecto.client.notes,
+            is_active: proyecto.client.is_active,
+            department: proyecto.client.department,
+            city: proyecto.client.city,
+            responsibleUser: proyecto.client.responsibleUser,
+            responsible_user_id: proyecto.client.responsible_user_id,
+            department_id: proyecto.client.department_id,
+            city_id: proyecto.client.city_id
+          } : 'Cliente no especificado',
+          capacidadAC: proyecto.capacity_ac,
+          estadoActual: proyecto.current_state_id,
+          porcentajeAvance: proyecto.progress_percentage || 0, // Usar el porcentaje de avance del backend
+          departamento: proyecto.department,
+          municipio: proyecto.municipality,
+          direccion: proyecto.address,
+          responsableActual: proyecto.current_responsible || 'No asignado',
+          fechaInicio: proyecto.start_date,
+          fechaEstimadaFinalizacion: proyecto.estimated_completion_date,
+          fechaSolicitudPresentada: proyecto.application_date,
+          fechaRevisionCompletiudIniciada: proyecto.completeness_start_date,
+          fechaRevisionCompletiudFinalizada: proyecto.completeness_end_date,
+          fechaRevisionTecnicaIniciada: proyecto.technical_review_start_date,
+          fechaRevisionTecnicaFinalizada: proyecto.technical_review_end_date,
+          fechaConceptoViabilidad: proyecto.feasibility_concept_date,
+          fechaInstalacionIniciada: proyecto.installation_start_date,
+          fechaInstalacionFinalizada: proyecto.installation_end_date,
+          fechaInspeccionSolicitada: proyecto.inspection_requested_date,
+          fechaInspeccionRealizada: proyecto.inspection_performed_date,
+          fechaAprobacionFinal: proyecto.final_approval_date,
+          fechaConexion: proyecto.connection_date,
+          observacionesAire: proyecto.aire_observations || '',
+          accionesCorrectivas: proyecto.corrective_actions || '',
+          comentariosInternos: proyecto.internal_comments || '',
+          proximaAccion: proyecto.next_action || '',
+          fechaProximaAccion: proyecto.next_action_date
+        }));
+        setProyectos(proyectosMapeados);
+        setPagination(response.data.pagination || {
+          current_page: 1,
+          per_page: 15,
+          total: 0,
+          last_page: 1,
+          from: 0,
+          to: 0
+        });
+      } else {
+        console.error('Error al cargar los proyectos:', response.message);
+        setProyectos([]);
+        setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
       }
-    };
+    } catch (error) {
+      console.error('Error al cargar los proyectos:', error);
+      setProyectos([]);
+      setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearchTerm, filters, pagination.per_page]);
 
-    cargarProyectos();
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    fetchProyectos();
   }, []);
 
-  // Filtrar proyectos
-  const proyectosFiltrados = proyectos.filter(proyecto => {
-    const nombreCliente = typeof proyecto.cliente === 'object' && proyecto.cliente ? proyecto.cliente.name : proyecto.cliente;
-    const emailCliente = typeof proyecto.cliente === 'object' && proyecto.cliente.email ? proyecto.cliente.email : '';
-    const documentoCliente = typeof proyecto.cliente === 'object' && proyecto.cliente.nic ? proyecto.cliente.nic : '';
-    
-    const cumpleBusqueda = 
-      proyecto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      (nombreCliente && nombreCliente.toLowerCase().includes(busqueda.toLowerCase())) ||
-      (emailCliente && emailCliente.toLowerCase().includes(busqueda.toLowerCase())) ||
-      (documentoCliente && documentoCliente.toLowerCase().includes(busqueda.toLowerCase())) ||
-      proyecto.id.toLowerCase().includes(busqueda.toLowerCase());
-    
-    const cumpleEstado = filtroEstado === 'todos' || proyecto.estadoActual === parseInt(filtroEstado);
-    const cumpleDepartamento = filtroDepartamento === 'todos' || proyecto.departamento === filtroDepartamento;
-    const cumpleSemaforo = filtroSemaforo === 'todos' || obtenerColorSemaforo(proyecto) === filtroSemaforo;
-
-    return cumpleBusqueda && cumpleEstado && cumpleDepartamento && cumpleSemaforo;
-  });
+  // Cargar datos cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    if (debouncedSearchTerm !== undefined) {
+      fetchProyectos();
+    }
+  }, [debouncedSearchTerm, filters]);
 
   const departamentos = [...new Set(proyectos.map(p => p.departamento))];
+
+  // Función para notificaciones
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 5000);
+  };
 
   const obtenerNombreEstado = (idEstado) => {
     const estado = estados.find(e => e.id === idEstado);
@@ -140,28 +187,19 @@ const VistaProyectos = ({ estados }) => {
       const response = await projectService.updateProjectState(proyectoOriginal.backendId, {
         current_state_id: parseInt(nuevoEstado)
       });
-      
+
       if (response.success) {
-        // Actualizar el estado en los datos locales
-        const proyectosActualizados = proyectos.map(proyecto => 
-          proyecto.id === proyectoId 
-            ? { 
-                ...proyecto, 
-                estadoActual: parseInt(nuevoEstado),
-                porcentajeAvance: calcularPorcentajePorEstado(parseInt(nuevoEstado))
-              } 
-            : proyecto
-        );
-        
-        // Actualizar el estado visualmente
-        setProyectos(proyectosActualizados);
-        setEditingEstado(null);
+        showNotification('success', `Estado actualizado a: ${obtenerNombreEstado(parseInt(nuevoEstado))}`);
+        fetchProyectos(pagination.current_page); // Refresh the list maintaining current page
       } else {
         console.error('Error al actualizar el estado del proyecto:', response.message);
+        showNotification('error', response.message || 'Error al actualizar el estado del proyecto');
       }
-      
+
     } catch (error) {
       console.error('Error al actualizar el estado del proyecto:', error);
+      showNotification('error', error.message || 'Error al actualizar el estado del proyecto');
+    } finally {
       setEditingEstado(null);
     }
   };
@@ -182,203 +220,197 @@ const VistaProyectos = ({ estados }) => {
 
   return (
     <div className="space-y-6">
-      {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Búsqueda */}
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Buscar</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Nombre, cliente o ID..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+      {/* Filtros y búsqueda */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Proyectos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <AdvancedSearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar proyectos..."
+              loading={loading && searchTerm.length > 0}
+              className="flex-1 min-w-[200px]"
+            />
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              filterOptions={[
+                {
+                  key: 'status',
+                  label: 'Estado',
+                  options: estados.map(estado => ({
+                    value: estado.id.toString(),
+                    label: estado.nombre
+                  }))
+                },
+                {
+                  key: 'department',
+                  label: 'Departamento',
+                  options: departamentos.map(dep => ({
+                    value: dep,
+                    label: dep
+                  }))
+                },
+                {
+                  key: 'semaphore',
+                  label: 'Semáforo',
+                  options: [
+                    { value: 'verde', label: '🟢 En tiempo' },
+                    { value: 'amarillo', label: '🟡 Atención' },
+                    { value: 'rojo', label: '🔴 Retrasado' }
+                  ]
+                }
+              ]}
+            />
           </div>
 
-          {/* Filtro Estado */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Estado</label>
-            <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="todos">Todos los estados</option>
-              {estados.map(estado => (
-                <option key={estado.id} value={estado.id}>{estado.nombre}</option>
-              ))}
-            </select>
+          {/* Tabla */}
+          <div className="rounded-md border transition-opacity duration-300">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID Proyecto</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Capacidad (kW)</TableHead>
+                  <TableHead>Estado Actual</TableHead>
+                  <TableHead>Días en Estado</TableHead>
+                  <TableHead>Avance</TableHead>
+                  <TableHead>Responsable</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                {loading ? (
+                  <SkeletonTable columns={9} rows={pagination.per_page || 15} asRows={true} />
+                ) : proyectos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                      No se encontraron proyectos
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  proyectos.map((proyecto) => (
+                    <TableRow key={proyecto.id} className="transition-all duration-200 hover:bg-gray-50">
+                      <TableCell>
+                        <span className="text-sm font-medium text-slate-900">{proyecto.id}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium text-slate-900">{proyecto.nombre}</div>
+                        <div className="text-sm text-slate-500">{proyecto.departamento} - {proyecto.municipio}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-slate-900">
+                          {typeof proyecto.cliente === 'object' && proyecto.cliente ? proyecto.cliente.name : proyecto.cliente}
+                        </div>
+                        {typeof proyecto.cliente === 'object' && proyecto.cliente && proyecto.cliente.email && (
+                          <div className="text-sm text-slate-500">{proyecto.cliente.email}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-slate-900">{proyecto.capacidadAC}</span>
+                      </TableCell>
+                      <TableCell>
+                        {editingEstado === proyecto.id ? (
+                          <div className="relative">
+                            <select
+                              value={proyecto.estadoActual}
+                              onChange={(e) => handleEstadoChange(proyecto.id, e.target.value)}
+                              onBlur={handleEstadoBlur}
+                              className="w-full px-3 py-1.5 text-sm border border-green-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none"
+                              autoFocus
+                            >
+                              {estados.map(estado => (
+                                <option key={estado.id} value={estado.id}>
+                                  {estado.nombre}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:shadow-sm transition-all border ${obtenerColorEstado(proyecto.estadoActual) === '#94a3b8' ? 'bg-gray-100 text-gray-800 border-gray-200' : ''}`}
+                            style={{
+                              backgroundColor: obtenerColorEstado(proyecto.estadoActual) !== '#94a3b8' ? obtenerColorEstado(proyecto.estadoActual) : undefined,
+                              color: obtenerColorEstado(proyecto.estadoActual) !== '#94a3b8' ? 'white' : undefined
+                            }}
+                            onClick={() => handleEstadoClick(proyecto)}
+                            title="Clic para cambiar estado"
+                          >
+                            <div className={`w-2 h-2 rounded-full ${obtenerColorEstado(proyecto.estadoActual) !== '#94a3b8' ? 'bg-current' : 'bg-gray-400'}`}></div>
+                            {obtenerNombreEstado(proyecto.estadoActual)}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-slate-900">{calcularDiasEnEstado(proyecto)} días</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-slate-200 rounded-full h-2 w-20">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all"
+                              style={{ width: `${calcularPorcentajePorEstado(proyecto.estadoActual || 0)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-sm text-slate-900">{calcularPorcentajePorEstado(proyecto.estadoActual || 0)}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-slate-600">{proyecto.responsableActual}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              setProyectoSeleccionado({
+                                ...proyecto,
+                                id: proyecto.backendId
+                              });
+                            }}
+                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Exportar"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
 
-          {/* Filtro Departamento */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Departamento</label>
-            <select
-              value={filtroDepartamento}
-              onChange={(e) => setFiltroDepartamento(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="todos">Todos</option>
-              {departamentos.map(dep => (
-                <option key={dep} value={dep}>{dep}</option>
-              ))}
-            </select>
-          </div>
+          {/* Paginación */}
+          <AdvancedPagination
+            pagination={pagination}
+            onPageChange={(page) => fetchProyectos(page)}
+            onPerPageChange={(perPage) => fetchProyectos(1, perPage)}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
 
-          {/* Filtro Semáforo */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Semáforo</label>
-            <select
-              value={filtroSemaforo}
-              onChange={(e) => setFiltroSemaforo(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="todos">Todos</option>
-              <option value="verde">🟢 En tiempo</option>
-              <option value="amarillo">🟡 Atención</option>
-              <option value="rojo">🔴 Retrasado</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-slate-600">
-            Mostrando <span className="font-semibold">{proyectosFiltrados.length}</span> de <span className="font-semibold">{proyectos.length}</span> proyectos
-          </p>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            <Download className="w-4 h-4" />
-            Exportar
-          </button>
-        </div>
-      </div>
-
-      {/* Tabla de Proyectos */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  ID Proyecto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Nombre
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Capacidad (kW)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Estado Actual
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Días en Estado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Avance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Responsable
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {proyectosFiltrados.map((proyecto) => (
-                <tr key={proyecto.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-slate-900">{proyecto.id}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-900">{proyecto.nombre}</div>
-                    <div className="text-sm text-slate-500">{proyecto.departamento} - {proyecto.municipio}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-slate-900">
-                      {typeof proyecto.cliente === 'object' && proyecto.cliente ? proyecto.cliente.name : proyecto.cliente}
-                    </div>
-                    {typeof proyecto.cliente === 'object' && proyecto.cliente && proyecto.cliente.email && (
-                      <div className="text-sm text-slate-500">{proyecto.cliente.email}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-slate-900">{proyecto.capacidadAC}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {editingEstado === proyecto.id ? (
-                      <div className="relative">
-                        <select
-                          value={proyecto.estadoActual}
-                          onChange={(e) => handleEstadoChange(proyecto.id, e.target.value)}
-                          onBlur={handleEstadoBlur}
-                          className="px-2.5 py-0.5 rounded-full text-xs font-medium border-2 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                          autoFocus
-                        >
-                          {estados.map(estado => (
-                            <option key={estado.id} value={estado.id}>
-                              {estado.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
-                      <span 
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: obtenerColorEstado(proyecto.estadoActual) }}
-                        onClick={() => handleEstadoClick(proyecto)}
-                        title="Clic para cambiar estado"
-                      >
-                        {obtenerNombreEstado(proyecto.estadoActual)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-slate-900">{calcularDiasEnEstado(proyecto)} días</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-slate-200 rounded-full h-2 w-20">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all"
-                          style={{ width: `${calcularPorcentajePorEstado(proyecto.estadoActual || 0)}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-slate-900">{calcularPorcentajePorEstado(proyecto.estadoActual || 0)}%</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-900">{proyecto.responsableActual}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => {
-                        // Pasar el ID del proyecto para que el DetalleProyecto pueda cargar los datos completos
-                        setProyectoSeleccionado({
-                          ...proyecto,
-                          id: proyecto.backendId // Usar el ID real del backend para la API
-                        });
-                      }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Ver
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Modal de Notificación */}
+      <Notification
+        notification={notification}
+        onClose={() => setNotification(null)}
+      />
     </div>
   );
 };

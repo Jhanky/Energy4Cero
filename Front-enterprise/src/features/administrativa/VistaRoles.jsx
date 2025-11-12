@@ -1,40 +1,63 @@
 import { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  UserCheck, 
-  UserX,
+import {
+  Shield,
+  Plus,
+  Edit,
+  Trash2,
   Users,
-  Settings,
   Key,
-  CheckSquare,
-  Square,
-  MoreVertical,
-  AlertTriangle
+  UserCheck,
+  UserX,
+  Loader2
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import RolModal from './RolModal';
+import RolDeleteModal from './RolDeleteModal';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import dataService from '../../services/dataService';
-import useOptimisticCRUD from '../../hooks/useOptimisticCRUD';
 
 const VistaRoles = () => {
-  const {
-    data: roles,
-    loading,
-    error,
-    deleteItem,
-    toggleItemStatus,
-    setData: setRoles
-  } = useOptimisticCRUD([], dataService);
-  
-  const [availablePermissions, setAvailablePermissions] = useState({});
+  // Estados para datos del backend
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: ''
+  });
+
+  // Estados de paginación
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
+
+  // Estados para modales
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // create, edit, view
+  const [modalMode, setModalMode] = useState('create'); // 'create', 'edit', 'view'
   const [selectedRole, setSelectedRole] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState(null);
+
+  // Estados para formulario
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -42,83 +65,82 @@ const VistaRoles = () => {
     permissions: [],
     is_active: true
   });
-  const [formErrors, setFormErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
 
-  // Cargar datos iniciales
+  // Estados para notificaciones y carga
+  const [notification, setNotification] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Permisos disponibles (desde el backend)
+  const [availablePermissions, setAvailablePermissions] = useState({});
+
+  // Efecto para debounce de búsqueda
   useEffect(() => {
-    loadInitialData();
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    loadData();
   }, []);
 
-  const loadInitialData = async () => {
-    try {
+  // Cargar datos cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    if (debouncedSearchTerm !== '' || Object.keys(filters).length > 0) {
+      loadRoles();
+    }
+  }, [debouncedSearchTerm, filters]);
 
+  // Función para cargar datos iniciales
+  const loadData = async () => {
+    await Promise.all([loadRoles(), loadPermissions()]);
+  };
+
+  // Función para cargar roles con paginación
+  const loadRoles = async (page = 1, perPage = pagination.per_page) => {
+    try {
       setLoading(true);
-      setError('');
-      
-      // Cargar roles y permisos disponibles en paralelo
-      await Promise.all([
-        loadRoles(),
-        loadAvailablePermissions()
-      ]);
+      const params = {
+        search: debouncedSearchTerm,
+        page,
+        per_page: perPage,
+        ...filters
+      };
+
+      const response = await dataService.getRoles(params);
+
+      if (response.success) {
+        setRoles(response.data.roles || []);
+        setStats(response.data.stats || {});
+        setPagination(response.data.pagination || {
+          current_page: 1,
+          per_page: 15,
+          total: 0,
+          last_page: 1,
+          from: 0,
+          to: 0
+        });
+      } else {
+        showNotification('error', 'Error al cargar roles: ' + response.message);
+      }
     } catch (error) {
-      
-      setError('Error al cargar los datos: ' + error.message);
+      showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
-      
       setLoading(false);
     }
   };
 
-  const loadRoles = async () => {
+  // Cargar permisos disponibles
+  const loadPermissions = async () => {
     try {
-      
-      const response = await dataService.getRoles();
-      
-      
-      if (response.success) {
-        // Verificar la estructura de la respuesta y adaptarla si es necesario
-        let rolesData = [];
-        if (response.data && response.data.data) {
-          // Estructura esperada: { success: true, data: { data: [...] } }
-          rolesData = response.data.data;
-        } else if (response.data && Array.isArray(response.data)) {
-          // Estructura alternativa: { success: true, data: [...] }
-          rolesData = response.data;
-        } else if (Array.isArray(response.data)) {
-          // Estructura simple: { success: true, data: [...] }
-          rolesData = response.data;
-        }
-        
-        
-        setRoles(rolesData);
-      } else {
-        
-        throw new Error(response.message || 'Error al cargar roles');
-      }
-    } catch (error) {
-      
-      setError('Error al cargar roles: ' + error.message);
-      throw error;
-    }
-  };
-
-  const loadAvailablePermissions = async () => {
-    try {
-      
       const response = await dataService.getAvailablePermissions();
-      
-      
       if (response.success) {
-        
-        setAvailablePermissions(response.data || {});
-      } else {
-        
-        throw new Error(response.message || 'Error al cargar permisos');
+        setAvailablePermissions(response.data?.permissions || {});
       }
     } catch (error) {
-      
-      throw error;
+      console.error('Error loading permissions:', error);
     }
   };
 
@@ -132,7 +154,6 @@ const VistaRoles = () => {
       permissions: [],
       is_active: true
     });
-    setFormErrors({});
     setShowModal(true);
   };
 
@@ -146,7 +167,6 @@ const VistaRoles = () => {
       permissions: role.permissions || [],
       is_active: role.is_active
     });
-    setFormErrors({});
     setShowModal(true);
   };
 
@@ -160,15 +180,13 @@ const VistaRoles = () => {
       permissions: role.permissions || [],
       is_active: role.is_active
     });
-    setFormErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    setFormErrors({});
-    
+
     try {
       let response;
       
@@ -197,38 +215,69 @@ const VistaRoles = () => {
           );
         }
       } else {
-        if (response.errors) {
-          setFormErrors(response.errors);
-        } else {
-          setError(response.message || 'Error al procesar la solicitud');
-        }
+        showNotification('error', response.message || 'Error al procesar la solicitud');
       }
       
     } catch (error) {
-      
-      setError('Error de conexión: ' + error.message);
+      showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (role) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el rol "${role.name}"?`)) {
-      return;
-    }
+  // Funciones para notificaciones
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 5000);
+  };
 
+  // Funciones para modales
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedRole(null);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setRoleToDelete(null);
+  };
+
+  // Función para cambiar estado del rol
+  const handleToggleStatus = async (role) => {
     try {
-      await deleteItem(role, (id) => dataService.deleteRole(id));
+      const response = await dataService.toggleRoleStatus(role.role_id);
+      if (response.success) {
+        showNotification('success', `Rol ${role.is_active ? 'desactivado' : 'activado'} exitosamente`);
+        loadRoles(); // Recargar datos
+      } else {
+        showNotification('error', response.message || 'Error al cambiar estado del rol');
+      }
     } catch (error) {
-      // El hook ya maneja el estado de error
+      showNotification('error', 'Error al cambiar estado del rol: ' + error.message);
     }
   };
 
-  const handleToggleStatus = async (role) => {
+  // Función para eliminar rol
+  const handleDelete = (role) => {
+    setRoleToDelete(role);
+    setShowDeleteModal(true);
+  };
+
+  // Confirmar eliminación
+  const confirmDelete = async () => {
+    if (!roleToDelete) return;
+
     try {
-      await toggleItemStatus(role, (id) => dataService.toggleRoleStatus(id));
+      const response = await dataService.deleteRole(roleToDelete.role_id);
+      if (response.success) {
+        showNotification('success', 'Rol eliminado exitosamente');
+        closeDeleteModal();
+        loadRoles(); // Recargar datos
+      } else {
+        showNotification('error', response.message || 'Error al eliminar el rol');
+      }
     } catch (error) {
-      // El hook ya maneja el estado de error
+      showNotification('error', 'Error al eliminar el rol: ' + error.message);
     }
   };
 
@@ -236,7 +285,7 @@ const VistaRoles = () => {
     const newPermissions = formData.permissions.includes(permission)
       ? formData.permissions.filter(p => p !== permission)
       : [...formData.permissions, permission];
-    
+
     setFormData({ ...formData, permissions: newPermissions });
   };
 
@@ -259,14 +308,49 @@ const VistaRoles = () => {
     });
   };
 
-  const filteredRoles = roles.filter(role => {
-    const matchesSearch = role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (role.description && role.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = !statusFilter || role.is_active.toString() === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const getPermissionLabel = (permission) => {
+    const labels = {
+      'users.create': 'Crear usuarios',
+      'users.read': 'Ver usuarios',
+      'users.update': 'Editar usuarios',
+      'users.delete': 'Eliminar usuarios',
+      'roles.create': 'Crear roles',
+      'roles.read': 'Ver roles',
+      'roles.update': 'Editar roles',
+      'roles.delete': 'Eliminar roles',
+      'projects.create': 'Crear proyectos',
+      'projects.read': 'Ver proyectos',
+      'projects.update': 'Editar proyectos',
+      'projects.delete': 'Eliminar proyectos',
+      'tasks.create': 'Crear tareas',
+      'tasks.read': 'Ver tareas',
+      'tasks.update': 'Editar tareas',
+      'tasks.delete': 'Eliminar tareas',
+      'inventory.create': 'Crear elementos de inventario',
+      'inventory.read': 'Ver inventario',
+      'inventory.update': 'Editar inventario',
+      'inventory.delete': 'Eliminar elementos de inventario',
+      'support.create': 'Crear tickets de soporte',
+      'support.read': 'Ver soporte',
+      'support.update': 'Editar soporte',
+      'support.delete': 'Eliminar soporte',
+      'financial.read': 'Ver finanzas',
+      'financial.update': 'Editar finanzas',
+      'financial.reports': 'Reportes financieros',
+      'commercial.read': 'Ver comercial',
+      'commercial.update': 'Editar comercial',
+      'commercial.reports': 'Reportes comerciales',
+      'settings.read': 'Ver configuración',
+      'settings.update': 'Editar configuración',
+      'reports.create': 'Crear reportes',
+      'reports.read': 'Ver reportes',
+      'reports.update': 'Editar reportes',
+      'reports.delete': 'Eliminar reportes'
+    };
+    return labels[permission] || permission;
+  };
+
+  // Los filtros se manejan en el backend, no necesitamos filtrado local
 
   const getRoleColor = (slug) => {
     const colors = {
@@ -280,7 +364,58 @@ const VistaRoles = () => {
     return colors[slug] || 'gray';
   };
 
-  const groupedPermissions = Object.entries(availablePermissions).reduce((groups, [key, label]) => {
+  // Convertir la estructura de permisos del backend a un formato plano para etiquetas
+  const flatPermissions = {};
+  if (availablePermissions && typeof availablePermissions === 'object') {
+    Object.entries(availablePermissions).forEach(([module, permissions]) => {
+      if (permissions && typeof permissions === 'object') {
+        Object.entries(permissions).forEach(([action, permissionKey]) => {
+          // Crear etiquetas descriptivas para los permisos
+          const labels = {
+            'users.create': 'Crear usuarios',
+            'users.read': 'Ver usuarios',
+            'users.update': 'Editar usuarios',
+            'users.delete': 'Eliminar usuarios',
+            'roles.create': 'Crear roles',
+            'roles.read': 'Ver roles',
+            'roles.update': 'Editar roles',
+            'roles.delete': 'Eliminar roles',
+            'projects.create': 'Crear proyectos',
+            'projects.read': 'Ver proyectos',
+            'projects.update': 'Editar proyectos',
+            'projects.delete': 'Eliminar proyectos',
+            'tasks.create': 'Crear tareas',
+            'tasks.read': 'Ver tareas',
+            'tasks.update': 'Editar tareas',
+            'tasks.delete': 'Eliminar tareas',
+            'inventory.create': 'Crear elementos de inventario',
+            'inventory.read': 'Ver inventario',
+            'inventory.update': 'Editar inventario',
+            'inventory.delete': 'Eliminar elementos de inventario',
+            'support.create': 'Crear tickets de soporte',
+            'support.read': 'Ver soporte',
+            'support.update': 'Editar soporte',
+            'support.delete': 'Eliminar soporte',
+            'financial.read': 'Ver finanzas',
+            'financial.update': 'Editar finanzas',
+            'financial.reports': 'Reportes financieros',
+            'commercial.read': 'Ver comercial',
+            'commercial.update': 'Editar comercial',
+            'commercial.reports': 'Reportes comerciales',
+            'settings.read': 'Ver configuración',
+            'settings.update': 'Editar configuración',
+            'reports.create': 'Crear reportes',
+            'reports.read': 'Ver reportes',
+            'reports.update': 'Editar reportes',
+            'reports.delete': 'Eliminar reportes'
+          };
+          flatPermissions[permissionKey] = labels[permissionKey] || permissionKey;
+        });
+      }
+    });
+  }
+
+  const groupedPermissions = Object.entries(flatPermissions).reduce((groups, [key, label]) => {
     const category = key.split('.')[0];
     if (!groups[category]) {
       groups[category] = [];
@@ -312,7 +447,7 @@ const VistaRoles = () => {
           </div>
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={loadInitialData}
+            onClick={loadData}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Reintentar
@@ -327,8 +462,8 @@ const VistaRoles = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Gestión de Roles y Permisos</h1>
-          <p className="text-slate-600 mt-1">Administra los roles del sistema y sus permisos</p>
+          <h1 className="text-3xl font-bold text-slate-900">Roles y Permisos</h1>
+          <p className="text-slate-600 mt-1">Administra los roles y permisos del sistema</p>
         </div>
         <button
           onClick={handleCreate}
@@ -339,292 +474,223 @@ const VistaRoles = () => {
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Buscar roles..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            />
-          </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los estados</option>
-            <option value="true">Activos</option>
-            <option value="false">Inactivos</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-red-600">{error}</p>
-        </div>
-      )}
-
-      {/* Tabla de Roles */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">Rol</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">Permisos</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">Usuarios</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">Estado</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {filteredRoles.map((role) => (
-                <tr key={role.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 bg-gradient-to-br from-${getRoleColor(role.slug)}-500 to-${getRoleColor(role.slug)}-600 rounded-full flex items-center justify-center text-white font-semibold`}>
-                        <Shield className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900">{role.name}</p>
-                        <p className="text-sm text-slate-500">{role.description || 'Sin descripción'}</p>
-                        <p className="text-xs text-slate-400">{role.slug}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {role.permissions && role.permissions.slice(0, 3).map((permission) => (
-                        <span key={permission} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {availablePermissions[permission] || permission}
-                        </span>
-                      ))}
-                      {role.permissions && role.permissions.length > 3 && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                          +{role.permissions.length - 3} más
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-medium">{role.users_count || 0}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleToggleStatus(role)}
-                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                        role.is_active
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
-                      } transition-colors`}
-                    >
-                      {role.is_active ? (
-                        <>
-                          <UserCheck className="w-3 h-3" />
-                          Activo
-                        </>
-                      ) : (
-                        <>
-                          <UserX className="w-3 h-3" />
-                          Inactivo
-                        </>
-                      )}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleView(role)}
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                        title="Ver detalles"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(role)}
-                        className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Editar"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(role)}
-                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {modalMode === 'create' && 'Nuevo Rol'}
-                  {modalMode === 'edit' && 'Editar Rol'}
-                  {modalMode === 'view' && 'Detalles del Rol'}
-                </h2>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Nombre del Rol *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      disabled={modalMode === 'view'}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        formErrors.name ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                      }`}
-                      placeholder="Ej: Administrador de Proyectos"
-                    />
-                    {formErrors.name && (
-                      <p className="text-red-500 text-sm mt-1">{formErrors.name[0]}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Slug *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.slug}
-                      onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                      disabled={modalMode === 'view'}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        formErrors.slug ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                      }`}
-                      placeholder="administrador-proyectos"
-                    />
-                    {formErrors.slug && (
-                      <p className="text-red-500 text-sm mt-1">{formErrors.slug[0]}</p>
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Descripción
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      disabled={modalMode === 'view'}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="Descripción del rol y sus responsabilidades"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-3 mb-4">
-                      <input
-                        type="checkbox"
-                        checked={formData.is_active}
-                        onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                        disabled={modalMode === 'view'}
-                        className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
-                      />
-                      <span className="text-sm font-medium text-slate-700">Rol activo</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Permisos */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-4">
-                    Permisos del Rol
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-64 overflow-y-auto border border-slate-200 rounded-xl p-4">
-                    {Object.entries(groupedPermissions).map(([category, permissions]) => (
-                      <div key={category} className="space-y-2">
-                        <h4 className="font-medium text-slate-900 capitalize">{category}</h4>
-                        {permissions.map(({ key, label }) => (
-                          <label key={key} className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={formData.permissions.includes(key)}
-                              onChange={() => handlePermissionChange(key)}
-                              disabled={modalMode === 'view'}
-                              className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
-                            />
-                            <span className="text-slate-700">{label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  {formErrors.permissions && (
-                    <p className="text-red-500 text-sm mt-1">{formErrors.permissions[0]}</p>
-                  )}
-                </div>
-
-                {modalMode !== 'view' && (
-                  <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50"
-                    >
-                      {submitting ? 'Guardando...' : (modalMode === 'create' ? 'Crear Rol' : 'Actualizar Rol')}
-                    </button>
-                  </div>
-                )}
-
-                {modalMode === 'view' && (
-                  <div className="flex justify-end pt-6 border-t border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200"
-                    >
-                      Cerrar
-                    </button>
-                  </div>
-                )}
-              </form>
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Total Roles</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.total}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Shield className="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
-      )}
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Activos</p>
+              <p className="text-2xl font-bold text-green-600">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.active}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <UserCheck className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Inactivos</p>
+              <p className="text-2xl font-bold text-red-600">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.inactive}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <UserX className="w-6 h-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Permisos Totales</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : [...new Set(roles.flatMap(r => r.permissions || []))].length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Key className="w-6 h-6 text-orange-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros y búsqueda */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Roles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <AdvancedSearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar roles..."
+              loading={loading && searchTerm.length > 0}
+              className="flex-1 min-w-[200px]"
+            />
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              filterOptions={[
+                {
+                  key: 'status',
+                  label: 'Estado',
+                  options: [
+                    { value: 'active', label: 'Activos' },
+                    { value: 'inactive', label: 'Inactivos' }
+                  ]
+                }
+              ]}
+            />
+          </div>
+
+          {/* Tabla */}
+          <div className="rounded-md border transition-opacity duration-300">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Permisos</TableHead>
+                  <TableHead>Usuarios</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                {loading ? (
+                  <SkeletonTable columns={6} rows={pagination.per_page || 15} asRows={true} />
+                ) : roles.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      No se encontraron roles
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  roles.map((rol) => (
+                    <TableRow key={rol.role_id} className="transition-all duration-200 hover:bg-gray-50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center ${getRoleColor(rol.slug)}`}>
+                            <Shield className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{rol.name}</p>
+                            <p className="text-sm text-slate-600">@{rol.slug}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-slate-600">{rol.description}</p>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(rol.permissions || []).slice(0, 3).map((permission, index) => (
+                            <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                              {getPermissionLabel(permission)}
+                            </span>
+                          ))}
+                          {rol.permissions && rol.permissions.length > 3 && (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-200 text-slate-600">
+                              +{rol.permissions.length - 3} más
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-slate-500" />
+                          <span className="text-sm font-medium">{rol.users_count || 0}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          rol.is_active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {rol.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => handleEdit(rol)}
+                            className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Editar rol"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(rol)}
+                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar rol"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Paginación */}
+          <AdvancedPagination
+            pagination={pagination}
+            onPageChange={(page) => loadRoles(page)}
+            onPerPageChange={(perPage) => loadRoles(1, perPage)}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Modal de Rol */}
+      <RolModal
+        show={showModal}
+        mode={modalMode}
+        formData={formData}
+        onFormChange={setFormData}
+        onSubmit={handleSubmit}
+        onClose={closeModal}
+        isSubmitting={isSubmitting}
+        availablePermissions={availablePermissions}
+      />
+
+      {/* Modal de Confirmación de Eliminación */}
+      <RolDeleteModal
+        show={showDeleteModal}
+        rol={roleToDelete}
+        onConfirm={confirmDelete}
+        onCancel={closeDeleteModal}
+      />
+
+      {/* Notificación Toast */}
+      <Notification
+        notification={notification}
+        onClose={() => setNotification(null)}
+      />
     </div>
   );
 };

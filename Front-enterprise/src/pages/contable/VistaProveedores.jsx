@@ -1,23 +1,43 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Truck, Phone, Mail, MapPin, CreditCard, FileText, Upload, X, DollarSign, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Truck, Phone, Mail, MapPin, CreditCard, FileText, Upload, X, DollarSign, Loader2, Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import supplierService from '../../services/supplierService';
 import { getDepartments, getCitiesByDepartment } from '../../services/locationService';
 
 const VistaProveedores = () => {
+  // Estados para búsqueda y filtros avanzados
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     categoria: '',
     estado: '',
     departamento: ''
   });
 
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
   // Estados para datos
   const [proveedores, setProveedores] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [supplierOptions, setSupplierOptions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [cities, setCities] = useState([]);
+
+  // Estados para notificaciones
+  const [notification, setNotification] = useState(null);
 
   // Estados para formularios
   const [supplierForm, setSupplierForm] = useState({
@@ -58,9 +78,22 @@ const VistaProveedores = () => {
     notas: ''
   });
 
-  // Cargar datos iniciales
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Efecto para recargar datos cuando cambian los filtros o búsqueda
   useEffect(() => {
     loadSuppliers();
+  }, [debouncedSearchTerm, filters, currentPage, perPage]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
     loadDepartments();
     loadSupplierOptions();
   }, []);
@@ -113,12 +146,20 @@ const VistaProveedores = () => {
     }
   }, [supplierForm.department_id]);
 
-  // Cargar proveedores
-  const loadSuppliers = async () => {
+  // Cargar proveedores con paginación del servidor
+  const loadSuppliers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await supplierService.getSuppliers();
+
+      const params = {
+        page: currentPage,
+        per_page: perPage,
+        search: debouncedSearchTerm,
+        ...filters
+      };
+
+      const response = await supplierService.getSuppliers(params);
       if (response.success) {
         // Transformar datos del backend al formato del frontend
         const transformedSuppliers = response.data.suppliers.map(supplier => ({
@@ -138,7 +179,10 @@ const VistaProveedores = () => {
           totalComprado: 0, // Por ahora 0, se puede agregar después
           deudaPendiente: 0 // Por ahora 0, se puede agregar después
         }));
+
         setProveedores(transformedSuppliers);
+        setTotalPages(response.data.pagination?.total_pages || 1);
+        setTotalRecords(response.data.pagination?.total || 0);
       } else {
         setError(response.message || 'Error al cargar proveedores');
       }
@@ -148,7 +192,7 @@ const VistaProveedores = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, perPage, debouncedSearchTerm, filters]);
 
   // Cargar departamentos
   const loadDepartments = async () => {
@@ -1028,60 +1072,68 @@ const VistaProveedores = () => {
         </button>
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Búsqueda */}
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Buscar</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Nombre, NIT, contacto o categoría..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
+      {/* Componentes Avanzados de Búsqueda y Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Buscar y Filtrar Proveedores</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <AdvancedSearchBar
+            placeholder="Buscar por nombre, NIT, contacto o categoría..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+          <AdvancedFilters
+            filters={[
+              {
+                key: 'categoria',
+                label: 'Categoría',
+                value: filters.categoria,
+                options: [
+                  { value: '', label: 'Todas las categorías' },
+                  ...categorias.map(categoria => ({
+                    value: categoria,
+                    label: categoria
+                  }))
+                ]
+              },
+              {
+                key: 'estado',
+                label: 'Estado',
+                value: filters.estado,
+                options: [
+                  { value: '', label: 'Todos los estados' },
+                  { value: 'activo', label: 'Activo' },
+                  { value: 'inactivo', label: 'Inactivo' }
+                ]
+              },
+              {
+                key: 'departamento',
+                label: 'Departamento',
+                value: filters.departamento,
+                options: [
+                  { value: '', label: 'Todos los departamentos' },
+                  ...departamentosList.map(departamento => ({
+                    value: departamento,
+                    label: departamento
+                  }))
+                ]
+              }
+            ]}
+            onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
+            onClear={() => setFilters({
+              categoria: '',
+              estado: '',
+              departamento: ''
+            })}
+          />
+          <div className="flex items-center justify-between text-sm text-slate-600">
+            <span>
+              Mostrando <span className="font-semibold">{proveedores.length}</span> de <span className="font-semibold">{totalRecords}</span> proveedores
+            </span>
           </div>
-
-          {/* Filtro Categoría */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Categoría</label>
-            <select
-              value={filters.categoria}
-              onChange={(e) => setFilters(prev => ({ ...prev, categoria: e.target.value }))}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="">Todas las categorías</option>
-              {categorias.map(categoria => (
-                <option key={categoria} value={categoria}>{categoria}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Filtro Estado */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Estado</label>
-            <select
-              value={filters.estado}
-              onChange={(e) => setFilters(prev => ({ ...prev, estado: e.target.value }))}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="">Todos los estados</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-slate-600">
-            Mostrando <span className="font-semibold">{proveedoresFiltrados.length}</span> de <span className="font-semibold">{proveedores.length}</span> proveedores
-          </p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Estados de carga y error */}
       {error && (
@@ -1109,114 +1161,125 @@ const VistaProveedores = () => {
       )}
 
       {/* Tabla de Proveedores */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-            <span className="ml-2 text-slate-600">Cargando proveedores...</span>
-          </div>
-        ) : proveedores.length === 0 ? (
-          <div className="text-center py-12">
-            <Truck className="mx-auto h-12 w-12 text-slate-400" />
-            <h3 className="mt-2 text-sm font-medium text-slate-900">No hay proveedores</h3>
-            <p className="mt-1 text-sm text-slate-500">Comienza registrando tu primer proveedor.</p>
-            <div className="mt-6">
-              <button
-                onClick={handleCreateProveedor}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Registrar Proveedor
-              </button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Proveedores Registrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <SkeletonTable columns={6} rows={perPage} />
+          ) : proveedores.length === 0 ? (
+            <div className="text-center py-12">
+              <Truck className="mx-auto h-12 w-12 text-slate-400" />
+              <h3 className="mt-2 text-sm font-medium text-slate-900">No hay proveedores</h3>
+              <p className="mt-1 text-sm text-slate-500">Comienza registrando tu primer proveedor.</p>
+              <div className="mt-6">
+                <button
+                  onClick={handleCreateProveedor}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Registrar Proveedor
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Proveedor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Contacto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Ubicación
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
-                {proveedoresFiltrados.map((proveedor) => (
-                  <tr key={proveedor.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">{proveedor.nombre}</div>
-                        <div className="text-sm text-slate-500">NIT: {proveedor.nit}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {proveedor.categoria}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-slate-900">{proveedor.contacto}</div>
-                      <div className="text-sm text-slate-500 flex items-center gap-1">
-                        <Phone className="w-3 h-3" />
-                        {proveedor.telefono}
-                      </div>
-                      <div className="text-sm text-slate-500 flex items-center gap-1">
-                        <Mail className="w-3 h-3" />
-                        {proveedor.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-slate-900 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {proveedor.departamento}
-                      </div>
-                      <div className="text-sm text-slate-500">{proveedor.ciudad}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(proveedor.estado)}`}>
-                        {proveedor.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEditProveedor(proveedor)}
-                          className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                          title="Editar proveedor"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProveedor(proveedor)}
-                          className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Eliminar proveedor"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Proveedor</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>Ubicación</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {proveedores.map((proveedor) => (
+                    <TableRow key={proveedor.id}>
+                      <TableCell>
+                        <div>
+                          <div className="text-sm font-medium text-slate-900">{proveedor.nombre}</div>
+                          <div className="text-sm text-slate-500">NIT: {proveedor.nit}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {proveedor.categoria}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-slate-900">{proveedor.contacto}</div>
+                        <div className="text-sm text-slate-500 flex items-center gap-1">
+                          <Phone className="w-3 h-3" />
+                          {proveedor.telefono}
+                        </div>
+                        <div className="text-sm text-slate-500 flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {proveedor.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-slate-900 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {proveedor.departamento}
+                        </div>
+                        <div className="text-sm text-slate-500">{proveedor.ciudad}</div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(proveedor.estado)}`}>
+                          {proveedor.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditProveedor(proveedor)}
+                            className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Editar proveedor"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProveedor(proveedor)}
+                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar proveedor"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Paginación Avanzada */}
+              <div className="mt-6">
+                <AdvancedPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  perPage={perPage}
+                  onPerPageChange={setPerPage}
+                  totalRecords={totalRecords}
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Componente de Notificaciones */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
     </>
   );

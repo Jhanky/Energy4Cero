@@ -51,8 +51,8 @@ const ProtectedRoute = ({
             if (permission) {
               const requiredPermissions = Array.isArray(permission) ? permission : [permission];
               // Verificar si el usuario tiene al menos uno de los permisos requeridos
-              const hasPermissionCheck = requiredPermissions.some(perm => 
-                updatedUser.role?.permissions?.includes(perm)
+              const hasPermissionCheck = requiredPermissions.some(perm =>
+                (updatedUser.role?.permissions || []).includes(perm)
               );
               setHasAccess(hasPermissionCheck);
             }
@@ -71,8 +71,8 @@ const ProtectedRoute = ({
           if (permission) {
             const requiredPermissions = Array.isArray(permission) ? permission : [permission];
             // Verificar si el usuario tiene al menos uno de los permisos requeridos
-            const hasPermissionCheck = requiredPermissions.some(perm => 
-              user.role?.permissions?.includes(perm)
+            const hasPermissionCheck = requiredPermissions.some(perm =>
+              (user.role?.permissions || []).includes(perm)
             );
             setHasAccess(hasPermissionCheck);
           }

@@ -15,7 +15,7 @@ class RoleController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Role::query();
+            $query = Role::query()->withCount('users');
 
             // Filtros
             if ($request->filled('search')) {
@@ -305,56 +305,13 @@ class RoleController extends Controller
     public function permissions()
     {
         try {
-            $permissions = [
-                'users' => [
-                    'users.create',
-                    'users.read',
-                    'users.update',
-                    'users.delete',
-                ],
-                'roles' => [
-                    'roles.create',
-                    'roles.read',
-                    'roles.update',
-                    'roles.delete',
-                ],
-                'projects' => [
-                    'projects.create',
-                    'projects.read',
-                    'projects.update',
-                    'projects.delete',
-                ],
-                'financial' => [
-                    'financial.read',
-                    'financial.update',
-                    'financial.reports',
-                ],
-                'commercial' => [
-                    'commercial.read',
-                    'commercial.update',
-                    'commercial.reports',
-                ],
-                'settings' => [
-                    'settings.read',
-                    'settings.update',
-                ],
-                'reports' => [
-                    'reports.create',
-                    'reports.read',
-                    'reports.update',
-                    'reports.delete',
-                ],
-                'support' => [
-                    'support.read',
-                    'support.update',
-                    'support.delete',
-                ],
-            ];
+            // Obtener permisos desde la configuración
+            $permissionsConfig = config('permissions') ?: $this->getDefaultPermissionsConfig();
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'permissions' => $permissions
+                    'permissions' => $permissionsConfig
                 ],
                 'message' => 'Permisos obtenidos exitosamente'
             ]);
@@ -366,5 +323,70 @@ class RoleController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Configuración por defecto de permisos
+     */
+    private function getDefaultPermissionsConfig()
+    {
+        return [
+            'users' => [
+                'create' => 'users.create',
+                'read' => 'users.read',
+                'update' => 'users.update',
+                'delete' => 'users.delete',
+            ],
+            'roles' => [
+                'create' => 'roles.create',
+                'read' => 'roles.read',
+                'update' => 'roles.update',
+                'delete' => 'roles.delete',
+            ],
+            'projects' => [
+                'create' => 'projects.create',
+                'read' => 'projects.read',
+                'update' => 'projects.update',
+                'delete' => 'projects.delete',
+            ],
+            'tasks' => [
+                'create' => 'tasks.create',
+                'read' => 'tasks.read',
+                'update' => 'tasks.update',
+                'delete' => 'tasks.delete',
+            ],
+            'inventory' => [
+                'create' => 'inventory.create',
+                'read' => 'inventory.read',
+                'update' => 'inventory.update',
+                'delete' => 'inventory.delete',
+            ],
+            'support' => [
+                'create' => 'support.create',
+                'read' => 'support.read',
+                'update' => 'support.update',
+                'delete' => 'support.delete',
+            ],
+            'financial' => [
+                'read' => 'financial.read',
+                'update' => 'financial.update',
+                'reports' => 'financial.reports',
+            ],
+            'commercial' => [
+                'read' => 'commercial.read',
+                'update' => 'commercial.update',
+                'reports' => 'commercial.reports',
+            ],
+            'settings' => [
+                'read' => 'settings.read',
+                'update' => 'settings.update',
+            ],
+            'reports' => [
+                'create' => 'reports.create',
+                'read' => 'reports.read',
+                'update' => 'reports.update',
+                'delete' => 'reports.delete',
+            ],
+        ];
     }
 }

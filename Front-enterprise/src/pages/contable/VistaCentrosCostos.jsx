@@ -1,21 +1,41 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Building2, DollarSign, TrendingUp, Users, X, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Building2, DollarSign, TrendingUp, Users, X, Loader2, Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import costCenterService from '../../services/costCenterService';
 import userService from '../../services/userService';
 
 const VistaCentrosCostos = () => {
+  // Estados para búsqueda y filtros avanzados
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     tipo: '',
     estado: '',
     responsable: ''
   });
 
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
   // Estados para datos
   const [centrosCostos, setCentrosCostos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
+
+  // Estados para notificaciones
+  const [notification, setNotification] = useState(null);
 
   // Estados para formularios
   const [costCenterForm, setCostCenterForm] = useState({
@@ -33,18 +53,39 @@ const VistaCentrosCostos = () => {
   const [selectedCostCenter, setSelectedCostCenter] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
-  // Cargar datos iniciales
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Efecto para recargar datos cuando cambian los filtros o búsqueda
   useEffect(() => {
     loadCostCenters();
+  }, [debouncedSearchTerm, filters, currentPage, perPage]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
     loadUsers();
   }, []);
 
-  // Funciones para cargar datos
-  const loadCostCenters = async () => {
-    setLoading(true);
-    setError(null);
+  // Cargar centros de costos con paginación del servidor
+  const loadCostCenters = useCallback(async () => {
     try {
-      const response = await costCenterService.getCostCenters();
+      setLoading(true);
+      setError(null);
+
+      const params = {
+        page: currentPage,
+        per_page: perPage,
+        search: debouncedSearchTerm,
+        ...filters
+      };
+
+      const response = await costCenterService.getCostCenters(params);
       if (response.success) {
         // Transformar datos del API al formato del frontend
         const transformedData = response.data.cost_centers.map(center => ({
@@ -62,7 +103,10 @@ const VistaCentrosCostos = () => {
           proyectos: center.projects_count || 0,
           porcentajeUso: center.usage_percentage || 0
         }));
+
         setCentrosCostos(transformedData);
+        setTotalPages(response.data.pagination?.total_pages || 1);
+        setTotalRecords(response.data.pagination?.total || 0);
       } else {
         setError('Error al cargar centros de costos');
       }
@@ -72,7 +116,7 @@ const VistaCentrosCostos = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, perPage, debouncedSearchTerm, filters]);
 
   const loadUsers = async () => {
     try {
@@ -330,153 +374,125 @@ const VistaCentrosCostos = () => {
         </button>
       </div>
 
-      {/* Filtros y Búsqueda */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Búsqueda */}
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Buscar</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Nombre, código, responsable o tipo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-              />
-            </div>
+      {/* Componentes Avanzados de Búsqueda y Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Buscar y Filtrar Centros de Costos</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <AdvancedSearchBar
+            placeholder="Buscar por nombre, código, responsable o tipo..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+          <AdvancedFilters
+            filters={[
+              {
+                key: 'tipo',
+                label: 'Tipo',
+                value: filters.tipo,
+                options: [
+                  { value: '', label: 'Todos los tipos' },
+                  ...tipos.map(tipo => ({
+                    value: tipo,
+                    label: tipo
+                  }))
+                ]
+              },
+              {
+                key: 'estado',
+                label: 'Estado',
+                value: filters.estado,
+                options: [
+                  { value: '', label: 'Todos los estados' },
+                  { value: 'activo', label: 'Activo' },
+                  { value: 'cerrado', label: 'Cerrado' },
+                  { value: 'pausado', label: 'Pausado' }
+                ]
+              },
+              {
+                key: 'responsable',
+                label: 'Responsable',
+                value: filters.responsable,
+                options: [
+                  { value: '', label: 'Todos los responsables' },
+                  ...responsables.map(responsable => ({
+                    value: responsable,
+                    label: responsable
+                  }))
+                ]
+              }
+            ]}
+            onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
+            onClear={() => setFilters({
+              tipo: '',
+              estado: '',
+              responsable: ''
+            })}
+          />
+          <div className="flex items-center justify-between text-sm text-slate-600">
+            <span>
+              Mostrando <span className="font-semibold">{centrosCostos.length}</span> de <span className="font-semibold">{totalRecords}</span> centros de costos
+            </span>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Filtro Tipo */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Tipo</label>
-            <select
-              value={filters.tipo}
-              onChange={(e) => setFilters(prev => ({ ...prev, tipo: e.target.value }))}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="">Todos los tipos</option>
-              {tipos.map(tipo => (
-                <option key={tipo} value={tipo}>{tipo}</option>
-              ))}
-            </select>
-          </div>
 
-          {/* Filtro Estado */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Estado</label>
-            <select
-              value={filters.estado}
-              onChange={(e) => setFilters(prev => ({ ...prev, estado: e.target.value }))}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="">Todos los estados</option>
-              <option value="activo">Activo</option>
-              <option value="cerrado">Cerrado</option>
-              <option value="pausado">Pausado</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-slate-600">
-            Mostrando <span className="font-semibold">{centrosFiltrados.length}</span> de <span className="font-semibold">{centrosCostos.length}</span> centros de costos
-          </p>
-        </div>
-      </div>
-
-      {/* Estados de carga y error */}
-      {loading && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-          <div className="flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-            <span className="ml-3 text-slate-600">Cargando centros de costos...</span>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center">
-            <div className="text-red-600">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-800">Error al cargar centros de costos</p>
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-            <div className="ml-auto">
-              <button
-                onClick={loadCostCenters}
-                className="px-3 py-1 text-sm bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors"
-              >
-                Reintentar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Tabla de Centros de Costos */}
-      {!loading && !error && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Centro de Costos
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Responsable
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Presupuesto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Utilización
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
-                {centrosFiltrados.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center">
-                        <Building2 className="w-12 h-12 text-slate-400 mb-4" />
-                        <p className="text-slate-500 text-lg font-medium">No hay centros de costos</p>
-                        <p className="text-slate-400 text-sm">Comienza creando tu primer centro de costos</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  centrosFiltrados.map((centro) => (
-                    <tr key={centro.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Centros de Costos Registrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <SkeletonTable columns={7} rows={perPage} />
+          ) : centrosCostos.length === 0 ? (
+            <div className="text-center py-12">
+              <Building2 className="mx-auto h-12 w-12 text-slate-400" />
+              <h3 className="mt-2 text-sm font-medium text-slate-900">No hay centros de costos</h3>
+              <p className="mt-1 text-sm text-slate-500">Comienza creando tu primer centro de costos.</p>
+              <div className="mt-6">
+                <button
+                  onClick={handleCreateCostCenter}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Registrar Centro de Costos
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Centro de Costos</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Responsable</TableHead>
+                    <TableHead>Presupuesto</TableHead>
+                    <TableHead>Utilización</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {centrosCostos.map((centro) => (
+                    <TableRow key={centro.id}>
+                      <TableCell>
                         <div>
                           <div className="text-sm font-medium text-slate-900">{centro.nombre}</div>
                           <div className="text-sm text-slate-500">Código: {centro.codigo}</div>
                           <div className="text-xs text-slate-400 mt-1">{centro.descripcion}</div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTipoColor(centro.tipo)}`}>
                           {centro.tipo}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="text-sm text-slate-900">{centro.responsable}</div>
                         {centro.proyectos > 0 && (
                           <div className="text-sm text-slate-500 flex items-center gap-1">
@@ -484,12 +500,12 @@ const VistaCentrosCostos = () => {
                             {centro.proyectos} proyecto(s)
                           </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="text-sm text-slate-900">{formatearMoneda(centro.presupuesto)}</div>
                         <div className="text-sm text-slate-500">Disponible: {formatearMoneda(centro.disponible)}</div>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="flex-1 bg-slate-200 rounded-full h-2 w-20">
                             <div
@@ -507,14 +523,14 @@ const VistaCentrosCostos = () => {
                         <div className="text-xs text-slate-500 mt-1">
                           Gastado: {formatearMoneda(centro.gastado)}
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(centro.estado)}`}>
                           {centro.estado === 'activo' ? 'Activo' :
                            centro.estado === 'cerrado' ? 'Cerrado' : 'Pausado'}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEditCostCenter(centro)}
@@ -531,14 +547,35 @@ const VistaCentrosCostos = () => {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Paginación Avanzada */}
+              <div className="mt-6">
+                <AdvancedPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  perPage={perPage}
+                  onPerPageChange={setPerPage}
+                  totalRecords={totalRecords}
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Componente de Notificaciones */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
       )}
 
       {/* Modal de Crear Centro de Costos */}

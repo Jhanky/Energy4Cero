@@ -15,13 +15,28 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Obtener roles
+        // Obtener roles con validación
         $adminRole = Role::where('slug', 'administrador')->first();
         $gerenteRole = Role::where('slug', 'gerente')->first();
         $comercialRole = Role::where('slug', 'comercial')->first();
         $contadorRole = Role::where('slug', 'contador')->first();
         $ingenieroRole = Role::where('slug', 'ingeniero')->first();
         $tecnicoRole = Role::where('slug', 'tecnico')->first();
+
+        // Verificar que todos los roles existan
+        $missingRoles = [];
+        if (!$adminRole) $missingRoles[] = 'administrador';
+        if (!$gerenteRole) $missingRoles[] = 'gerente';
+        if (!$comercialRole) $missingRoles[] = 'comercial';
+        if (!$contadorRole) $missingRoles[] = 'contador';
+        if (!$ingenieroRole) $missingRoles[] = 'ingeniero';
+        if (!$tecnicoRole) $missingRoles[] = 'tecnico';
+
+        if (!empty($missingRoles)) {
+            echo "Error: Los siguientes roles no existen: " . implode(', ', $missingRoles) . "\n";
+            echo "Ejecuta el RoleSeeder primero.\n";
+            return;
+        }
 
         $users = [
             // Usuario administrador
@@ -88,7 +103,10 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::create($userData);
+            User::updateOrCreate(
+                ['email' => $userData['email']],
+                $userData
+            );
         }
     }
 }

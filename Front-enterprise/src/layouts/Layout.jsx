@@ -1,52 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, ChevronDown, ChevronRight, Shield, Settings, Target, FileText, TrendingUp, Receipt, Book, Package, Bell, Menu, X, User, Truck, Building2, LogOut } from 'lucide-react';
+import React from 'react';
+import { Outlet, useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
+import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Shield, Settings, Truck, Building2, LogOut, Package, FileText, Receipt, MessageCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { Sidebar, SidebarBody, SidebarSection, SidebarSectionItem, SidebarLink } from '../shared/ui/CustomSidebar';
+import { Button } from '../ui/button';
+import { useState } from 'react';
 
 function Layout() {
-  const [menuAbierto, setMenuAbierto] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { usuario, loading, isAuthenticated, hasPermission, logout } = useAuth();
-
-  // Cerrar menús al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuAbierto && !event.target.closest('.menu-section')) {
-        setMenuAbierto(null);
-      }
-      if (userMenuOpen && !event.target.closest('.user-menu')) {
-        setUserMenuOpen(false);
-      }
-      if (notificationsOpen && !event.target.closest('.notifications-menu')) {
-        setNotificationsOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [menuAbierto, userMenuOpen, notificationsOpen]);
-
-  // Redirigir al login si no está autenticado
-  // (esto se evalúa en cada renderizado, pero solo causa efecto si el estado cambió)
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Mostrar loading mientras se verifica autenticación
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-slate-50 to-emerald-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Cargando contenido...</p>
-        </div>
-      </div>
-    );
-  }
+  const { user: usuario, loading, isAuthenticated, hasPermission, logout, refreshUser } = useAuth();
+  const [logoutExpanded, setLogoutExpanded] = useState(false);
+  const [openSection, setOpenSection] = useState(null);
 
   const menuSections = [
     {
@@ -63,7 +28,7 @@ function Layout() {
     {
       id: 'comercial',
       nombre: 'Gestión Comercial',
-      icono: ShoppingCart,    
+      icono: ShoppingCart,
       color: 'green',
       paginas: [
         { id: 'clientes', nombre: 'Gestión de Clientes', icono: Users, path: '/clientes' },
@@ -98,16 +63,63 @@ function Layout() {
       ]
     },
     {
-      id: 'soporte',
-      nombre: 'Soporte',
+      id: 'tecnica',
+      nombre: 'Gestión Técnica',
       icono: HelpCircle,
       color: 'gray',
       paginas: [
+        { id: 'bodegas', nombre: 'Bodegas', icono: Building2, path: '/bodegas' },
+        { id: 'herramientas', nombre: 'Herramientas', icono: Wrench, path: '/herramientas' },
+        { id: 'materiales', nombre: 'Inventario', icono: Package, path: '/materiales' },
         { id: 'servicio', nombre: 'Servicio Técnico', icono: Wrench, path: '/servicio' },
         { id: 'mantenimiento', nombre: 'Mantenimiento', icono: Settings, path: '/mantenimiento' }
       ]
+    },
+    {
+      id: 'asistente',
+      nombre: 'Asistente IA',
+      icono: MessageCircle,
+      color: 'purple',
+      paginas: [
+        { id: 'asistente', nombre: 'Asistente IA', icono: MessageCircle, path: '/chat-ia' }
+      ]
     }
   ];
+
+  // Efecto para refrescar usuario y verificar permisos al cargar
+  React.useEffect(() => {
+    const refreshUserData = async () => {
+      try {
+        const result = await refreshUser();
+        console.log('🔄 Usuario refrescado:', {
+          user: result?.user,
+          permissions: result?.user?.role?.permissions,
+          role: result?.user?.role?.name,
+          roleSlug: result?.user?.role?.slug
+        });
+      } catch (error) {
+        console.error('Error al refrescar usuario:', error);
+      }
+    };
+
+    if (isAuthenticated && usuario) {
+      console.log('👤 Usuario actual en Layout:', {
+        user: usuario,
+        permissions: usuario?.role?.permissions,
+        role: usuario?.role?.name,
+        roleSlug: usuario?.role?.slug
+      });
+      refreshUserData();
+    }
+  }, [isAuthenticated, usuario, refreshUser]);
+
+  // Efecto para abrir automáticamente la sección que contiene la página activa
+  React.useEffect(() => {
+    const activeSection = menuSections.find(section => hasActivePageInSection(section));
+    if (activeSection) {
+      setOpenSection(activeSection.id);
+    }
+  }, [location.pathname]);
 
   // Función para verificar si una página está activa
   const isPageActive = (path) => {
@@ -115,35 +127,61 @@ function Layout() {
   };
 
   // Función para verificar si una sección tiene páginas activas
-  const hasActivePage = (section) => {
+  const hasActivePageInSection = (section) => {
     return section.paginas.some(pagina => isPageActive(pagina.path));
   };
 
   // Función para filtrar páginas basado en permisos
   const getFilteredPages = (paginas) => {
     return paginas.filter(pagina => {
-      // Mapear páginas a permisos
+      // Mapear páginas a permisos requeridos
       const pagePermissions = {
-        'tareas': ['tasks.read'],
+        // Administrativa
         'usuarios': ['users.read'],
         'roles': ['roles.read'],
         'configuracion': ['settings.read'],
+
+        // Comercial
         'clientes': ['commercial.read'],
         'suministros': ['commercial.read'],
         'cotizaciones': ['commercial.read'],
+
+        // Proyectos
+        'resumen': ['projects.read'],
+        'proyectos': ['projects.read'],
+        'analisis': ['projects.read'],
+        'aire': ['projects.read'],
+        'tareas': ['tasks.read'],
+
+        // Contable
         'financiera': ['financial.read'],
+        'facturacion': ['financial.read'],
         'proveedores': ['financial.read'],
         'centros-costos': ['financial.read'],
         'reportes-fin': ['financial.reports'],
+
+        // Técnica
+        'bodegas': ['inventory.read'],
+        'herramientas': ['inventory.read'],
+        'materiales': ['inventory.read'],
         'servicio': ['support.read'],
-        'mantenimiento': ['support.read'],
-        'tickets': ['support.read']
+        'mantenimiento': ['support.read']
       };
 
       const requiredPermissions = pagePermissions[pagina.id];
-      if (!requiredPermissions) return true; // Páginas sin restricciones
+      if (!requiredPermissions) return true; // Páginas sin restricciones específicas
 
-      return requiredPermissions.some(permission => hasPermission(permission));
+      const hasRequiredPermission = requiredPermissions.some(permission => hasPermission(permission));
+
+      // Debug: mostrar qué permisos se están verificando
+      console.log(`🔐 Verificando página "${pagina.nombre}" (${pagina.id}):`, {
+        requiredPermissions,
+        hasPermission: hasRequiredPermission,
+        userPermissions: usuario?.role?.permissions,
+        userRole: usuario?.role?.name
+      });
+
+      return hasRequiredPermission;
     });
   };
 
@@ -152,228 +190,109 @@ function Layout() {
     return getFilteredPages(section.paginas).length > 0;
   };
 
+  // Función para manejar el toggle de secciones (comportamiento de acordeón)
+  const handleSectionToggle = (sectionId) => {
+    setOpenSection(openSection === sectionId ? null : sectionId);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100">
-      {/* Header Superior */}
-      <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-[99%] mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            {/* Logo y Título */}
-            <div 
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => navigate('/home')}
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">Enterprise</h1>
-                <p className="text-xs text-slate-600">Sistema de Gestión</p>
-              </div>
-            </div>
-
-            {/* Navegación Desktop */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {menuSections.filter(section => hasVisiblePages(section)).map((section) => {
-                const Icono = section.icono;
-                const isOpen = menuAbierto === section.id;
-                const sectionHasActivePage = hasActivePage(section);
-                
-                return (
-                  <div key={section.id} className="relative menu-section">
-                    <button
-                      onClick={() => setMenuAbierto(isOpen ? null : section.id)}
-                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg ${
-                        sectionHasActivePage
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                      }`}
-                    >
-                      <Icono className="w-4 h-4" />
-                      <span>{section.nombre}</span>
-                      {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    
-                    {isOpen && (
-                      <div className="absolute top-full left-0 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-64 mt-1">
-                        {getFilteredPages(section.paginas).map((pagina) => {
-                          const PaginaIcono = pagina.icono;
-                          const isActive = isPageActive(pagina.path);
-                          return (
-                            <button
-                              key={pagina.id}
-                              onClick={() => {
-                                navigate(pagina.path);
-                                setMenuAbierto(null);
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${
-                                isActive
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-slate-600'
-                              }`}
-                            >
-                              <PaginaIcono className="w-4 h-4" />
-                              <span className="text-sm font-medium">{pagina.nombre}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
-
-            {/* Controles Derecha */}
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100">
+      {/* Sidebar */}
+      <Sidebar>
+        <SidebarBody>
+          {/* Logo en el sidebar */}
+          <Link to="/" className="px-4 py-4 border-b border-sidebar-border flex-shrink-0 block hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
             <div className="flex items-center gap-3">
-              {/* Notificaciones */}
-              <div className="relative notifications-menu">
-                <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors relative"
-                >
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                </button>
-                
-                {notificationsOpen && (
-                  <div className="absolute top-full right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-50 w-80 mt-2">
-                    <div className="p-4 border-b border-slate-200">
-                      <h3 className="font-semibold text-slate-900">Notificaciones</h3>
-                    </div>
-                    <div className="p-4">
-                      <div className="text-center text-slate-500 py-8">
-                        <Bell className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                        <p className="text-sm">No hay notificaciones nuevas</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Leaf className="w-5 h-5 text-white" />
               </div>
-
-              {/* Menú de Usuario */}
-              <div className="relative user-menu">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium text-slate-900">{usuario?.name || 'Usuario'}</p>
-                    <p className="text-xs text-slate-600">{usuario?.role?.name || 'Sin rol'}</p>
-                  </div>
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                
-                {userMenuOpen && (
-                  <div className="absolute top-full right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-50 w-48 mt-2">
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          navigate('/perfil');
-                          setUserMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                      >
-                        <User className="w-4 h-4" />
-                        <span className="text-sm">Mi Perfil</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate('/configuracion');
-                          setUserMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span className="text-sm">Configuración</span>
-                      </button>
-                      <hr className="my-2 border-slate-200" />
-                      <button
-                        onClick={async () => {
-                          await logout();
-                          setUserMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span className="text-sm">Cerrar Sesión</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Botón Menú Móvil */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Menú Móvil */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-200 bg-white">
-            <div className="max-w-[99%] mx-auto px-4 sm:px-6 py-4">
-              <div className="space-y-2">
-                {menuSections.filter(section => hasVisiblePages(section)).map((section) => (
-                  <div key={section.id} className="border-b border-slate-100 pb-2">
-                    <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700">
-                      <section.icono className="w-4 h-4" />
-                      <span>{section.nombre}</span>
-                    </div>
-                    <div className="ml-6 space-y-1">
-                      {getFilteredPages(section.paginas).map((pagina) => {
-                        const PaginaIcono = pagina.icono;
-                        const isActive = isPageActive(pagina.path);
-                        return (
-                          <button
-                            key={pagina.id}
-                            onClick={() => {
-                              navigate(pagina.path);
-                              setMobileMenuOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm rounded-lg transition-colors ${
-                              isActive
-                                ? 'bg-green-100 text-green-700'
-                                : 'text-slate-600 hover:bg-slate-50'
-                            }`}
-                          >
-                            <PaginaIcono className="w-4 h-4" />
-                            <span>{pagina.nombre}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-hidden">
+                <h1 className="text-lg font-bold text-sidebar-foreground truncate">Enterprise</h1>
+                <p className="text-xs text-sidebar-foreground/70 truncate">Sistema de Gestión</p>
               </div>
             </div>
-          </div>
-        )}
-      </header>
+          </Link>
 
-      {/* Main Content */}
-      <main className="max-w-[99%] mx-auto px-4 sm:px-6 py-8">
-        <Outlet />
-      </main>
+          {/* Navegación del Sidebar - ocupa espacio disponible */}
+          <div className="flex-1 overflow-y-auto px-2 py-4">
+            <div className="space-y-1">
+              {menuSections
+                .filter(section => hasVisiblePages(section))
+                .map((section) => {
+                  const filteredPages = getFilteredPages(section.paginas);
+                  const isSectionActive = hasActivePageInSection(section);
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-12">
-        <div className="max-w-[99%] mx-auto px-4 sm:px-6 py-6">
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <p>© 2025 Energy 4.0</p>
-            <p>Atlántico, Magdalena y La Guajira</p>
+                  // Si la sección tiene solo una página, mostrar como enlace directo
+                  if (filteredPages.length === 1) {
+                    const pagina = filteredPages[0];
+                    return (
+                      <SidebarLink
+                        key={section.id}
+                        link={{
+                          label: section.nombre,
+                          href: pagina.path,
+                          icon: <section.icono className="w-4 h-4" />
+                        }}
+                        className="border-b border-sidebar-border pb-2 mb-2 last:border-b-0"
+                      />
+                    );
+                  }
+
+                  // Si tiene múltiples páginas, mostrar como sección expandible
+                  return (
+                    <SidebarSection
+                      key={section.id}
+                      title={section.nombre}
+                      icon={section.icono}
+                      open={openSection === section.id || isSectionActive}
+                      onToggle={() => handleSectionToggle(section.id)}
+                      isActive={isSectionActive}
+                      className="border-b border-sidebar-border pb-2 mb-2 last:border-b-0"
+                    >
+                      {filteredPages.map((pagina) => (
+                        <SidebarSectionItem
+                          key={pagina.id}
+                          link={{
+                            label: pagina.nombre,
+                            href: pagina.path,
+                            icon: <pagina.icono className="w-4 h-4" />
+                          }}
+                        />
+                      ))}
+                    </SidebarSection>
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      </footer>
+
+          {/* Botón de cerrar sesión */}
+          <div className="border-t border-sidebar-border p-4 flex-shrink-0">
+            <Button
+              onClick={async () => {
+                await logout();
+              }}
+              variant="destructive"
+              className="w-full justify-start px-3 py-3 h-auto"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium ml-3">
+                Cerrar Sesión
+              </span>
+            </Button>
+          </div>
+        </SidebarBody>
+      </Sidebar>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-[99%] mx-auto px-4 sm:px-6 py-8">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

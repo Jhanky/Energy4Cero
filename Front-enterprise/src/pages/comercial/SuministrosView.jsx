@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Package, Plus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import dataService from '../../services/dataService';
 
 // Componentes comunes
-import { Notification, LoadingSpinner } from '../../shared/ui';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 
 // Componentes específicos de suministros
-import { 
+import {
   SuministrosTabs,
-  SuministrosFilters,
-  SuministrosTable,
   SuministroDeleteModal,
   PanelModal,
   InverterModal,
@@ -24,8 +30,37 @@ const SuministrosView = () => {
 
   // Estados de búsqueda y filtros
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     is_active: '',
+  });
+
+  // Estados de paginación por pestaña
+  const [pagination, setPagination] = useState({
+    paneles: {
+      current_page: 1,
+      per_page: 15,
+      total: 0,
+      last_page: 1,
+      from: 0,
+      to: 0
+    },
+    inversores: {
+      current_page: 1,
+      per_page: 15,
+      total: 0,
+      last_page: 1,
+      from: 0,
+      to: 0
+    },
+    baterias: {
+      current_page: 1,
+      per_page: 15,
+      total: 0,
+      last_page: 1,
+      from: 0,
+      to: 0
+    }
   });
 
   // Estados del modal principal
@@ -54,75 +89,98 @@ const SuministrosView = () => {
     baterias: []
   });
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
-
-  // Cargar datos
-  const loadData = async () => {
+  // Función para cargar datos por pestaña con paginación
+  const loadTabData = async (tab, page = 1, perPage = pagination[tab].per_page) => {
     try {
       setLoading(true);
       setError(null);
 
+      const params = {
+        search: debouncedSearchTerm,
+        page,
+        per_page: perPage,
+        ...filters
+      };
+
       let response;
-      switch (activeTab) {
+      switch (tab) {
         case 'paneles':
-          response = await dataService.getPanels({
-            search: searchTerm,
-          });
+          response = await dataService.getPanels(params);
           break;
         case 'inversores':
-          response = await dataService.getInverters({
-            search: searchTerm,
-          });
+          response = await dataService.getInverters(params);
           break;
         case 'baterias':
-          response = await dataService.getBatteries({
-            search: searchTerm,
-          });
+          response = await dataService.getBatteries(params);
           break;
         default:
           return;
       }
 
       if (response.success) {
-        // Usar función de actualización de estado para garantizar actualización atómica
+        // Actualizar datos de la pestaña
         setData(prevData => {
           const newData = { ...prevData };
-          // Extraer los elementos de la respuesta paginada
-          // El backend devuelve la estructura data.panels, data.inverters o data.batteries
-          // pero las pestañas se llaman paneles, inversores y baterias
           let tabData = [];
-          
-          // Mapear el nombre de la pestaña al nombre del campo en la respuesta
+
           const responseFieldMap = {
             'paneles': 'panels',
-            'inversores': 'inverters', 
+            'inversores': 'inverters',
             'baterias': 'batteries'
           };
-          
-          const responseField = responseFieldMap[activeTab];
-          
+
+          const responseField = responseFieldMap[tab];
+
           if (response.data && response.data[responseField]) {
             tabData = Array.isArray(response.data[responseField]) ? response.data[responseField] : [];
           } else {
-            // Si no está en la estructura paginada, usar directamente response.data (si es array)
             tabData = Array.isArray(response.data) ? response.data : [];
           }
-          
-          newData[activeTab] = tabData;
+
+          newData[tab] = tabData;
           return newData;
         });
+
+        // Actualizar paginación de la pestaña
+        setPagination(prevPagination => ({
+          ...prevPagination,
+          [tab]: response.data.pagination || {
+            current_page: 1,
+            per_page: 15,
+            total: 0,
+            last_page: 1,
+            from: 0,
+            to: 0
+          }
+        }));
       } else {
         setError(response.message || 'Error al cargar datos');
       }
     } catch (error) {
-      console.error('Error en loadData:', error);
+      console.error('Error en loadTabData:', error);
       setError('Error de conexión: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Cargar datos al cambiar de pestaña
+  useEffect(() => {
+    loadTabData(activeTab);
+  }, [activeTab]);
+
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar datos cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    loadTabData(activeTab);
+  }, [debouncedSearchTerm, filters]);
 
 
   // Manejo de notificaciones
@@ -328,7 +386,7 @@ const SuministrosView = () => {
       if (response.success) {
         const action = modalMode === 'create' ? 'creado' : 'actualizado';
         showNotification('success', `${getTabTitle()} ${action} exitosamente`);
-        loadData();
+        loadTabData(activeTab);
         closeModal();
       } else {
         if (response.errors) {
@@ -374,7 +432,7 @@ const SuministrosView = () => {
         
         if (response.success) {
           showNotification('success', `${getTabTitle()} eliminado exitosamente`);
-          loadData();
+          loadTabData(activeTab);
         } else {
           showNotification('error', response.message || 'Error al eliminar');
         }
@@ -398,16 +456,11 @@ const SuministrosView = () => {
     setFilters({ ...filters, [key]: value });
   };
 
-  const applyFilters = () => {
-    loadData();
-  };
-
   const clearFilters = () => {
     setFilters({
       is_active: '',
     });
     setSearchTerm('');
-    loadData();
   };
 
   // Funciones helper
@@ -481,30 +534,129 @@ const SuministrosView = () => {
         onTabChange={setActiveTab} 
       />
 
-      {/* Filtros */}
-      <SuministrosFilters
-        activeTab={activeTab}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onApplyFilters={applyFilters}
-        onClearFilters={clearFilters}
-      />
+      {/* Filtros y búsqueda */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{getTabTitle()}s</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <AdvancedSearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder={`Buscar ${getTabTitle().toLowerCase()}s...`}
+              loading={loading && searchTerm.length > 0}
+              className="flex-1 min-w-[200px]"
+            />
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              filterOptions={[
+                {
+                  key: 'is_active',
+                  label: 'Estado',
+                  options: [
+                    { value: '1', label: 'Activos' },
+                    { value: '0', label: 'Inactivos' }
+                  ]
+                }
+              ]}
+            />
+          </div>
 
-      {/* Tabla de datos */}
-      <SuministrosTable
-        activeTab={activeTab}
-        data={getCurrentData()}
-        loading={loading}
-        error={error}
-        onView={(item) => openModal('view', item)}
-        onEdit={(item) => openModal('edit', item)}
-        onDelete={openDeleteModal}
-        onRetry={loadData}
-        formatPrice={formatPrice}
-        formatDate={formatDate}
-      />
+          {/* Tabla */}
+          <div className="rounded-md border transition-opacity duration-300">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Modelo</TableHead>
+                  <TableHead>Marca</TableHead>
+                  {activeTab === 'paneles' && <TableHead>Potencia (W)</TableHead>}
+                  {activeTab === 'inversores' && <TableHead>Potencia (kW)</TableHead>}
+                  {activeTab === 'baterias' && <TableHead>Capacidad (Ah)</TableHead>}
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha Creación</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                {loading ? (
+                  <SkeletonTable columns={7} rows={pagination[activeTab].per_page || 15} asRows={true} />
+                ) : getCurrentData().length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      No se encontraron {getTabTitle().toLowerCase()}s
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  getCurrentData().map((item) => (
+                    <TableRow key={item.id} className="transition-all duration-200 hover:bg-gray-50">
+                      <TableCell className="font-medium">{item.model || item.name}</TableCell>
+                      <TableCell>{item.brand || '-'}</TableCell>
+                      {activeTab === 'paneles' && <TableCell>{item.power_output || '-'}</TableCell>}
+                      {activeTab === 'inversores' && <TableCell>{item.power_output_kw || '-'}</TableCell>}
+                      {activeTab === 'baterias' && <TableCell>{item.ah_capacity || '-'}</TableCell>}
+                      <TableCell>{formatPrice(item.price)}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {item.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {formatDate(item.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {item.technical_sheet_path && (
+                            <button
+                              onClick={() => window.open(item.technical_sheet_path, '_blank')}
+                              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Ver ficha técnica"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => openModal('edit', item)}
+                            className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(item)}
+                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Paginación */}
+          <AdvancedPagination
+            pagination={pagination[activeTab]}
+            onPageChange={(page) => loadTabData(activeTab, page)}
+            onPerPageChange={(perPage) => loadTabData(activeTab, 1, perPage)}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modal específico según el tipo de suministro */}
       {activeTab === 'paneles' && (

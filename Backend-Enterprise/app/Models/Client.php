@@ -91,6 +91,30 @@ class Client extends Model
         return $this->belongsTo(\App\Models\City::class, 'city_id', 'city_id');
     }
 
+    /**
+     * Relación con cotizaciones
+     */
+    public function quotations()
+    {
+        return $this->hasMany(\App\Models\Quotation::class, 'client_id', 'client_id');
+    }
+
+    /**
+     * Relación con proyectos
+     */
+    public function projects()
+    {
+        return $this->hasMany(\App\Models\Project::class, 'client_id', 'client_id');
+    }
+
+    /**
+     * Relación con tickets
+     */
+    public function tickets()
+    {
+        return $this->hasMany(\App\Models\Ticket::class, 'client_id', 'client_id');
+    }
+
 
 
     /**

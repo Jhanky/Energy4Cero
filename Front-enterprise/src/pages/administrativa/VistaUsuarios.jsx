@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  UserCheck, 
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
+  UserCheck,
   UserX,
   Mail,
   Phone,
@@ -13,9 +12,17 @@ import {
   Calendar,
   Loader2
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import UsuarioModal from './UsuarioModal';
 import UsuarioDeleteModal from './UsuarioDeleteModal';
-import { Notification } from '../../shared/ui';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import dataService from '../../services/dataService';
 
 const VistaUsuarios = () => {
@@ -32,8 +39,21 @@ const VistaUsuarios = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    role: '',
+    status: ''
+  });
+
+  // Estados de paginación
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
 
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
@@ -58,60 +78,67 @@ const VistaUsuarios = () => {
   const [notification, setNotification] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Cargar datos del backend
-  const loadData = async () => {
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar datos al montar el componente y cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    loadUsers();
+  }, [debouncedSearchTerm, filters]);
+
+  // Función para cargar usuarios con paginación
+  const loadUsers = async (page = 1, perPage = pagination.per_page) => {
     try {
       setLoading(true);
+      const params = {
+        search: debouncedSearchTerm,
+        page,
+        per_page: perPage,
+        ...filters
+      };
 
-      
-      // Cargar usuarios y roles en paralelo
-      const [usersResponse, rolesResponse] = await Promise.all([
-        dataService.getUsers(),
-        dataService.getRoles()
-      ]);
+      const response = await dataService.getUsers(params);
 
-
-
-      if (usersResponse.success) {
-        setUsuarios(usersResponse.data.users || []);
-        setStats(usersResponse.data.stats || {});
+      if (response.success) {
+        setUsuarios(response.data.users || []);
+        setStats(response.data.stats || {});
+        setPagination(response.data.pagination || {
+          current_page: 1,
+          per_page: 15,
+          total: 0,
+          last_page: 1,
+          from: 0,
+          to: 0
+        });
       } else {
-        showNotification('error', 'Error al cargar usuarios: ' + usersResponse.message);
+        showNotification('error', 'Error al cargar usuarios: ' + response.message);
       }
-
-      if (rolesResponse.success) {
-        setRoles(rolesResponse.data.roles || []);
-      } else {
-        showNotification('error', 'Error al cargar roles: ' + rolesResponse.message);
-      }
-
     } catch (error) {
-      
       showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar datos al montar el componente
+  // Cargar roles al montar
   useEffect(() => {
-    loadData();
+    const loadRoles = async () => {
+      try {
+        const response = await dataService.getRoles();
+        if (response.success) {
+          setRoles(response.data.roles || []);
+        }
+      } catch (error) {
+        console.error('Error loading roles:', error);
+      }
+    };
+    loadRoles();
   }, []);
-
-  // Filtrar usuarios
-  const usuariosFiltrados = usuarios.filter(usuario => {
-    const cumpleBusqueda = 
-      usuario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (usuario.position && usuario.position.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const cumpleRol = !roleFilter || usuario.role?.slug === roleFilter;
-    const cumpleEstado = !statusFilter || 
-      (statusFilter === 'active' && usuario.is_active) ||
-      (statusFilter === 'inactive' && !usuario.is_active);
-
-    return cumpleBusqueda && cumpleRol && cumpleEstado;
-  });
 
   const getRoleColor = (roleSlug) => {
     const colors = {
@@ -223,13 +250,13 @@ const VistaUsuarios = () => {
       }
 
       if (response.success) {
-        showNotification('success', 
-          modalMode === 'create' 
-            ? 'Usuario creado exitosamente' 
+        showNotification('success',
+          modalMode === 'create'
+            ? 'Usuario creado exitosamente'
             : 'Usuario actualizado exitosamente'
         );
         closeModal();
-        loadData(); // Recargar datos
+        loadUsers(); // Recargar datos
       } else {
         showNotification('error', response.message || 'Error al procesar la solicitud');
       }
@@ -251,7 +278,7 @@ const VistaUsuarios = () => {
       if (response.success) {
         showNotification('success', 'Usuario eliminado exitosamente');
         closeDeleteModal();
-        loadData(); // Recargar datos
+        loadUsers(); // Recargar datos
       } else {
         showNotification('error', response.message || 'Error al eliminar el usuario');
       }
@@ -337,149 +364,145 @@ const VistaUsuarios = () => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Buscar usuarios..."
+      {/* Filtros y búsqueda */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Usuarios</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <AdvancedSearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              onChange={setSearchTerm}
+              placeholder="Buscar usuarios..."
+              loading={loading && searchTerm.length > 0}
+              className="flex-1 min-w-[200px]"
+            />
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              filterOptions={[
+                {
+                  key: 'role',
+                  label: 'Rol',
+                  options: roles.map(role => ({ value: role.slug, label: role.name }))
+                },
+                {
+                  key: 'status',
+                  label: 'Estado',
+                  options: [
+                    { value: 'active', label: 'Activos' },
+                    { value: 'inactive', label: 'Inactivos' }
+                  ]
+                }
+              ]}
             />
           </div>
-          
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los roles</option>
-            {roles.map(role => (
-              <option key={role.role_id} value={role.slug}>{role.name}</option>
-            ))}
-          </select>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
-        </div>
-      </div>
 
-      {/* Tabla de Usuarios */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Usuarios ({loading ? '...' : usuariosFiltrados.length})
-          </h3>
-        </div>
-        
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-            <span className="ml-2 text-slate-600">Cargando usuarios...</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Usuario</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Rol</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Contacto</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Estado</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Fecha</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {usuariosFiltrados.map((usuario) => (
-                <tr key={usuario.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold text-sm">
-                          {usuario.name.split(' ').map(n => n[0]).join('')}
+          {/* Tabla */}
+          <div className="rounded-md border transition-opacity duration-300">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                {loading ? (
+                  <SkeletonTable columns={6} rows={pagination.per_page || 15} asRows={true} />
+                ) : usuarios.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      No se encontraron usuarios
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  usuarios.map((usuario) => (
+                    <TableRow key={usuario.id} className="transition-all duration-200 hover:bg-gray-50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {usuario.name.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{usuario.name}</p>
+                            <p className="text-sm text-slate-600">{usuario.position}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(usuario.role?.slug || '')}`}>
+                          {usuario.role?.name || 'Sin rol'}
                         </span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900">{usuario.name}</p>
-                        <p className="text-sm text-slate-600">{usuario.position}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(usuario.role?.slug || '')}`}>
-                      {usuario.role?.name || 'Sin rol'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Mail className="w-4 h-4" />
-                        {usuario.email}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Phone className="w-4 h-4" />
-                        {usuario.phone || 'Sin teléfono'}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      usuario.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {usuario.is_active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(usuario.created_at)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => handleEdit(usuario)}
-                        className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="Editar usuario"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(usuario)}
-                        className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Eliminar usuario"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              </tbody>
-            </table>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Mail className="w-4 h-4" />
+                            {usuario.email}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Phone className="w-4 h-4" />
+                            {usuario.phone || 'Sin teléfono'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          usuario.is_active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {usuario.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <Calendar className="w-4 h-4" />
+                          {formatDate(usuario.created_at)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => handleEdit(usuario)}
+                            className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Editar usuario"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(usuario)}
+                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar usuario"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        )}
-        
-        {!loading && usuariosFiltrados.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-500">No se encontraron usuarios</p>
-          </div>
-        )}
-      </div>
+
+          {/* Paginación */}
+          <AdvancedPagination
+            pagination={pagination}
+            onPageChange={(page) => loadUsers(page)}
+            onPerPageChange={(perPage) => loadUsers(1, perPage)}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modal de Usuario */}
       <UsuarioModal

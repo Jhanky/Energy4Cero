@@ -1,17 +1,34 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, FileText, Download, Upload, X, DollarSign, Calendar, AlertTriangle, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Download, Upload, X, DollarSign, Calendar, AlertTriangle, CheckCircle, Clock, XCircle, Loader2, Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 import invoiceService from '../../services/invoiceService';
 import supplierService from '../../services/supplierService';
 import costCenterService from '../../services/costCenterService';
 
 const VistaFacturas = () => {
+  // Estados para búsqueda y filtros avanzados
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     estado: '',
     tipoPago: '',
     proveedor: '',
     centroCosto: ''
   });
+
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   // Estados para datos
   const [facturas, setFacturas] = useState([]);
@@ -20,6 +37,9 @@ const VistaFacturas = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [costCenters, setCostCenters] = useState([]);
   const [invoiceOptions, setInvoiceOptions] = useState({});
+
+  // Estados para notificaciones
+  const [notification, setNotification] = useState(null);
 
   // Estados para formularios
   const [invoiceForm, setInvoiceForm] = useState({
@@ -47,20 +67,41 @@ const VistaFacturas = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
 
-  // Cargar datos iniciales
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Efecto para recargar datos cuando cambian los filtros o búsqueda
   useEffect(() => {
     loadInvoices();
+  }, [debouncedSearchTerm, filters, currentPage, perPage]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
     loadSuppliers();
     loadCostCenters();
     loadInvoiceOptions();
   }, []);
 
-  // Cargar facturas
-  const loadInvoices = async () => {
+  // Cargar facturas con paginación del servidor
+  const loadInvoices = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await invoiceService.getInvoices();
+
+      const params = {
+        page: currentPage,
+        per_page: perPage,
+        search: debouncedSearchTerm,
+        ...filters
+      };
+
+      const response = await invoiceService.getInvoices(params);
       if (response.success) {
         // Transformar datos del backend al formato del frontend
         const transformedInvoices = response.data.invoices.map(invoice => ({
@@ -80,7 +121,10 @@ const VistaFacturas = () => {
           estaVencida: invoice.is_overdue,
           diasHastaVencimiento: invoice.days_until_due
         }));
+
         setFacturas(transformedInvoices);
+        setTotalPages(response.data.pagination?.total_pages || 1);
+        setTotalRecords(response.data.pagination?.total || 0);
       } else {
         setError(response.message || 'Error al cargar facturas');
       }
@@ -90,7 +134,7 @@ const VistaFacturas = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, perPage, debouncedSearchTerm, filters]);
 
   // Cargar proveedores
   const loadSuppliers = async () => {
@@ -923,76 +967,83 @@ const VistaFacturas = () => {
           </button>
         </div>
 
-        {/* Filtros y Búsqueda */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Búsqueda */}
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Número, proveedor o centro de costo..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+        {/* Componentes Avanzados de Búsqueda y Filtros */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Buscar y Filtrar Facturas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <AdvancedSearchBar
+              placeholder="Buscar por número, proveedor o centro de costo..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+            />
+            <AdvancedFilters
+              filters={[
+                {
+                  key: 'estado',
+                  label: 'Estado',
+                  value: filters.estado,
+                  options: [
+                    { value: '', label: 'Todos los estados' },
+                    ...estados.map(estado => ({
+                      value: estado,
+                      label: estado.charAt(0).toUpperCase() + estado.slice(1)
+                    }))
+                  ]
+                },
+                {
+                  key: 'tipoPago',
+                  label: 'Tipo de Pago',
+                  value: filters.tipoPago,
+                  options: [
+                    { value: '', label: 'Todos los tipos' },
+                    ...tiposPago.map(tipo => ({
+                      value: tipo,
+                      label: tipo === 'total' ? 'Pago Total' : 'Pago Parcial'
+                    }))
+                  ]
+                },
+                {
+                  key: 'proveedor',
+                  label: 'Proveedor',
+                  value: filters.proveedor,
+                  options: [
+                    { value: '', label: 'Todos los proveedores' },
+                    ...proveedoresList.map(proveedor => ({
+                      value: proveedor,
+                      label: proveedor
+                    }))
+                  ]
+                },
+                {
+                  key: 'centroCosto',
+                  label: 'Centro de Costo',
+                  value: filters.centroCosto,
+                  options: [
+                    { value: '', label: 'Todos los centros' },
+                    ...centrosCostoList.map(centro => ({
+                      value: centro,
+                      label: centro
+                    }))
+                  ]
+                }
+              ]}
+              onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
+              onClear={() => setFilters({
+                estado: '',
+                tipoPago: '',
+                proveedor: '',
+                centroCosto: ''
+              })}
+            />
+            <div className="flex items-center justify-between text-sm text-slate-600">
+              <span>
+                Mostrando <span className="font-semibold">{facturas.length}</span> de <span className="font-semibold">{totalRecords}</span> facturas
+              </span>
             </div>
-
-            {/* Filtro Estado */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Estado</label>
-              <select
-                value={filters.estado}
-                onChange={(e) => setFilters(prev => ({ ...prev, estado: e.target.value }))}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Todos los estados</option>
-                {estados.map(estado => (
-                  <option key={estado} value={estado}>{estado.charAt(0).toUpperCase() + estado.slice(1)}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Filtro Tipo de Pago */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Pago</label>
-              <select
-                value={filters.tipoPago}
-                onChange={(e) => setFilters(prev => ({ ...prev, tipoPago: e.target.value }))}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Todos los tipos</option>
-                {tiposPago.map(tipo => (
-                  <option key={tipo} value={tipo}>{tipo === 'total' ? 'Pago Total' : 'Pago Parcial'}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Filtro Proveedor */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Proveedor</label>
-              <select
-                value={filters.proveedor}
-                onChange={(e) => setFilters(prev => ({ ...prev, proveedor: e.target.value }))}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Todos los proveedores</option>
-                {proveedoresList.map(proveedor => (
-                  <option key={proveedor} value={proveedor}>{proveedor}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-slate-600">
-              Mostrando <span className="font-semibold">{facturasFiltradas.length}</span> de <span className="font-semibold">{facturas.length}</span> facturas
-            </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Estados de carga y error */}
         {error && (
@@ -1022,143 +1073,152 @@ const VistaFacturas = () => {
         )}
 
         {/* Tabla de Facturas */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              <span className="ml-2 text-slate-600">Cargando facturas...</span>
-            </div>
-          ) : facturas.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="mx-auto h-12 w-12 text-slate-400" />
-              <h3 className="mt-2 text-sm font-medium text-slate-900">No hay facturas</h3>
-              <p className="mt-1 text-sm text-slate-500">Comienza registrando tu primera factura.</p>
-              <div className="mt-6">
-                <button
-                  onClick={handleCreateFactura}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Registrar Factura
-                </button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Facturas Registradas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <SkeletonTable columns={7} rows={perPage} />
+            ) : facturas.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-slate-400" />
+                <h3 className="mt-2 text-sm font-medium text-slate-900">No hay facturas</h3>
+                <p className="mt-1 text-sm text-slate-500">Comienza registrando tu primera factura.</p>
+                <div className="mt-6">
+                  <button
+                    onClick={handleCreateFactura}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Registrar Factura
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Factura
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Proveedor
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Centro de Costos
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Valor Total
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Vencimiento
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                  {facturasFiltradas.map((factura) => (
-                    <tr key={factura.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="text-sm font-medium text-slate-900">{factura.numeroFactura}</div>
-                          <div className="text-sm text-slate-500 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(factura.fechaEmision)}
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Factura</TableHead>
+                      <TableHead>Proveedor</TableHead>
+                      <TableHead>Centro de Costos</TableHead>
+                      <TableHead>Valor Total</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Vencimiento</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {facturas.map((factura) => (
+                      <TableRow key={factura.id}>
+                        <TableCell>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900">{factura.numeroFactura}</div>
+                            <div className="text-sm text-slate-500 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(factura.fechaEmision)}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-900">{factura.proveedor}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-900">{factura.centroCosto}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-slate-900">{formatCurrency(factura.valorTotal)}</div>
-                        <div className="text-sm text-slate-500">{formatCurrency(factura.montoAntesIva)} antes IVA</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {getEstadoIcon(factura.estado)}
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(factura.estado)}`}>
-                            {factura.estado.charAt(0).toUpperCase() + factura.estado.slice(1)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-900">
-                          {factura.fechaVencimiento ? formatDate(factura.fechaVencimiento) : 'No definida'}
-                        </div>
-                        {factura.estaVencida && (
-                          <div className="text-sm text-red-600 font-medium flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" />
-                            Vencida
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-slate-900">{factura.proveedor}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-slate-900">{factura.centroCosto}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm font-medium text-slate-900">{formatCurrency(factura.valorTotal)}</div>
+                          <div className="text-sm text-slate-500">{formatCurrency(factura.montoAntesIva)} antes IVA</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getEstadoIcon(factura.estado)}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(factura.estado)}`}>
+                              {factura.estado.charAt(0).toUpperCase() + factura.estado.slice(1)}
+                            </span>
                           </div>
-                        )}
-                        {factura.diasHastaVencimiento !== null && factura.diasHastaVencimiento > 0 && !factura.estaVencida && (
-                          <div className="text-sm text-orange-600">
-                            {factura.diasHastaVencimiento} días
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-slate-900">
+                            {factura.fechaVencimiento ? formatDate(factura.fechaVencimiento) : 'No definida'}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditFactura(factura)}
-                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Editar factura"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          {factura.archivo ? (
-                            <button
-                              onClick={() => handleDownloadFile(factura)}
-                              className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                              title="Descargar archivo"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleUploadFile(factura)}
-                              className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                              title="Subir archivo"
-                            >
-                              <Upload className="w-4 h-4" />
-                            </button>
+                          {factura.estaVencida && (
+                            <div className="text-sm text-red-600 font-medium flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Vencida
+                            </div>
                           )}
-                          <button
-                            onClick={() => handleDeleteFactura(factura)}
-                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar factura"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                          {factura.diasHastaVencimiento !== null && factura.diasHastaVencimiento > 0 && !factura.estaVencida && (
+                            <div className="text-sm text-orange-600">
+                              {factura.diasHastaVencimiento} días
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditFactura(factura)}
+                              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar factura"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            {factura.archivo ? (
+                              <button
+                                onClick={() => handleDownloadFile(factura)}
+                                className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                title="Descargar archivo"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleUploadFile(factura)}
+                                className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                title="Subir archivo"
+                              >
+                                <Upload className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteFactura(factura)}
+                              className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar factura"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Paginación Avanzada */}
+                <div className="mt-6">
+                  <AdvancedPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                    totalRecords={totalRecords}
+                  />
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Componente de Notificaciones */}
+        {notification && (
+          <Notification
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification(null)}
+          />
+        )}
       </div>
     </>
   );

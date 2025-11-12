@@ -51,12 +51,27 @@ class CotizacionesService {
   // Actualizar cotización
   async updateCotizacion(id, cotizacionData) {
     try {
-      return await apiService.request(`/quotations/${id}`, {
+      console.log('🔄 Servicio: Iniciando actualización de cotización', {
+        id: id,
+        dataKeys: Object.keys(cotizacionData),
+        hasUsedProducts: !!cotizacionData.used_products,
+        hasItems: !!cotizacionData.items,
+        usedProductsCount: cotizacionData.used_products ? cotizacionData.used_products.length : 0,
+        itemsCount: cotizacionData.items ? cotizacionData.items.length : 0
+      });
+
+      console.log('📤 Servicio: Enviando datos al backend:', JSON.stringify(cotizacionData, null, 2));
+
+      const response = await apiService.request(`/quotations/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cotizacionData)
       });
+
+      console.log('📥 Servicio: Respuesta del backend:', JSON.stringify(response, null, 2));
+
+      return response;
     } catch (error) {
-      
+      console.error('❌ Servicio: Error al actualizar cotización:', error);
       throw error;
     }
   }

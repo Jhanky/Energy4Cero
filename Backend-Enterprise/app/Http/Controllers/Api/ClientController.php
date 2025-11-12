@@ -30,6 +30,12 @@ class ClientController extends Controller
         try {
             $query = Client::query();
 
+            // FILTRO DE SEGURIDAD: Usuarios comerciales solo ven sus propios clientes
+            $user = auth()->user();
+            if ($user && $user->role && $user->role->slug === 'comercial') {
+                $query->where('responsible_user_id', $user->id);
+            }
+
             // Filtros
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -134,7 +140,7 @@ class ClientController extends Controller
             
             $validator = Validator::make($requestData, [
                 'name' => 'required|string|max:255',
-                'client_type' => 'required|string|in:residencial,comercial,empresa',
+                'client_type' => 'required|string|in:residencial,comercial,industrial',
                 'email' => 'required|email|unique:clients,email,NULL,client_id',
                 'phone' => 'nullable|string|max:20',
                 'nic' => 'nullable|string|max:50|unique:clients,nic,NULL,client_id',
@@ -148,7 +154,7 @@ class ClientController extends Controller
             ], [
                 'name.required' => 'El nombre es obligatorio',
                 'client_type.required' => 'El tipo de cliente es obligatorio',
-                'client_type.in' => 'El tipo de cliente debe ser residencial, comercial o empresa',
+                'client_type.in' => 'El tipo de cliente debe ser residencial, comercial o industrial',
                 'email.required' => 'El email es obligatorio',
                 'email.email' => 'El email debe tener un formato válido',
                 'email.unique' => 'Este email ya está registrado',
@@ -213,7 +219,7 @@ class ClientController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
-                'client_type' => 'sometimes|required|string|in:residencial,comercial,empresa',
+                'client_type' => 'sometimes|required|string|in:residencial,comercial,industrial',
                 'email' => [
                     'sometimes',
                     'required',
@@ -238,7 +244,7 @@ class ClientController extends Controller
             ], [
                 'name.required' => 'El nombre es obligatorio',
                 'client_type.required' => 'El tipo de cliente es obligatorio',
-                'client_type.in' => 'El tipo de cliente debe ser residencial, comercial o empresa',
+                'client_type.in' => 'El tipo de cliente debe ser residencial, comercial o industrial',
                 'email.required' => 'El email es obligatorio',
                 'email.email' => 'El email debe tener un formato válido',
                 'email.unique' => 'Este email ya está registrado',
@@ -373,6 +379,88 @@ class ClientController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener estadísticas',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Eliminar múltiples clientes en lote
+     */
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $requestData = $request->all();
+
+            // Validar que los datos sean un array
+            if (!is_array($requestData) || !$this->isArrayAList($requestData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Formato de datos incorrecto. Se esperaba un array de IDs de clientes.',
+                    'errors' => ['format' => ['Se esperaba un array de IDs de clientes']]
+                ], 422);
+            }
+
+            $validator = Validator::make(['client_ids' => $requestData], [
+                'client_ids' => 'required|array|min:1',
+                'client_ids.*' => 'required|integer|exists:clients,client_id'
+            ], [
+                'client_ids.required' => 'Los IDs de clientes son obligatorios',
+                'client_ids.array' => 'Los IDs deben ser un array',
+                'client_ids.min' => 'Debe proporcionar al menos un ID de cliente',
+                'client_ids.*.required' => 'Cada ID de cliente es obligatorio',
+                'client_ids.*.integer' => 'Los IDs deben ser números enteros',
+                'client_ids.*.exists' => 'Uno o más clientes no existen'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos de entrada inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $clientIds = $requestData;
+            $totalRequested = count($clientIds);
+
+            // Verificar si hay clientes con relaciones que podrían causar problemas
+            $clientsWithRelations = [];
+            foreach ($clientIds as $clientId) {
+                $client = Client::with(['quotations', 'projects', 'tickets'])->find($clientId);
+                if ($client) {
+                    $relationsCount = $client->quotations->count() + $client->projects->count() + $client->tickets->count();
+                    if ($relationsCount > 0) {
+                        $clientsWithRelations[] = [
+                            'id' => $client->client_id,
+                            'name' => $client->name,
+                            'relations' => [
+                                'quotations' => $client->quotations->count(),
+                                'projects' => $client->projects->count(),
+                                'tickets' => $client->tickets->count()
+                            ]
+                        ];
+                    }
+                }
+            }
+
+            // Eliminar los clientes
+            $deletedCount = Client::whereIn('client_id', $clientIds)->delete();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'deleted_count' => $deletedCount,
+                    'requested_count' => $totalRequested,
+                    'clients_with_relations' => $clientsWithRelations
+                ],
+                'message' => "Se eliminaron {$deletedCount} de {$totalRequested} clientes exitosamente"
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar clientes en lote',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -104,7 +104,14 @@ class DataService {
   }
 
   async getProjects(params = {}) {
-    return await this.service.getProjects(params);
+    // Para proyectos, siempre usar API real sin datos mock
+    try {
+      return await apiService.getProjects(params);
+    } catch (error) {
+      console.error('Error al obtener proyectos desde API:', error);
+      // No usar datos mock, devolver error
+      throw error;
+    }
   }
 
   async getProject(id) {
@@ -283,6 +290,13 @@ class DataService {
     return await this.service.deleteClient(id);
   }
 
+  async bulkDeleteClients(clientIds) {
+    if (this.useMockData) {
+      throw new Error('Eliminar clientes en grupo no disponible en modo datos de prueba');
+    }
+    return await this.service.bulkDeleteClients(clientIds);
+  }
+
   // Método para obtener permisos disponibles
   async getAvailablePermissions() {
     return await this.service.getAvailablePermissions();
@@ -296,6 +310,35 @@ class DataService {
   // Método para obtener ciudades desde API externa
   async getCitiesFromApi(departmentId) {
     return await this.service.getCitiesFromApi(departmentId);
+  }
+
+  // Métodos para mantenimientos
+  async getMaintenances(params = {}) {
+    return await this.service.getMaintenances(params);
+  }
+
+  async getMaintenance(id) {
+    return await this.service.getMaintenance(id);
+  }
+
+  async createMaintenance(maintenanceData) {
+    return await this.service.createMaintenance(maintenanceData);
+  }
+
+  async updateMaintenance(id, maintenanceData) {
+    return await this.service.updateMaintenance(id, maintenanceData);
+  }
+
+  async deleteMaintenance(id) {
+    return await this.service.deleteMaintenance(id);
+  }
+
+  async updateMaintenanceStatus(id, status) {
+    return await this.service.updateMaintenanceStatus(id, status);
+  }
+
+  async getMaintenanceStatistics() {
+    return await this.service.getMaintenanceStatistics();
   }
 
   // Método para obtener información del servicio actual

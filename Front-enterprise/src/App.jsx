@@ -10,13 +10,18 @@ import VistaFinanciera from './features/contable/VistaFinanciera';
 import { VistaProveedores, VistaCentrosCostos, VistaFacturas } from './pages/contable';
 import VistaServicioTecnico from './features/soporte/ui/VistaServicioTecnico';
 import VistaUsuarios from './pages/administrativa/VistaUsuarios';
-import VistaRoles from './pages/administrativa/VistaRoles';
+import VistaRoles from './features/administrativa/VistaRoles';
 import VistaConfiguracion from './pages/administrativa/VistaConfiguracion';
 import VistaClientes from './pages/comercial/VistaClientes';
 import VistaCotizaciones from './pages/comercial/VistaCotizaciones';
 import VistaDocumentos from './features/administrativa/VistaDocumentos';
 import SuministrosView from './pages/comercial/SuministrosView';
 import DetalleCotizacion from './features/comercial/cotizaciones/DetalleCotizacion';
+import VistaBodegas from './pages/inventario/VistaBodegas';
+import VistaHerramientas from './pages/inventario/VistaHerramientas';
+import VistaMateriales from './pages/inventario/VistaMateriales';
+import VistaMantenimiento from './pages/soporte/VistaMantenimiento';
+import ChatIA from './pages/asistente/ChatIA';
 import ComingSoon from './widgets/ComingSoon';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -26,7 +31,7 @@ import HomeComercial from './pages/comercial/HomeComercial';
 import HomeProyectos from './pages/proyectos/HomeProyectos';
 import HomeContable from './pages/contable/HomeContable';
 import HomeSoporte from './features/soporte/ui/HomeSoporte';
-import ListaTickets from './views/soporte/ui/ListaTickets';
+// import ListaTickets from './views/soporte/ui/ListaTickets'; // TODO: Componente no encontrado, pendiente de implementar
 
 
 // Página de tareas
@@ -271,34 +276,68 @@ function App() {
             }
           />
           
-          {/* ========== SOPORTE ========== */}
-          <Route 
-            path="servicio" 
+          {/* ========== INVENTARIO ========== */}
+          <Route
+            path="bodegas"
+            element={
+              <ProtectedRoute permission="inventory.read">
+                <VistaBodegas />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="herramientas"
+            element={
+              <ProtectedRoute permission="inventory.read">
+                <VistaHerramientas />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="materiales"
+            element={
+              <ProtectedRoute permission="inventory.read">
+                <VistaMateriales />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ========== GESTIÓN TÉCNICA ========== */}
+          <Route
+            path="servicio"
             element={
               <ProtectedRoute permission="support.read">
                 <VistaServicioTecnico />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="mantenimiento" 
+          <Route
+            path="mantenimiento"
             element={
               <ProtectedRoute permission="support.read">
-                <ComingSoon pageName="Mantenimiento" />
+                <VistaMantenimiento />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route
             path="tickets"
             element={
               <ProtectedRoute permission="support.read">
-                <ListaTickets />
+                <ComingSoon pageName="Lista de Tickets" />
               </ProtectedRoute>
             }
           />
-          
 
-          
+          {/* ========== ASISTENTE IA ========== */}
+          <Route
+            path="chat-ia"
+            element={
+              <ProtectedRoute>
+                <ChatIA />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Ruta no encontrada - redirigir basado en permisos */}
           <Route 
             path="*" 

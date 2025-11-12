@@ -1,42 +1,60 @@
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
   MapPin,
   Phone,
   Mail,
   Building,
   Home,
-  Calendar,
-  Filter,
   Loader2
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import dataService from '../../services/dataService';
-
 import { useAuth } from '../../contexts/AuthContext';
 import ClienteModal from './ClienteModal';
 import ClienteDeleteModal from './ClienteDeleteModal';
-import { Notification } from '../../shared/ui';
-import Pagination from '../../shared/ui/Pagination';
+import ClienteBulkDeleteModal from './ClienteBulkDeleteModal';
+import {
+  Notification,
+  AdvancedSearchBar,
+  AdvancedFilters,
+  AdvancedPagination,
+  SkeletonTable
+} from '../../shared/ui';
 
 const VistaClientes = () => {
   const { user: loggedInUser } = useAuth();
+
+  // Estados para datos del backend
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0
+  });
 
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
-  const [totalClients, setTotalClients] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    client_type: '',
+    status: ''
+  });
+
+  // Estados de paginación
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
 
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
@@ -66,6 +84,11 @@ const VistaClientes = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Estados para selección múltiple y eliminación en grupo
+  const [selectedClients, setSelectedClients] = useState([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
   // Estados para notificaciones
   const [notification, setNotification] = useState(null);
 
@@ -79,42 +102,33 @@ const VistaClientes = () => {
     }, 3000);
   };
 
-  const loadData = async () => {
+  // Función para cargar clientes con paginación
+  const loadClientes = async (page = 1, perPage = pagination.per_page) => {
     try {
       setLoading(true);
-      setError('');
-      
       const params = {
-        page: currentPage,
+        search: debouncedSearchTerm,
+        page,
         per_page: perPage,
+        ...filters
       };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter) params.is_active = statusFilter === 'active';
-      if (cityFilter) params.city = cityFilter;
-      if (typeFilter) params.client_type = typeFilter;
 
-      const [clientsResponse, usersResponse] = await Promise.all([
-        dataService.getClients(params),
-        dataService.getUsers()
-      ]);
+      const response = await dataService.getClients(params);
 
-      if (clientsResponse && clientsResponse.success) {
+      if (response.success) {
         let clientesData = [];
-        let total = 0;
 
-        if (clientsResponse.data && clientsResponse.data.clients && Array.isArray(clientsResponse.data.clients)) {
-          clientesData = clientsResponse.data.clients;
-          total = clientsResponse.data.pagination.total;
-        } else if (clientsResponse.data && Array.isArray(clientsResponse.data)) {
-          clientesData = clientsResponse.data;
-          total = clientesData.length;
+        if (response.data && response.data.clients && Array.isArray(response.data.clients)) {
+          clientesData = response.data.clients;
+        } else if (response.data && Array.isArray(response.data)) {
+          clientesData = response.data;
         }
-        
+
         // Formatear clientes combinando con información del responsable
         const formattedClientes = clientesData.map(cliente => {
           // Usar directamente el responsable que viene en la respuesta del cliente
           const responsableUser = cliente.responsible_user || null;
-          
+
           // Combinar información de ubicación (departamento y ciudad)
           const location = {};
           if (cliente.department_id) {
@@ -123,14 +137,14 @@ const VistaClientes = () => {
           } else {
             location.department = '-';
           }
-          
+
           if (cliente.city_id) {
             // Si el cliente ya tiene información del nombre de la ciudad, usarla
             location.city = cliente.city?.name || cliente.city_id;
           } else {
             location.city = '-';
           }
-          
+
           return {
             ...cliente,
             status: cliente.is_active ? 'active' : 'inactive',
@@ -139,43 +153,57 @@ const VistaClientes = () => {
             location: location
           };
         });
-        
+
         setClientes(formattedClientes);
-        setTotalClients(total);
+        setStats(response.data.stats || {});
+        setPagination(response.data.pagination || {
+          current_page: 1,
+          per_page: 15,
+          total: 0,
+          last_page: 1,
+          from: 0,
+          to: 0
+        });
       } else {
-        setError(clientsResponse?.message || 'Error al cargar clientes');
+        showNotification('error', 'Error al cargar clientes: ' + response.message);
       }
-
-      if (usersResponse && usersResponse.success) {
-        setUsers(usersResponse.data.data || usersResponse.data);
-      } else {
-        
-      }
-
-    } catch (err) {
-      setError(err.message || 'Error al cargar datos');
-      showNotification('error', err.message || 'Error al cargar datos');
+    } catch (error) {
+      showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [searchTerm, statusFilter, cityFilter, typeFilter, currentPage, perPage]);
-
-  // Calcular estadísticas de clientes
-  const stats = {
-    total: totalClients,
-    active: clientes.filter(cliente => cliente.is_active).length, // This will only be for the current page
-    inactive: clientes.filter(cliente => !cliente.is_active).length, // This will only be for the current page
-    residential: clientes.filter(cliente => cliente.client_type === 'residencial').length, // This will only be for the current page
-    commercial: clientes.filter(cliente => cliente.client_type === 'comercial').length, // This will only be for the current page
-    industrial: clientes.filter(cliente => cliente.client_type === 'industrial').length, // This will only be for the current page
+  // Cargar usuarios disponibles
+  const loadUsers = async () => {
+    try {
+      const response = await dataService.getUsers();
+      if (response.success) {
+        setUsers(response.data.data || response.data);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
   };
 
-  // Filtrar clientes (ya están filtrados por la API, pero mantenemos por si acaso)
-  const clientesFiltrados = clientes;
+  const loadData = async () => {
+    await Promise.all([loadClientes(), loadUsers()]);
+  };
+
+  // Efecto para debounce de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar datos al montar el componente y cuando cambien los filtros o búsqueda
+  useEffect(() => {
+    loadClientes();
+  }, [debouncedSearchTerm, filters]);
+
+
 
   const getTypeIcon = (type) => {
     switch (type) {
@@ -398,11 +426,11 @@ const VistaClientes = () => {
 
   const confirmDelete = async () => {
     if (!clientToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       const response = await dataService.deleteClient(clientToDelete.client_id);
-      
+
       if (response && response.success) {
         showNotification('success', 'Cliente eliminado exitosamente');
         // Cerrar el modal inmediatamente después de éxito
@@ -413,10 +441,65 @@ const VistaClientes = () => {
         throw new Error(response?.message || response?.error || 'Error al eliminar el cliente');
       }
     } catch (error) {
-      
+
       showNotification('error', error.message || 'Error al eliminar el cliente');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Funciones para selección múltiple y eliminación en grupo
+  const handleSelectClient = (clientId) => {
+    setSelectedClients(prev =>
+      prev.includes(clientId)
+        ? prev.filter(id => id !== clientId)
+        : [...prev, clientId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedClients.length === clientes.length) {
+      setSelectedClients([]);
+    } else {
+      setSelectedClients(clientes.map(cliente => cliente.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    const clientsToDelete = clientes.filter(cliente =>
+      selectedClients.includes(cliente.id)
+    );
+    setSelectedClients(clientsToDelete);
+    setShowBulkDeleteModal(true);
+  };
+
+  const closeBulkDeleteModal = () => {
+    setShowBulkDeleteModal(false);
+    setSelectedClients([]);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedClients.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const clientIds = selectedClients.map(client => client.id);
+      const response = await dataService.bulkDeleteClients(clientIds);
+
+      if (response && response.success) {
+        const deletedCount = response.data?.deleted_count || 0;
+        const requestedCount = response.data?.requested_count || clientIds.length;
+        showNotification('success', `Se eliminaron ${deletedCount} de ${requestedCount} clientes exitosamente`);
+        setShowBulkDeleteModal(false);
+        setSelectedClients([]);
+        loadData(); // Recargar la lista de clientes
+      } else {
+        throw new Error(response?.message || response?.error || 'Error al eliminar clientes en grupo');
+      }
+    } catch (error) {
+      showNotification('error', error.message || 'Error al eliminar clientes en grupo');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -429,7 +512,17 @@ const VistaClientes = () => {
           <p className="text-slate-600 mt-1">Administra la base de datos de clientes</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          {selectedClients.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center gap-2"
+              disabled={isBulkDeleting}
+            >
+              <Trash2 className="w-5 h-5" />
+              Eliminar ({selectedClients.length})
+            </button>
+          )}
+          <button
             onClick={handleCreate}
             className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center gap-2"
             disabled={isSubmitting}
@@ -490,7 +583,7 @@ const VistaClientes = () => {
             <div>
               <p className="text-sm font-medium text-slate-600">Residenciales</p>
               <p className="text-2xl font-bold text-purple-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.residential}
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (stats.residential || 0)}
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -498,13 +591,13 @@ const VistaClientes = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Comerciales</p>
               <p className="text-2xl font-bold text-orange-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.commercial}
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (stats.commercial || 0)}
               </p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -514,203 +607,211 @@ const VistaClientes = () => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Buscar clientes..."
+      {/* Filtros y búsqueda */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Clientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <AdvancedSearchBar
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              onChange={setSearchTerm}
+              placeholder="Buscar clientes..."
+              loading={loading && searchTerm.length > 0}
+              className="flex-1 min-w-[200px]"
+            />
+            <AdvancedFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              filterOptions={[
+                {
+                  key: 'client_type',
+                  label: 'Tipo',
+                  options: [
+                    { value: 'residencial', label: 'Residencial' },
+                    { value: 'comercial', label: 'Comercial' },
+                    { value: 'industrial', label: 'Industrial' }
+                  ]
+                },
+                {
+                  key: 'status',
+                  label: 'Estado',
+                  options: [
+                    { value: 'active', label: 'Activos' },
+                    { value: 'inactive', label: 'Inactivos' }
+                  ]
+                }
+              ]}
             />
           </div>
-          
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los tipos</option>
-            <option value="residencial">Residencial</option>
-            <option value="comercial">Comercial</option>
-            <option value="industrial">Industrial</option>
-          </select>
-          
 
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Tabla de Clientes */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Clientes ({loading ? '...' : totalClients})
-          </h3>
-        </div>
-        
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-            <span className="ml-2 text-slate-600">Cargando clientes...</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">NIC</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Cliente</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Tipo</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Contacto</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Ubicación</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Responsable</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Consumo Mensual</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Estado</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {clientesFiltrados.map((cliente) => {
-                  const TypeIcon = getTypeIcon(cliente.client_type);
-                  return (
-                    <tr key={cliente.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium text-slate-900">
-                            {cliente.nic || '-'}
+          {/* Tabla */}
+          <div className="rounded-md border transition-opacity duration-300">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <input
+                      type="checkbox"
+                      checked={selectedClients.length === clientes.length && clientes.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-slate-300 text-green-600 focus:ring-green-500"
+                    />
+                  </TableHead>
+                  <TableHead>NIC</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Ubicación</TableHead>
+                  <TableHead>Responsable</TableHead>
+                  <TableHead>Consumo Mensual</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                {loading ? (
+                  <SkeletonTable columns={10} rows={pagination.per_page || 15} asRows={true} />
+                ) : clientes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                      No se encontraron clientes
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  clientes.map((cliente) => {
+                    const TypeIcon = getTypeIcon(cliente.client_type);
+                    return (
+                      <TableRow key={cliente.id} className="transition-all duration-200 hover:bg-gray-50">
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedClients.includes(cliente.id)}
+                            onChange={() => handleSelectClient(cliente.id)}
+                            className="rounded border-slate-300 text-green-600 focus:ring-green-500"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-slate-900">
+                              {cliente.nic || '-'}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              ID: {cliente.id}
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-500">
-                            ID: {cliente.id}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                              {TypeIcon && <TypeIcon className="w-5 h-5 text-white" />}
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900">{cliente.name}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                            {TypeIcon && <TypeIcon className="w-5 h-5 text-white" />}
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900">{cliente.name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(cliente.client_type)}`}>
-                          {getTypeLabel(cliente.client_type)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <Mail className="w-4 h-4" />
-                            {cliente.email}
-                          </div>
-                          {cliente.phone && (
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(cliente.client_type)}`}>
+                            {getTypeLabel(cliente.client_type)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm text-slate-600">
-                              <Phone className="w-4 h-4" />
-                              {cliente.phone}
+                              <Mail className="w-4 h-4" />
+                              {cliente.email}
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <MapPin className="w-4 h-4" />
-                            {cliente.location?.city || '-'}
+                            {cliente.phone && (
+                              <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <Phone className="w-4 h-4" />
+                                {cliente.phone}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-sm text-slate-500">
-                            {cliente.location?.department || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <MapPin className="w-4 h-4" />
+                              {cliente.location?.city || '-'}
+                            </div>
+                            <div className="text-sm text-slate-500">
+                              {cliente.location?.department || '-'}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium text-slate-900">
-                            {cliente.responsibleUser?.name || 'No asignado'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-slate-900">
+                              {cliente.responsibleUser?.name || 'No asignado'}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {cliente.responsibleUser?.email || '-'}
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-500">
-                            {cliente.responsibleUser?.email || '-'}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            <span className="font-medium text-slate-900">
-                              {cliente.monthly_consumption ? `${cliente.monthly_consumption} kW/h` : '-'}
-                            </span>
-                          </div>
-                          {cliente.location && (
-                            <div className="flex items-center gap-1 text-xs text-slate-500">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-sm">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                               </svg>
-                              <span>{cliente.location.radiation} kWh/día, {cliente.location.peak_sun_hours} HS</span>
+                              <span className="font-medium text-slate-900">
+                                {cliente.monthly_consumption ? `${cliente.monthly_consumption} kW/h` : '-'}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cliente.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {cliente.status === 'active' ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleEdit(cliente)}
-                            className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Editar cliente"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(cliente)}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar cliente"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            {cliente.location && (
+                              <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <span>{cliente.location.radiation} kWh/día, {cliente.location.peak_sun_hours} HS</span>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cliente.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {cliente.is_active ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => handleEdit(cliente)}
+                              className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Editar cliente"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(cliente)}
+                              className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar cliente"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
           </div>
-        )}
-        
-        {!loading && clientesFiltrados.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-500">No se encontraron clientes</p>
-          </div>
-        )}
 
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalClients / perPage)}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+          {/* Paginación */}
+          <AdvancedPagination
+            pagination={pagination}
+            onPageChange={(page) => loadClientes(page)}
+            onPerPageChange={(perPage) => loadClientes(1, perPage)}
+            loading={loading}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modal de Cliente */}
       <ClienteModal
@@ -733,8 +834,14 @@ const VistaClientes = () => {
         isDeleting={isDeleting}
       />
 
-      {/* Modal de Importación de Clientes */}
-
+      {/* Modal de Eliminación en Grupo */}
+      <ClienteBulkDeleteModal
+        show={showBulkDeleteModal}
+        selectedClients={selectedClients}
+        onConfirm={confirmBulkDelete}
+        onCancel={closeBulkDeleteModal}
+        isDeleting={isBulkDeleting}
+      />
 
       {/* Notificación Toast */}
       <Notification

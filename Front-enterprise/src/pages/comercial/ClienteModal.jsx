@@ -17,6 +17,22 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
+  // Asegurar que formData tenga valores por defecto si es undefined
+  const safeFormData = formData || {
+    name: '',
+    client_type: 'residencial',
+    email: '',
+    phone: '',
+    nic: '',
+    responsible_user_id: '',
+    department_id: '',
+    city_id: '',
+    address: '',
+    monthly_consumption: '',
+    notes: '',
+    is_active: true
+  };
+
   useEffect(() => {
     if (show) {
       const fetchDepartments = async () => {
@@ -40,11 +56,11 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
   }, [show]);
 
   useEffect(() => {
-    if (formData.department_id) {
+    if (safeFormData.department_id) {
       const fetchCities = async () => {
         setLoadingCities(true);
         try {
-          const response = await getCitiesByDepartment(formData.department_id);
+          const response = await getCitiesByDepartment(safeFormData.department_id);
           if (response.success) {
             const uniqueCities = Array.from(new Map(response.data.map(city => [city.city_id, city])).values());
             setCities(uniqueCities);
@@ -61,7 +77,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
     } else {
       setCities([]);
     }
-  }, [formData.department_id]);
+  }, [safeFormData.department_id]);
 
   if (!show) {
     return null;
@@ -96,7 +112,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
+                  value={safeFormData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="Ej: Juan Pérez"
@@ -108,7 +124,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   Tipo de Cliente
                 </label>
                 <select
-                  value={formData.client_type}
+                  value={safeFormData.client_type}
                   onChange={(e) => handleInputChange('client_type', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
@@ -126,7 +142,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
                     type="email"
-                    value={formData.email}
+                    value={safeFormData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     placeholder="juan.perez@example.com"
@@ -142,7 +158,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
                     type="tel"
-                    value={formData.phone}
+                    value={safeFormData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     placeholder="300 123 4567"
@@ -155,7 +171,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   Departamento
                 </label>
                 <select
-                  value={formData.department_id}
+                  value={safeFormData.department_id}
                   onChange={(e) => handleInputChange('department_id', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   disabled={loadingDepartments}
@@ -172,10 +188,10 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   Ciudad
                 </label>
                 <select
-                  value={formData.city_id}
+                  value={safeFormData.city_id}
                   onChange={(e) => handleInputChange('city_id', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  disabled={!formData.department_id || loadingCities}
+                  disabled={!safeFormData.department_id || loadingCities}
                 >
                   <option value="">{loadingCities ? 'Cargando...' : 'Seleccione una ciudad'}</option>
                   {cities.map(city => (
@@ -190,7 +206,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                 </label>
                 <input
                   type="text"
-                  value={formData.address}
+                  value={safeFormData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="Calle 123 # 45 - 67"
@@ -203,7 +219,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                 </label>
                 <input
                   type="text"
-                  value={formData.nic}
+                  value={safeFormData.nic}
                   onChange={(e) => handleInputChange('nic', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="1234567"
@@ -216,7 +232,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                 </label>
                 <input
                   type="number"
-                  value={formData.monthly_consumption}
+                  value={safeFormData.monthly_consumption}
                   onChange={(e) => handleInputChange('monthly_consumption', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="500"
@@ -233,7 +249,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   Notas
                 </label>
                 <textarea
-                  value={formData.notes}
+                  value={safeFormData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={3}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -245,7 +261,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
-                    checked={formData.is_active}
+                    checked={safeFormData.is_active}
                     onChange={(e) => handleInputChange('is_active', e.target.checked)}
                     className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
                   />

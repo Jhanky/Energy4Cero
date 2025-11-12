@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
             CitySeeder::class,
             RoleTruncateSeeder::class,
             RoleSeeder::class,
-            ProjectPermissionsSeeder::class,
             UserTruncateSeeder::class,
             UserSeeder::class,
             ClientSeeder::class,
@@ -38,6 +37,7 @@ class DatabaseSeeder extends Seeder
             TicketPrioritiesSeeder::class,
             TicketStatesSeeder::class,
             TicketsSeeder::class,
+            ToolStateSeeder::class,
         ]);
 
         // Habilitar la verificación de claves foráneas

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  FileText, 
-  User, 
-  Building, 
-  Calendar, 
+import {
+  ArrowLeft,
+  FileText,
+  User,
+  Building,
+  Calendar,
   DollarSign,
   Download,
   Send,
@@ -124,6 +124,7 @@ const DetalleCotizacion = () => {
         const descripcionFinal = `${product.brand || ''} ${product.model || ''}`.trim() || product.description || getProductName(product.product_type, product.product_id) || 'Producto sin descripción';
         console.log('📝 Descripción generada:', descripcionFinal);
         return {
+          used_product_id: product.used_product_id, // Agregar el ID del producto utilizado
           tipo: formatProductType(product.product_type),
           descripcion: descripcionFinal,
           cantidad: parseInt(product.quantity) || 0,
@@ -135,6 +136,7 @@ const DetalleCotizacion = () => {
         };
       }) : [],
       items_complementarios: Array.isArray(apiData.quotation_items) ? apiData.quotation_items.map(item => ({
+        item_id: item.item_id, // Agregar el ID del item adicional
         descripcion: item.description || 'Item sin descripción',
         cantidad: parseFloat(item.quantity) || 0,
         unidad: item.unit || 'unidad',
@@ -384,34 +386,164 @@ const DetalleCotizacion = () => {
     setEditingType(null);
   };
 
+  // Función para transformar datos del frontend al formato del backend
+  const transformCotizacionForBackend = (frontendData) => {
+    console.log('💾 Iniciando proceso de guardado');
+    console.log('📊 Cotización con cambios aplicados:', frontendData);
+
+    // Calcular resumen de costos para obtener los valores calculados
+    const resumenCostos = getResumenCostos();
+    console.log('🧮 Resumen de costos calculado:', resumenCostos);
+
+    // Transformar productos utilizados
+    const usedProducts = frontendData.suministros.map((item, index) => {
+      console.log(`🔄 Transformando producto ${index}:`, item);
+
+      // Determinar el tipo de producto basado en la descripción del frontend
+      let productType = 'panel';
+      let productId = null;
+
+      if (item.tipo === 'Panel Solar') {
+        productType = 'panel';
+        // En una implementación real, esto debería buscar el ID del producto
+        // Por ahora usamos un ID genérico
+        productId = 1;
+      } else if (item.tipo === 'Inversor') {
+        productType = 'inverter';
+        productId = 1;
+      } else if (item.tipo === 'Batería') {
+        productType = 'battery';
+        productId = 1;
+      }
+
+      // Crear el objeto base
+      const productData = {
+        product_type: productType,
+        product_id: productId,
+        brand: item.descripcion.split(' ')[0] || 'Genérico',
+        model: item.descripcion.split(' ').slice(1).join(' ') || 'Modelo',
+        quantity: parseInt(item.cantidad) || 0,
+        unit_price: parseFloat(item.precio_unitario) || 0,
+        profit_percentage: parseFloat(item.porcentaje_utilidad) / 100 || 0, // Convertir de porcentaje a decimal
+        partial_value: parseFloat(item.valor_parcial) || 0,
+        profit: parseFloat(item.utilidad) || 0,
+        total_value: parseFloat(item.total) || 0
+      };
+
+      // Solo incluir used_product_id si existe y es válido (para actualizaciones)
+      if (item.used_product_id && item.used_product_id !== null && item.used_product_id !== undefined) {
+        productData.used_product_id = item.used_product_id;
+        console.log(`📝 Producto ${index} es una actualización (ID: ${item.used_product_id})`);
+      } else {
+        console.log(`📝 Producto ${index} es nuevo (sin ID)`);
+      }
+
+      return productData;
+    });
+
+    // Transformar items complementarios
+    const items = frontendData.items_complementarios.map((item, index) => {
+      console.log(`🔄 Transformando item complementario ${index}:`, item);
+
+      // Crear el objeto base
+      const itemData = {
+        description: item.descripcion || '',
+        item_type: item.descripcion || 'Complementario',
+        quantity: parseFloat(item.cantidad) || 0,
+        unit: item.unidad || 'unidad',
+        unit_price: parseFloat(item.precio_unitario) || 0,
+        profit_percentage: parseFloat(item.porcentaje_utilidad) / 100 || 0, // Convertir de porcentaje a decimal
+        partial_value: parseFloat(item.valor_parcial) || 0,
+        profit: parseFloat(item.utilidad) || 0,
+        total_value: parseFloat(item.total) || 0
+      };
+
+      // Solo incluir item_id si existe y es válido (para actualizaciones)
+      if (item.item_id && item.item_id !== null && item.item_id !== undefined) {
+        itemData.item_id = item.item_id;
+        console.log(`📝 Item complementario ${index} es una actualización (ID: ${item.item_id})`);
+      } else {
+        console.log(`📝 Item complementario ${index} es nuevo (sin ID)`);
+      }
+
+      return itemData;
+    });
+
+    // Preparar datos para el backend
+    const backendData = {
+      client_id: frontendData.cliente.id,
+      user_id: frontendData.id, // Usar el ID de la cotización como user_id por ahora
+      project_name: frontendData.proyecto,
+      system_type: frontendData.tipo_sistema,
+      power_kwp: parseFloat(frontendData.potencia_total) || 0,
+      panel_count: parseInt(frontendData.suministros.find(s => s.tipo === 'Panel Solar')?.cantidad || 0),
+      requires_financing: frontendData.requires_financing ? 1 : 0,
+      profit_percentage: parseFloat(frontendData.porcentaje_utilidad) / 100 || 0,
+      iva_profit_percentage: 0.19, // IVA 19%
+      commercial_management_percentage: parseFloat(frontendData.porcentaje_gestion_comercial) / 100 || 0.03,
+      administration_percentage: parseFloat(frontendData.porcentaje_administracion) / 100 || 0.08,
+      contingency_percentage: parseFloat(frontendData.porcentaje_imprevistos) / 100 || 0.02,
+      withholding_percentage: parseFloat(frontendData.porcentaje_retencion) / 100 || 0.035,
+      subtotal: resumenCostos?.subtotal || 0,
+      profit: resumenCostos?.utilidad || 0,
+      profit_iva: resumenCostos?.ivaUtilidad || 0,
+      commercial_management: resumenCostos?.gestionComercial || 0,
+      administration: resumenCostos?.administracion || 0,
+      contingency: resumenCostos?.imprevistos || 0,
+      withholdings: resumenCostos?.retenciones || 0,
+      total_value: resumenCostos?.cotizacionFinal || 0,
+      subtotal2: resumenCostos?.subtotal2 || 0,
+      subtotal3: resumenCostos?.subtotal3 || 0,
+      status_id: 1, // Mantener como borrador por defecto
+      used_products: usedProducts,
+      items: items
+    };
+
+    console.log('📤 Enviando datos transformados al backend:', JSON.stringify(backendData, null, 2));
+
+    return backendData;
+  };
+
   // Función para guardar todos los cambios
   const handleSaveAllChanges = async () => {
     try {
-      // Simular guardado en API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Actualizar la cotización original con los cambios actuales
-      setCotizacionOriginal(JSON.parse(JSON.stringify(cotizacion)));
-      setHasUnsavedChanges(false);
-      
-      // Mostrar notificación de éxito
-      setNotification({
-        type: 'success',
-        message: 'Cotización actualizada exitosamente'
-      });
-      
-      // Ocultar notificación después de 3 segundos
-      setTimeout(() => {
-        setNotification(null);
-      }, 3000);
-      
+      console.log('🔄 Llamando a cotizacionesService.updateCotizacion');
+
+      // Transformar los datos al formato que espera el backend
+      const backendData = transformCotizacionForBackend(cotizacion);
+
+      // Llamar al servicio para actualizar la cotización
+      const response = await cotizacionesService.updateCotizacion(cotizacion.id, backendData);
+
+      console.log('📥 Respuesta completa del backend:', response);
+
+      if (response.success) {
+        // Actualizar la cotización original con los cambios actuales
+        setCotizacionOriginal(JSON.parse(JSON.stringify(cotizacion)));
+        setHasUnsavedChanges(false);
+
+        // Mostrar notificación de éxito
+        setNotification({
+          type: 'success',
+          message: 'Cotización actualizada exitosamente'
+        });
+
+        // Ocultar notificación después de 3 segundos
+        setTimeout(() => {
+          setNotification(null);
+        }, 3000);
+      } else {
+        throw new Error(response.message || 'Error desconocido del backend');
+      }
+
     } catch (error) {
-      
+      console.error('❌ Error al guardar los cambios:', error);
+
       setNotification({
         type: 'error',
-        message: 'Error al guardar los cambios'
+        message: error.message || 'Error al guardar los cambios'
       });
-      
+
       // Ocultar notificación de error después de 5 segundos
       setTimeout(() => {
         setNotification(null);

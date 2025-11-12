@@ -36,6 +36,12 @@ class QuotationController extends Controller
                 'user:id,name,email'
             ]);
 
+            // FILTRO DE SEGURIDAD: Usuarios comerciales solo ven sus propias cotizaciones
+            $user = auth()->user();
+            if ($user && $user->role && $user->role->slug === 'comercial') {
+                $query->where('user_id', $user->id);
+            }
+
             // Filtros
             if ($request->has('status_id')) {
                 $query->where('status_id', $request->status_id);
@@ -430,24 +436,42 @@ class QuotationController extends Controller
 
     /**
      * 4. Editar Cotización
-     * 
+     *
      * IMPORTANTE: Cuando el frontend edita productos o items, debe enviar TODOS los valores recalculados
-     * porque los cambios afectan subtotales, ganancias, IVA, gestión comercial, administración, 
+     * porque los cambios afectan subtotales, ganancias, IVA, gestión comercial, administración,
      * contingencia, retenciones y total final.
-     * 
+     *
      * El frontend debe recalcular y enviar: subtotal, profit, profit_iva, commercial_management,
      * administration, contingency, withholdings, total_value, subtotal2, subtotal3
      */
     public function update(Request $request, $id): JsonResponse
     {
+        \Log::info('🎯 MÉTODO UPDATE LLAMADO', [
+            'quotation_id' => $id,
+            'method' => $request->method(),
+            'headers' => $request->headers->all(),
+            'all_data' => $request->all()
+        ]);
+
         try {
+            \Log::info('🔄 Iniciando actualización de cotización', [
+                'quotation_id' => $id,
+                'request_data' => $request->all()
+            ]);
+
             $quotation = Quotation::find($id);
             if (!$quotation) {
+                \Log::error('❌ Cotización no encontrada', ['quotation_id' => $id]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Cotización no encontrada'
                 ], 404);
             }
+
+            \Log::info('✅ Cotización encontrada', [
+                'quotation_id' => $quotation->quotation_id,
+                'current_data' => $quotation->toArray()
+            ]);
 
             $validator = Validator::make($request->all(), [
                 'client_id' => 'sometimes|exists:clients,client_id',
@@ -496,6 +520,11 @@ class QuotationController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::error('❌ Error de validación en actualización', [
+                    'quotation_id' => $id,
+                    'errors' => $validator->errors(),
+                    'request_data' => $request->all()
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación',
@@ -503,8 +532,13 @@ class QuotationController extends Controller
                 ], 422);
             }
 
+            \Log::info('✅ Validación exitosa, procediendo con actualización', [
+                'quotation_id' => $id,
+                'fields_to_update' => array_keys($request->all())
+            ]);
+
             // Actualizar solo los campos enviados
-            $quotation->update($request->only([
+            $updateData = $request->only([
                 'client_id',
                 'user_id',
                 'project_name',
@@ -529,15 +563,38 @@ class QuotationController extends Controller
                 'subtotal2',
                 'subtotal3',
                 'status_id',
-            ]));
+            ]);
+
+            \Log::info('📝 Datos a actualizar en cotización', [
+                'quotation_id' => $id,
+                'update_data' => $updateData
+            ]);
+
+            $quotation->update($updateData);
+
+            \Log::info('✅ Cotización actualizada exitosamente', [
+                'quotation_id' => $id,
+                'updated_at' => $quotation->updated_at
+            ]);
 
             // Actualizar productos utilizados si se enviaron
             if ($request->has('used_products')) {
-                foreach ($request->used_products as $productData) {
+                \Log::info('🔄 Actualizando productos utilizados', [
+                    'quotation_id' => $id,
+                    'products_count' => count($request->used_products)
+                ]);
+
+                foreach ($request->used_products as $index => $productData) {
+                    \Log::info('📦 Procesando producto', [
+                        'index' => $index,
+                        'used_product_id' => $productData['used_product_id'] ?? 'no-id',
+                        'product_data' => $productData
+                    ]);
+
                     if (isset($productData['used_product_id'])) {
                         $usedProduct = UsedProduct::find($productData['used_product_id']);
                         if ($usedProduct && $usedProduct->quotation_id == $quotation->quotation_id) {
-                            $usedProduct->update([
+                            $updateProductData = [
                                 'quantity' => $productData['quantity'] ?? $usedProduct->quantity,
                                 'unit_price' => $productData['unit_price'] ?? $usedProduct->unit_price,
                                 'profit_percentage' => $productData['profit_percentage'] ?? $usedProduct->profit_percentage,
@@ -546,19 +603,45 @@ class QuotationController extends Controller
                                 'total_value' => $productData['total_value'] ?? $usedProduct->total_value,
                                 'brand' => $productData['brand'] ?? $usedProduct->brand,
                                 'model' => $productData['model'] ?? $usedProduct->model,
+                            ];
+
+                            \Log::info('🔄 Actualizando producto usado', [
+                                'used_product_id' => $productData['used_product_id'],
+                                'update_data' => $updateProductData
+                            ]);
+
+                            $usedProduct->update($updateProductData);
+                        } else {
+                            \Log::warning('⚠️ Producto usado no encontrado o no pertenece a la cotización', [
+                                'used_product_id' => $productData['used_product_id'],
+                                'quotation_id' => $quotation->quotation_id,
+                                'found_product_quotation_id' => $usedProduct ? $usedProduct->quotation_id : 'null'
                             ]);
                         }
+                    } else {
+                        \Log::warning('⚠️ Producto sin used_product_id', ['product_data' => $productData]);
                     }
                 }
             }
 
             // Actualizar items si se enviaron
             if ($request->has('items')) {
-                foreach ($request->items as $itemData) {
+                \Log::info('🔄 Actualizando items adicionales', [
+                    'quotation_id' => $id,
+                    'items_count' => count($request->items)
+                ]);
+
+                foreach ($request->items as $index => $itemData) {
+                    \Log::info('📦 Procesando item', [
+                        'index' => $index,
+                        'item_id' => $itemData['item_id'] ?? 'no-id',
+                        'item_data' => $itemData
+                    ]);
+
                     if (isset($itemData['item_id'])) {
                         $item = QuotationAdditionalItem::find($itemData['item_id']);
                         if ($item && $item->quotation_id == $quotation->quotation_id) {
-                            $item->update([
+                            $updateItemData = [
                                 'description' => $itemData['description'] ?? $item->description,
                                 'item_type' => $itemData['item_type'] ?? $item->item_type,
                                 'quantity' => $itemData['quantity'] ?? $item->quantity,
@@ -568,8 +651,23 @@ class QuotationController extends Controller
                                 'partial_value' => $itemData['partial_value'] ?? $item->partial_value,
                                 'profit' => $itemData['profit'] ?? $item->profit,
                                 'total_value' => $itemData['total_value'] ?? $item->total_value,
+                            ];
+
+                            \Log::info('🔄 Actualizando item adicional', [
+                                'item_id' => $itemData['item_id'],
+                                'update_data' => $updateItemData
+                            ]);
+
+                            $item->update($updateItemData);
+                        } else {
+                            \Log::warning('⚠️ Item adicional no encontrado o no pertenece a la cotización', [
+                                'item_id' => $itemData['item_id'],
+                                'quotation_id' => $quotation->quotation_id,
+                                'found_item_quotation_id' => $item ? $item->quotation_id : 'null'
                             ]);
                         }
+                    } else {
+                        \Log::warning('⚠️ Item sin item_id', ['item_data' => $itemData]);
                     }
                 }
             }

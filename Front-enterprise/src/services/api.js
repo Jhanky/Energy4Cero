@@ -38,7 +38,19 @@ class ApiService {
 
   // Método genérico para hacer peticiones
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    let url = `${this.baseURL}${endpoint}`;
+
+    // Handle query parameters
+    if (options.params) {
+      const queryString = new URLSearchParams(options.params).toString();
+      if (queryString) {
+        url += (endpoint.includes('?') ? '&' : '?') + queryString;
+      }
+      // Remove params from options to avoid conflicts
+      const { params, ...restOptions } = options;
+      options = restOptions;
+    }
+
     const config = {
       credentials: 'include', // Include credentials (cookies) with requests for proper authentication
       ...options,
@@ -64,30 +76,38 @@ class ApiService {
     
 
     try {
-      
+      console.log('🚀 REQUEST ENVIADO:', {
+        method: config.method || 'GET',
+        url: url,
+        headers: config.headers,
+        hasBody: !!config.body,
+        bodyLength: config.body ? (typeof config.body === 'string' ? config.body.length : 'FormData') : 0
+      });
+
       const response = await fetch(url, config);
-      
-      
-      
-      console.log('📡 Headers de respuesta:', Object.fromEntries(response.headers.entries()));
-      
-      
-      
+
+      console.log('📡 RESPONSE RECIBIDA:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       // Si la respuesta es 401 (no autenticado), manejar según el contexto
       if (response.status === 401) {
-        
-        
+
+
         console.log('🚫 Es endpoint de login:', endpoint.includes('/auth/login'));
-        
+
         // Solo limpiar sesión si no es un endpoint de login
         if (!endpoint.includes('/auth/login')) {
-          
+
           this.handleUnauthorized();
           throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
         } else {
           // Para login, obtener el mensaje del servidor
           // No lanzar error aquí, dejar que se procese la respuesta JSON
-          
+
         }
       }
 
@@ -316,13 +336,69 @@ class ApiService {
     return userData ? JSON.parse(userData) : null;
   }
 
+  // HTTP method shortcuts
+  async get(endpoint, options = {}) {
+    return this.request(endpoint, { ...options, method: 'GET' });
+  }
+
+  async post(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: 'POST',
+      body: data instanceof FormData ? data : JSON.stringify(data)
+    });
+  }
+
+  async put(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: data instanceof FormData ? data : JSON.stringify(data)
+    });
+  }
+
+  async patch(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: data instanceof FormData ? data : JSON.stringify(data)
+    });
+  }
+
+  async delete(endpoint, options = {}) {
+    return this.request(endpoint, { ...options, method: 'DELETE' });
+  }
+
   // Método para verificar permisos del usuario
   hasPermission(permission) {
     const user = this.getCurrentUserFromStorage();
-    if (!user || !user.role || !user.role.permissions) {
+    if (!user || !user.role) {
       return false;
     }
-    return user.role.permissions.includes(permission);
+
+    let permissions = user.role.permissions;
+
+    // Si permissions no existe, devolver false
+    if (!permissions) {
+      return false;
+    }
+
+    // Si permissions es un string, intentar parsearlo como JSON
+    if (typeof permissions === 'string') {
+      try {
+        permissions = JSON.parse(permissions);
+      } catch (e) {
+        // Si no se puede parsear como JSON, asumir que es un string separado por comas
+        permissions = permissions.split(',').map(p => p.trim());
+      }
+    }
+
+    // Si permissions no es un array después del procesamiento, devolver false
+    if (!Array.isArray(permissions)) {
+      return false;
+    }
+
+    return permissions.includes(permission);
   }
 
   // Método para verificar rol del usuario
@@ -504,9 +580,17 @@ class ApiService {
   }
 
   async deleteClient(id) {
-    
+
     return await this.request(`/clients/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async bulkDeleteClients(clientIds) {
+
+    return await this.request('/clients/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify(clientIds),
     });
   }
 
@@ -860,6 +944,76 @@ class ApiService {
 
   async getCities(departmentId) {
     return await getLocationCitiesByDepartment(departmentId);
+  }
+
+  // ========== MÉTODOS PARA PROYECTOS ==========
+
+  // Listar proyectos con filtros y paginación
+  async getProjects(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/projects?${queryString}` : '/projects';
+    return await this.request(url);
+  }
+
+  async getProject(id) {
+    return await this.request(`/projects/${id}`);
+  }
+
+  // ========== MÉTODOS PARA MANTENIMIENTOS ==========
+
+  // Listar mantenimientos con filtros y paginación
+  async getMaintenances(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/maintenances?${queryString}` : '/maintenances';
+    return await this.request(url);
+  }
+
+  // Obtener mantenimiento específico
+  async getMaintenance(id) {
+    return await this.request(`/maintenances/${id}`);
+  }
+
+  // Crear mantenimiento
+  async createMaintenance(maintenanceData) {
+    return await this.request('/maintenances', {
+      method: 'POST',
+      body: JSON.stringify(maintenanceData),
+    });
+  }
+
+  // Actualizar mantenimiento
+  async updateMaintenance(id, maintenanceData) {
+    return await this.request(`/maintenances/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(maintenanceData),
+    });
+  }
+
+  // Eliminar mantenimiento
+  async deleteMaintenance(id) {
+    return await this.request(`/maintenances/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Actualizar estado de mantenimiento
+  async updateMaintenanceStatus(id, status) {
+    return await this.request(`/maintenances/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Obtener estadísticas de mantenimientos
+  async getMaintenanceStatistics() {
+    return await this.request('/maintenances/statistics');
+  }
+
+  // Obtener mantenimientos para calendario
+  async getMaintenanceCalendar(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/maintenances/calendar?${queryString}` : '/maintenances/calendar';
+    return await this.request(url);
   }
 }
 

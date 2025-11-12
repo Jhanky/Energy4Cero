@@ -819,11 +819,310 @@ class MockDataService {
 
   async deleteBattery(batteryId) {
     await this.delay();
-    
-    
+
+
     return {
       success: true,
       message: 'Batería eliminada exitosamente'
+    };
+  }
+
+  // ========== MÉTODOS PARA MANTENIMIENTOS ==========
+
+  // Generar mantenimientos de prueba
+  generateMockMaintenances() {
+    const today = new Date();
+    const maintenances = [];
+
+    for (let i = 1; i <= 20; i++) {
+      const scheduledDate = new Date(today);
+      scheduledDate.setDate(today.getDate() + (i % 30)); // Distribuir en los próximos 30 días
+
+      maintenances.push({
+        maintenance_id: i,
+        title: `Mantenimiento ${i}`,
+        description: `Descripción del mantenimiento ${i}. Este es un mantenimiento de tipo ${i % 2 === 0 ? 'preventivo' : 'correctivo'}.`,
+        type: i % 4 === 0 ? 'preventive' : i % 4 === 1 ? 'corrective' : i % 4 === 2 ? 'predictive' : 'condition_based',
+        frequency: i % 6 === 0 ? 'daily' : i % 6 === 1 ? 'weekly' : i % 6 === 2 ? 'monthly' : i % 6 === 3 ? 'quarterly' : i % 6 === 4 ? 'biannual' : 'annual',
+        priority: i % 4 === 0 ? 'low' : i % 4 === 1 ? 'medium' : i % 4 === 2 ? 'high' : 'critical',
+        status: i % 5 === 0 ? 'scheduled' : i % 5 === 1 ? 'in_progress' : i % 5 === 2 ? 'completed' : i % 5 === 3 ? 'cancelled' : 'overdue',
+        scheduled_date: scheduledDate.toISOString().split('T')[0],
+        estimated_duration_hours: Math.floor(Math.random() * 8) + 1,
+        project_id: (i % 3) + 1,
+        assigned_to_user_id: (i % 3) + 1,
+        created_by_user_id: 1,
+        notes: `Notas adicionales para el mantenimiento ${i}`,
+        estimated_cost: Math.floor(Math.random() * 1000000) + 50000,
+        created_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString(),
+        updated_at: new Date().toISOString(),
+        project: {
+          project_id: (i % 3) + 1,
+          name: `Proyecto ${(i % 3) + 1}`
+        },
+        assignedTo: {
+          id: (i % 3) + 1,
+          name: this.usuarios[(i % 3)].name
+        },
+        createdBy: {
+          id: 1,
+          name: 'Carlos Mendoza'
+        }
+      });
+    }
+
+    return maintenances;
+  }
+
+  // Listar mantenimientos con filtros y paginación
+  async getMaintenances(params = {}) {
+    await this.delay();
+
+    let maintenances = this.generateMockMaintenances();
+
+    // Aplicar filtros
+    if (params.search) {
+      const search = params.search.toLowerCase();
+      maintenances = maintenances.filter(m =>
+        m.title.toLowerCase().includes(search) ||
+        m.description.toLowerCase().includes(search)
+      );
+    }
+
+    if (params.status) {
+      maintenances = maintenances.filter(m => m.status === params.status);
+    }
+
+    if (params.type) {
+      maintenances = maintenances.filter(m => m.type === params.type);
+    }
+
+    if (params.priority) {
+      maintenances = maintenances.filter(m => m.priority === params.priority);
+    }
+
+    if (params.project_id) {
+      maintenances = maintenances.filter(m => m.project_id === parseInt(params.project_id));
+    }
+
+    if (params.assigned_to_user_id) {
+      maintenances = maintenances.filter(m => m.assigned_to_user_id === parseInt(params.assigned_to_user_id));
+    }
+
+    // Paginación
+    const perPage = params.per_page || 15;
+    const currentPage = params.page || 1;
+    const total = maintenances.length;
+    const startIndex = (currentPage - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    const paginatedMaintenances = maintenances.slice(startIndex, endIndex);
+
+    // Estadísticas
+    const stats = {
+      total: maintenances.length,
+      scheduled: maintenances.filter(m => m.status === 'scheduled').length,
+      in_progress: maintenances.filter(m => m.status === 'in_progress').length,
+      completed: maintenances.filter(m => m.status === 'completed').length,
+      cancelled: maintenances.filter(m => m.status === 'cancelled').length,
+      overdue: maintenances.filter(m => {
+        const scheduledDate = new Date(m.scheduled_date);
+        const today = new Date();
+        return scheduledDate < today && m.status === 'scheduled';
+      }).length,
+    };
+
+    return {
+      success: true,
+      data: {
+        maintenances: paginatedMaintenances,
+        pagination: {
+          current_page: currentPage,
+          per_page: perPage,
+          total: total,
+          last_page: Math.ceil(total / perPage),
+          from: startIndex + 1,
+          to: Math.min(endIndex, total),
+        },
+        stats: stats,
+      },
+      message: 'Mantenimientos obtenidos exitosamente'
+    };
+  }
+
+  // Obtener mantenimiento específico
+  async getMaintenance(id) {
+    await this.delay();
+
+    const maintenances = this.generateMockMaintenances();
+    const maintenance = maintenances.find(m => m.maintenance_id === parseInt(id));
+
+    if (!maintenance) {
+      return {
+        success: false,
+        message: 'Mantenimiento no encontrado'
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        maintenance: maintenance
+      },
+      message: 'Mantenimiento obtenido exitosamente'
+    };
+  }
+
+  // Crear mantenimiento
+  async createMaintenance(maintenanceData) {
+    await this.delay();
+
+    const newMaintenance = {
+      maintenance_id: Date.now(),
+      ...maintenanceData,
+      created_by_user_id: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      project: maintenanceData.project_id ? {
+        project_id: maintenanceData.project_id,
+        name: `Proyecto ${maintenanceData.project_id}`
+      } : null,
+      assignedTo: maintenanceData.assigned_to_user_id ? {
+        id: maintenanceData.assigned_to_user_id,
+        name: this.usuarios.find(u => u.id === maintenanceData.assigned_to_user_id)?.name || 'Usuario'
+      } : null,
+      createdBy: {
+        id: 1,
+        name: 'Carlos Mendoza'
+      }
+    };
+
+    return {
+      success: true,
+      data: {
+        maintenance: newMaintenance
+      },
+      message: 'Mantenimiento creado exitosamente'
+    };
+  }
+
+  // Actualizar mantenimiento
+  async updateMaintenance(id, maintenanceData) {
+    await this.delay();
+
+    return {
+      success: true,
+      data: {
+        maintenance: {
+          maintenance_id: parseInt(id),
+          ...maintenanceData,
+          updated_at: new Date().toISOString()
+        }
+      },
+      message: 'Mantenimiento actualizado exitosamente'
+    };
+  }
+
+  // Eliminar mantenimiento
+  async deleteMaintenance(id) {
+    await this.delay();
+
+    return {
+      success: true,
+      message: 'Mantenimiento eliminado exitosamente'
+    };
+  }
+
+  // Actualizar estado de mantenimiento
+  async updateMaintenanceStatus(id, status) {
+    await this.delay();
+
+    return {
+      success: true,
+      data: {
+        maintenance: {
+          maintenance_id: parseInt(id),
+          status: status,
+          updated_at: new Date().toISOString()
+        }
+      },
+      message: `Mantenimiento ${status}`
+    };
+  }
+
+  // Obtener estadísticas de mantenimientos
+  async getMaintenanceStatistics() {
+    await this.delay();
+
+    const maintenances = this.generateMockMaintenances();
+
+    const stats = {
+      total_maintenances: maintenances.length,
+      scheduled_maintenances: maintenances.filter(m => m.status === 'scheduled').length,
+      in_progress_maintenances: maintenances.filter(m => m.status === 'in_progress').length,
+      completed_maintenances: maintenances.filter(m => m.status === 'completed').length,
+      cancelled_maintenances: maintenances.filter(m => m.status === 'cancelled').length,
+      overdue_maintenances: maintenances.filter(m => {
+        const scheduledDate = new Date(m.scheduled_date);
+        const today = new Date();
+        return scheduledDate < today && m.status === 'scheduled';
+      }).length,
+      preventive_maintenances: maintenances.filter(m => m.type === 'preventive').length,
+      corrective_maintenances: maintenances.filter(m => m.type === 'corrective').length,
+      high_priority_maintenances: maintenances.filter(m => m.priority === 'high').length,
+      critical_priority_maintenances: maintenances.filter(m => m.priority === 'critical').length,
+    };
+
+    return {
+      success: true,
+      data: {
+        statistics: stats
+      },
+      message: 'Estadísticas obtenidas exitosamente'
+    };
+  }
+
+  // Obtener mantenimientos para calendario
+  async getMaintenanceCalendar(params = {}) {
+    await this.delay();
+
+    const maintenances = this.generateMockMaintenances();
+
+    // Filtrar por rango de fechas si se especifica
+    let filteredMaintenances = maintenances;
+    if (params.start_date && params.end_date) {
+      const startDate = new Date(params.start_date);
+      const endDate = new Date(params.end_date);
+
+      filteredMaintenances = maintenances.filter(m => {
+        const scheduledDate = new Date(m.scheduled_date);
+        return scheduledDate >= startDate && scheduledDate <= endDate;
+      });
+    }
+
+    const calendarMaintenances = filteredMaintenances.map(m => ({
+      id: m.maintenance_id,
+      title: m.title,
+      description: m.description,
+      start: m.scheduled_date,
+      end: m.scheduled_date,
+      status: m.status,
+      priority: m.priority,
+      type: m.type,
+      project: m.project,
+      assigned_to: m.assignedTo,
+      estimated_duration_hours: m.estimated_duration_hours,
+      estimated_cost: m.estimated_cost,
+    }));
+
+    return {
+      success: true,
+      data: {
+        maintenances: calendarMaintenances,
+        date_range: {
+          start: params.start_date || new Date().toISOString().split('T')[0],
+          end: params.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        }
+      },
+      message: 'Mantenimientos de calendario obtenidos exitosamente'
     };
   }
 }

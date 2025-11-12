@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authUtils } from '../utils/authUtils';
 import apiService from '../services/api';
@@ -58,7 +58,24 @@ export const AuthProvider = ({ children }) => {
     return !!authUtils.getToken() && !!authUtils.getCurrentUser();
   };
 
-  const refreshUser = async () => {
+  const hasPermission = (permission) => {
+    if (!user || !user.role || !user.role.permissions) {
+      return false;
+    }
+
+    // Verificar si el usuario tiene el permiso específico
+    return user.role.permissions.includes(permission);
+  };
+
+  const hasRole = (roleSlug) => {
+    if (!user || !user.role) {
+      return false;
+    }
+
+    return user.role.slug === roleSlug;
+  };
+
+  const refreshUser = useCallback(async () => {
     try {
       const response = await apiService.getCurrentUser();
       if (response.success) {
@@ -80,13 +97,15 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       return { success: false, message: error.message || 'Error de conexión' };
     }
-  };
+  }, [setUser]);
 
   const value = {
     user,
     login,
     logout,
     isAuthenticated,
+    hasPermission,
+    hasRole,
     refreshUser, // Agregamos la función refreshUser
     loading,
   };

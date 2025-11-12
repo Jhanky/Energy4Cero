@@ -33,6 +33,13 @@ class ClientService {
     });
   }
 
+  async bulkDeleteClients(clientIds) {
+    return await apiService.request('/clients/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify(clientIds),
+    });
+  }
+
   async toggleClientStatus(id) {
     return await apiService.request(`/clients/${id}/toggle-status`, {
       method: 'PATCH',
