@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Shield, Settings, Truck, Building2, LogOut, Package, FileText, Receipt, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Shield, Settings, Truck, Building2, LogOut, Package, FileText, Receipt } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Sidebar, SidebarBody, SidebarSection, SidebarSectionItem, SidebarLink } from '../shared/ui/CustomSidebar';
 import { Button } from '../ui/button';
@@ -75,15 +75,7 @@ function Layout() {
         { id: 'mantenimiento', nombre: 'Mantenimiento', icono: Settings, path: '/mantenimiento' }
       ]
     },
-    {
-      id: 'asistente',
-      nombre: 'Asistente IA',
-      icono: MessageCircle,
-      color: 'purple',
-      paginas: [
-        { id: 'asistente', nombre: 'Asistente IA', icono: MessageCircle, path: '/chat-ia' }
-      ]
-    }
+
   ];
 
   // Efecto para refrescar usuario y verificar permisos al cargar
@@ -91,24 +83,12 @@ function Layout() {
     const refreshUserData = async () => {
       try {
         const result = await refreshUser();
-        console.log('🔄 Usuario refrescado:', {
-          user: result?.user,
-          permissions: result?.user?.role?.permissions,
-          role: result?.user?.role?.name,
-          roleSlug: result?.user?.role?.slug
-        });
       } catch (error) {
         console.error('Error al refrescar usuario:', error);
       }
     };
 
     if (isAuthenticated && usuario) {
-      console.log('👤 Usuario actual en Layout:', {
-        user: usuario,
-        permissions: usuario?.role?.permissions,
-        role: usuario?.role?.name,
-        roleSlug: usuario?.role?.slug
-      });
       refreshUserData();
     }
   }, [isAuthenticated, usuario, refreshUser]);
@@ -172,14 +152,6 @@ function Layout() {
       if (!requiredPermissions) return true; // Páginas sin restricciones específicas
 
       const hasRequiredPermission = requiredPermissions.some(permission => hasPermission(permission));
-
-      // Debug: mostrar qué permisos se están verificando
-      console.log(`🔐 Verificando página "${pagina.nombre}" (${pagina.id}):`, {
-        requiredPermissions,
-        hasPermission: hasRequiredPermission,
-        userPermissions: usuario?.role?.permissions,
-        userRole: usuario?.role?.name
-      });
 
       return hasRequiredPermission;
     });

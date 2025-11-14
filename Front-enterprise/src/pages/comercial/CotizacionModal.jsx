@@ -551,6 +551,7 @@ const CotizacionModal = ({
       user_id: data.user_id,
       project_name: data.project_name,
       system_type: mapSystemType(data.system_type),
+      grid_type: data.network_type,
       power_kwp: parseFloat(data.power_kwp) || 0,
       panel_count: parseInt(data.panel_count) || 0,
       requires_financing: data.requires_financing || false,

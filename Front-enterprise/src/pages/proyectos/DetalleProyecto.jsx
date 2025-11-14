@@ -357,13 +357,10 @@ const DetalleProyecto = ({ proyecto, estados, onVolver }) => {
 
   const handleCrearHito = async (hitoData) => {
     try {
-      console.log('=== INICIANDO CREACIÓN DE HITO ===');
-      console.log('Datos recibidos del modal:', hitoData);
       
       // Obtener el ID del proyecto correctamente
       const projectId = proyectoDetalle.id || proyectoDetalle.backendId || proyecto.backendId || proyecto.id;
-      console.log('ID del proyecto detectado:', projectId);
-      
+
       if (!projectId) {
         console.error('❌ ID del proyecto no encontrado');
         console.log('proyectoDetalle.id:', proyectoDetalle.id);

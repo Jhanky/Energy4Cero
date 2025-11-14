@@ -18,6 +18,7 @@ class Quotation extends Model
         'user_id',
         'project_name',
         'system_type',
+        'grid_type',
         'power_kwp',
         'panel_count',
         'requires_financing',

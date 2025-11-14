@@ -21,7 +21,6 @@ import VistaBodegas from './pages/inventario/VistaBodegas';
 import VistaHerramientas from './pages/inventario/VistaHerramientas';
 import VistaMateriales from './pages/inventario/VistaMateriales';
 import VistaMantenimiento from './pages/soporte/VistaMantenimiento';
-import ChatIA from './pages/asistente/ChatIA';
 import ComingSoon from './widgets/ComingSoon';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -324,16 +323,6 @@ function App() {
             element={
               <ProtectedRoute permission="support.read">
                 <ComingSoon pageName="Lista de Tickets" />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* ========== ASISTENTE IA ========== */}
-          <Route
-            path="chat-ia"
-            element={
-              <ProtectedRoute>
-                <ChatIA />
               </ProtectedRoute>
             }
           />

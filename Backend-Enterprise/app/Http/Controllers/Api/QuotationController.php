@@ -123,6 +123,7 @@ class QuotationController extends Controller
                 'user_id' => $quotation->user_id,
                 'project_name' => $quotation->project_name,
                 'system_type' => $quotation->system_type,
+                'grid_type' => $quotation->grid_type,
                 'power_kwp' => number_format($quotation->power_kwp, 2, '.', ''),
                 'panel_count' => $quotation->panel_count,
                 'requires_financing' => $quotation->requires_financing ? 1 : 0,
@@ -243,6 +244,7 @@ class QuotationController extends Controller
                 'user_id' => 'required|exists:users,id',
                 'project_name' => 'required|string|max:200',
                 'system_type' => 'required|in:On-grid,Off-grid,Híbrido,Interconectado',
+                'grid_type' => 'required|string|max:255',
                 'power_kwp' => 'required|numeric|min:0.1',
                 'panel_count' => 'required|integer|min:1',
                 'requires_financing' => 'sometimes|boolean',
@@ -289,6 +291,7 @@ class QuotationController extends Controller
                 'user_id',
                 'project_name',
                 'system_type',
+                'grid_type',
                 'power_kwp',
                 'panel_count',
                 'requires_financing',
@@ -672,41 +675,98 @@ class QuotationController extends Controller
                 }
             }
 
-            // Cargar datos actualizados para la respuesta
-            $quotation->load(['client', 'user']);
-            
+            // Cargar datos actualizados para la respuesta incluyendo relaciones
+            $quotation->load(['client', 'user', 'usedProducts', 'items']);
+
+            // Formatear la respuesta con todos los detalles igual que en el método show
+            $formattedResponse = [
+                'quotation_id' => $quotation->quotation_id,
+                'client_id' => $quotation->client_id,
+                'user_id' => $quotation->user_id,
+                'project_name' => $quotation->project_name,
+                'system_type' => $quotation->system_type,
+                'power_kwp' => number_format($quotation->power_kwp, 2, '.', ''),
+                'panel_count' => $quotation->panel_count,
+                'requires_financing' => $quotation->requires_financing ? 1 : 0,
+                'profit_percentage' => number_format($quotation->profit_percentage, 3, '.', ''),
+                'iva_profit_percentage' => number_format($quotation->iva_profit_percentage, 3, '.', ''),
+                'commercial_management_percentage' => number_format($quotation->commercial_management_percentage, 3, '.', ''),
+                'administration_percentage' => number_format($quotation->administration_percentage, 3, '.', ''),
+                'contingency_percentage' => number_format($quotation->contingency_percentage, 3, '.', ''),
+                'withholding_percentage' => number_format($quotation->withholding_percentage, 3, '.', ''),
+                'subtotal' => $quotation->subtotal,
+                'profit' => $quotation->profit,
+                'profit_iva' => $quotation->profit_iva,
+                'commercial_management' => $quotation->commercial_management,
+                'administration' => $quotation->administration,
+                'contingency' => $quotation->contingency,
+                'withholdings' => $quotation->withholdings,
+                'total_value' => $quotation->total_value,
+                'creation_date' => $quotation->created_at,
+                'subtotal2' => $quotation->subtotal2,
+                'subtotal3' => $quotation->subtotal3,
+                'status_id' => $quotation->status_id,
+                'client' => [
+                    'client_id' => $quotation->client->client_id,
+                    'name' => $quotation->client->name,
+                    'nic' => $quotation->client->nic,
+                    'client_type' => $quotation->client->client_type,
+                    'email' => $quotation->client->email,
+                    'phone' => $quotation->client->phone,
+                    'address' => $quotation->client->address,
+                    'monthly_consumption' => $quotation->client->monthly_consumption,
+                    'department' => $quotation->client->department ? [
+                        'department_id' => $quotation->client->department->department_id,
+                        'name' => $quotation->client->department->name,
+                        'region' => $quotation->client->department->region,
+                    ] : null,
+                    'city' => $quotation->client->city ? [
+                        'city_id' => $quotation->client->city->city_id,
+                        'name' => $quotation->client->city->name,
+                        'department_id' => $quotation->client->city->department_id,
+                    ] : null
+                ],
+                'user' => [
+                    'id' => $quotation->user->id,
+                    'name' => $quotation->user->name,
+                    'email' => $quotation->user->email
+                ],
+                'products' => $quotation->usedProducts->map(function ($product) {
+                    return [
+                        'used_product_id' => $product->used_product_id,
+                        'quotation_id' => $product->quotation_id,
+                        'product_id' => $product->product_id,
+                        'product_type' => $product->product_type,
+                        'brand' => $product->brand,
+                        'model' => $product->model,
+                        'quantity' => $product->quantity,
+                        'unit_price' => number_format($product->unit_price, 2, '.', ''),
+                        'partial_value' => number_format($product->partial_value, 2, '.', ''),
+                        'profit_percentage' => number_format($product->profit_percentage, 3, '.', ''),
+                        'profit' => number_format($product->profit, 2, '.', ''),
+                        'total_value' => number_format($product->total_value, 2, '.', '')
+                    ];
+                }),
+                'quotation_items' => $quotation->items->map(function ($item) {
+                    return [
+                        'item_id' => $item->item_id,
+                        'quotation_id' => $item->quotation_id,
+                        'description' => $item->description,
+                        'item_type' => $item->item_type,
+                        'quantity' => number_format($item->quantity, 2, '.', ''),
+                        'unit' => $item->unit,
+                        'unit_price' => number_format($item->unit_price, 2, '.', ''),
+                        'partial_value' => number_format($item->partial_value, 2, '.', ''),
+                        'profit_percentage' => number_format($item->profit_percentage, 3, '.', ''),
+                        'profit' => number_format($item->profit, 2, '.', ''),
+                        'total_value' => number_format($item->total_value, 2, '.', '')
+                    ];
+                })
+            ];
+
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'quotation_id' => $quotation->quotation_id,
-                    'client_id' => $quotation->client_id,
-                    'user_id' => $quotation->user_id,
-                    'project_name' => $quotation->project_name,
-                    'system_type' => $quotation->system_type,
-                    'power_kwp' => $quotation->power_kwp,
-                    'panel_count' => $quotation->panel_count,
-                    'requires_financing' => $quotation->requires_financing,
-                    'profit_percentage' => $quotation->profit_percentage,
-                    'iva_profit_percentage' => $quotation->iva_profit_percentage,
-                    'commercial_management_percentage' => $quotation->commercial_management_percentage,
-                    'administration_percentage' => $quotation->administration_percentage,
-                    'contingency_percentage' => $quotation->contingency_percentage,
-                    'withholding_percentage' => $quotation->withholding_percentage,
-                    'status_id' => $quotation->status_id,
-                    'subtotal' => $quotation->subtotal,
-                    'profit' => $quotation->profit,
-                    'profit_iva' => $quotation->profit_iva,
-                    'commercial_management' => $quotation->commercial_management,
-                    'administration' => $quotation->administration,
-                    'contingency' => $quotation->contingency,
-                    'withholdings' => $quotation->withholdings,
-                    'total_value' => $quotation->total_value,
-                    'subtotal2' => $quotation->subtotal2,
-                    'subtotal3' => $quotation->subtotal3,
-                    'updated_at' => $quotation->updated_at,
-                    'used_products_count' => 0, // Por ahora hasta que se creen las tablas
-                    'items_count' => 0
-                ],
+                'data' => $formattedResponse,
                 'message' => 'Cotización actualizada exitosamente'
             ]);
         } catch (\Exception $e) {

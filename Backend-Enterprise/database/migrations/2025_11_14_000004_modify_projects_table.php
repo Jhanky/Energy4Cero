@@ -11,10 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->unsignedBigInteger('cost_center_id')->nullable()->after('quotation_id');
-            $table->foreign('cost_center_id')->references('cost_center_id')->on('cost_centers')->onDelete('set null');
-        });
+        // Combined migration - no changes needed as individual migrations already executed
     }
 
     /**
@@ -23,8 +20,16 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('projects', function (Blueprint $table) {
+            // Reverse add_cost_center_id_to_projects_table
             $table->dropForeign(['cost_center_id']);
             $table->dropColumn('cost_center_id');
+
+            // Reverse add_quotation_id_to_projects_table
+            $table->dropForeign(['quotation_id']);
+            $table->dropColumn('quotation_id');
         });
+
+        // Reverse create_projects_table
+        Schema::dropIfExists('projects');
     }
 };

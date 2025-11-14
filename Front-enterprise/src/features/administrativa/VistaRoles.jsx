@@ -185,7 +185,7 @@ const VistaRoles = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
+    setIsSubmitting(true);
 
     try {
       let response;
@@ -221,7 +221,7 @@ const VistaRoles = () => {
     } catch (error) {
       showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 

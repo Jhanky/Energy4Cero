@@ -76,28 +76,10 @@ class ApiService {
     
 
     try {
-      console.log('🚀 REQUEST ENVIADO:', {
-        method: config.method || 'GET',
-        url: url,
-        headers: config.headers,
-        hasBody: !!config.body,
-        bodyLength: config.body ? (typeof config.body === 'string' ? config.body.length : 'FormData') : 0
-      });
-
       const response = await fetch(url, config);
-
-      console.log('📡 RESPONSE RECIBIDA:', {
-        status: response.status,
-        statusText: response.statusText,
-        url: response.url,
-        headers: Object.fromEntries(response.headers.entries())
-      });
 
       // Si la respuesta es 401 (no autenticado), manejar según el contexto
       if (response.status === 401) {
-
-
-        console.log('🚫 Es endpoint de login:', endpoint.includes('/auth/login'));
 
         // Solo limpiar sesión si no es un endpoint de login
         if (!endpoint.includes('/auth/login')) {

@@ -544,9 +544,9 @@ const VistaCotizaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Total Cotizaciones</p>
-              <p className="text-2xl font-bold text-slate-900">
+              <div className="text-2xl font-bold text-slate-900">
                 {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : pagination.total || 0}
-              </p>
+              </div>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <FileText className="w-6 h-6 text-blue-600" />
@@ -558,9 +558,9 @@ const VistaCotizaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Aceptadas</p>
-              <p className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600">
                 {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : 'N/A'}
-              </p>
+              </div>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-6 h-6 text-green-600" />
@@ -572,9 +572,9 @@ const VistaCotizaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Valor Total</p>
-              <p className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-purple-600">
                 {loading ? <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div> : 'N/A'}
-              </p>
+              </div>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-purple-600" />
@@ -586,9 +586,9 @@ const VistaCotizaciones = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Potencia Total</p>
-              <p className="text-2xl font-bold text-orange-600">
+              <div className="text-2xl font-bold text-orange-600">
                 {loading ? <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div> : 'N/A'}
-              </p>
+              </div>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
               <FileText className="w-6 h-6 text-orange-600" />

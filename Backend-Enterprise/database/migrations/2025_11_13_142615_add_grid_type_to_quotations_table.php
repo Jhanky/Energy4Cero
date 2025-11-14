@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
-            $table->string('client_type')->default('residencial')->after('name');
+        Schema::table('quotations', function (Blueprint $table) {
+            $table->string('grid_type')->nullable()->after('system_type');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
-            $table->dropColumn('client_type');
+        Schema::table('quotations', function (Blueprint $table) {
+            $table->dropColumn('grid_type');
         });
     }
 };

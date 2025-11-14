@@ -31,6 +31,15 @@ class InverterController extends Controller
                 $query->where('is_active', $request->is_active === 'true');
             }
 
+            // Filtros para compatibilidad con cotizaciones
+            if ($request->filled('grid_type')) {
+                $query->where('grid_type', $request->grid_type);
+            }
+
+            if ($request->filled('system_type')) {
+                $query->where('system_type', $request->system_type);
+            }
+
             // Ordenamiento
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');

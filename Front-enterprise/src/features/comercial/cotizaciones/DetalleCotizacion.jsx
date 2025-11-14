@@ -20,6 +20,8 @@ import {
   X
 } from 'lucide-react';
 import { cotizacionesService } from '../../../services/cotizacionesService';
+import { productosService } from '../../../services/productosService';
+import apiService from '../../../services/api';
 
 const DetalleCotizacion = () => {
   const { id } = useParams();
@@ -32,18 +34,71 @@ const DetalleCotizacion = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [editingPercentage, setEditingPercentage] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [productos, setProductos] = useState({
+    panels: [],
+    inverters: [],
+    batteries: []
+  });
+  const [loadingProductos, setLoadingProductos] = useState(false);
+
+  // Función para cargar productos desde la API
+  const loadProductos = async (cotizacionData = null) => {
+    try {
+      setLoadingProductos(true);
+
+      // Cargar paneles
+      const panelsResponse = await productosService.getPanels();
+      if (panelsResponse.success) {
+        setProductos(prev => ({ ...prev, panels: panelsResponse.data.panels || [] }));
+      }
+
+      // Cargar baterías
+      const batteriesResponse = await productosService.getBatteries();
+      if (batteriesResponse.success) {
+        setProductos(prev => ({ ...prev, batteries: batteriesResponse.data.batteries || [] }));
+      }
+
+      // Cargar inversores filtrados por la cotización actual (si tenemos los datos)
+      if (cotizacionData && cotizacionData.tipo_red && cotizacionData.tipo_sistema) {
+        const invertersResponse = await productosService.getInvertersForQuotation(
+          cotizacionData.tipo_red,
+          cotizacionData.tipo_sistema
+        );
+        if (invertersResponse.success) {
+          setProductos(prev => ({ ...prev, inverters: invertersResponse.data.inverters || [] }));
+        }
+      } else {
+        // Si no tenemos datos de cotización, cargar todos los inversores
+        const invertersResponse = await productosService.getInverters();
+        if (invertersResponse.success) {
+          setProductos(prev => ({ ...prev, inverters: invertersResponse.data.inverters || [] }));
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      setNotification({
+        type: 'error',
+        message: 'Error al cargar los productos disponibles'
+      });
+    } finally {
+      setLoadingProductos(false);
+    }
+  };
 
   useEffect(() => {
     const fetchCotizacion = async () => {
       try {
         setLoading(true);
         const response = await cotizacionesService.getCotizacion(id);
-        
+
         if (response.success) {
           // Transformar la respuesta del backend para que coincida con la estructura esperada
           const transformedCotizacion = transformCotizacionData(response.data);
           setCotizacion(transformedCotizacion);
           setCotizacionOriginal(JSON.parse(JSON.stringify(transformedCotizacion)));
+
+          // Cargar productos después de tener la cotización
+          await loadProductos(transformedCotizacion);
         } else {
           setNotification({
             type: 'error',
@@ -146,6 +201,7 @@ const DetalleCotizacion = () => {
         utilidad: parseFloat(item.profit) || 0,
         total: parseFloat(item.total_value) || 0
       })) : [],
+      panel_count: parseInt(apiData.panel_count) || 0,
       porcentaje_gestion_comercial: parseFloat(apiData.commercial_management_percentage) * 100 || 3,
       porcentaje_administracion: parseFloat(apiData.administration_percentage) * 100 || 8,
       porcentaje_imprevistos: parseFloat(apiData.contingency_percentage) * 100 || 2,
@@ -302,35 +358,36 @@ const DetalleCotizacion = () => {
   };
 
   const handleSuministroChange = (field, value) => {
-    // Asegurar que los valores nunca sean negativos
-    const safeValue = Math.max(0, value);
-    
+    // Convertir a número y validar que no sea NaN
+    const numericValue = parseFloat(value);
+    const safeValue = isNaN(numericValue) ? 0 : Math.max(0, numericValue);
+
     setEditingItem(prev => {
       const updated = {
         ...prev,
         [field]: safeValue
       };
-      
+
       // Recalcular valores dinámicamente usando los valores actualizados
       const porcentajeUtilidad = Math.max(0, updated.porcentaje_utilidad || 5);
       const cantidad = Math.max(0, updated.cantidad || 0);
       const precioUnitario = Math.max(0, updated.precio_unitario || 0);
-      
+
       const valorParcial = cantidad * precioUnitario;
       const utilidad = valorParcial * (porcentajeUtilidad / 100);
       const total = valorParcial + utilidad;
-      
+
       return {
         ...updated,
         cantidad: cantidad,
         precio_unitario: precioUnitario,
         porcentaje_utilidad: porcentajeUtilidad,
-        valor_parcial: valorParcial,
-        utilidad: utilidad,
-        total: total
+        valor_parcial: isNaN(valorParcial) ? 0 : valorParcial,
+        utilidad: isNaN(utilidad) ? 0 : utilidad,
+        total: isNaN(total) ? 0 : total
       };
     });
-    
+
     // Marcar que hay cambios sin guardar
     setHasUnsavedChanges(true);
   };
@@ -371,14 +428,14 @@ const DetalleCotizacion = () => {
 
     // Actualizar en el array correspondiente
     if (editingType === 'suministro') {
-      updatedCotizacion.suministros[editingItem.originalIndex] = editingItem;
+      updatedCotizacion.suministros[editingItem.originalIndex] = { ...editingItem };
     } else if (editingType === 'complementario') {
-      updatedCotizacion.items_complementarios[editingItem.originalIndex] = editingItem;
+      updatedCotizacion.items_complementarios[editingItem.originalIndex] = { ...editingItem };
     }
 
-    // Recalcular valor total de la cotización
-    const totalSuministros = updatedCotizacion.suministros.reduce((sum, item) => sum + item.total, 0);
-    const totalComplementarios = updatedCotizacion.items_complementarios.reduce((sum, item) => sum + item.total, 0);
+    // Recalcular valor total de la cotización (todos los items, no solo los editados)
+    const totalSuministros = updatedCotizacion.suministros.reduce((sum, item) => sum + (item.total || 0), 0);
+    const totalComplementarios = updatedCotizacion.items_complementarios.reduce((sum, item) => sum + (item.total || 0), 0);
     updatedCotizacion.valor_total = totalSuministros + totalComplementarios;
 
     setCotizacion(updatedCotizacion);
@@ -392,11 +449,14 @@ const DetalleCotizacion = () => {
     console.log('📊 Cotización con cambios aplicados:', frontendData);
 
     // Calcular resumen de costos para obtener los valores calculados
+    // Usar los valores más actualizados incluyendo cambios en edición
     const resumenCostos = getResumenCostos();
     console.log('🧮 Resumen de costos calculado:', resumenCostos);
 
-    // Transformar productos utilizados
-    const usedProducts = frontendData.suministros.map((item, index) => {
+    // Transformar productos utilizados (filtrar productos con cantidad <= 0)
+    const usedProducts = frontendData.suministros
+      .filter(item => parseInt(item.cantidad) > 0)
+      .map((item, index) => {
       console.log(`🔄 Transformando producto ${index}:`, item);
 
       // Determinar el tipo de producto basado en la descripción del frontend
@@ -416,12 +476,15 @@ const DetalleCotizacion = () => {
         productId = 1;
       }
 
+      // Asegurar que descripcion sea una cadena antes de usar split
+      const descripcion = String(item.descripcion || '');
+
       // Crear el objeto base
       const productData = {
         product_type: productType,
         product_id: productId,
-        brand: item.descripcion.split(' ')[0] || 'Genérico',
-        model: item.descripcion.split(' ').slice(1).join(' ') || 'Modelo',
+        brand: descripcion.split(' ')[0] || 'Genérico',
+        model: descripcion.split(' ').slice(1).join(' ') || 'Modelo',
         quantity: parseInt(item.cantidad) || 0,
         unit_price: parseFloat(item.precio_unitario) || 0,
         profit_percentage: parseFloat(item.porcentaje_utilidad) / 100 || 0, // Convertir de porcentaje a decimal
@@ -469,12 +532,22 @@ const DetalleCotizacion = () => {
       return itemData;
     });
 
+    // Obtener el usuario actual para usar su ID
+    const currentUser = apiService.getCurrentUserFromStorage();
+    const userId = currentUser?.id || currentUser?.user_id;
+
+    if (!userId) {
+      console.error('❌ No se pudo obtener el ID del usuario actual');
+      throw new Error('Usuario no autenticado o ID de usuario no disponible');
+    }
+
     // Preparar datos para el backend
     const backendData = {
       client_id: frontendData.cliente.id,
-      user_id: frontendData.id, // Usar el ID de la cotización como user_id por ahora
+      user_id: userId, // Usar el ID del usuario actual
       project_name: frontendData.proyecto,
       system_type: frontendData.tipo_sistema,
+      grid_type: frontendData.tipo_red,
       power_kwp: parseFloat(frontendData.potencia_total) || 0,
       panel_count: parseInt(frontendData.suministros.find(s => s.tipo === 'Panel Solar')?.cantidad || 0),
       requires_financing: frontendData.requires_financing ? 1 : 0,
@@ -509,6 +582,11 @@ const DetalleCotizacion = () => {
     try {
       console.log('🔄 Llamando a cotizacionesService.updateCotizacion');
 
+      // Aplicar cualquier cambio pendiente antes de guardar
+      if (editingItem && editingType) {
+        handleFinishEditing();
+      }
+
       // Transformar los datos al formato que espera el backend
       const backendData = transformCotizacionForBackend(cotizacion);
 
@@ -518,8 +596,14 @@ const DetalleCotizacion = () => {
       console.log('📥 Respuesta completa del backend:', response);
 
       if (response.success) {
-        // Actualizar la cotización original con los cambios actuales
-        setCotizacionOriginal(JSON.parse(JSON.stringify(cotizacion)));
+        // Transformar la respuesta del backend al formato del frontend
+        const updatedCotizacion = transformCotizacionData(response.data);
+
+        // Actualizar el estado de la UI con los datos del backend
+        setCotizacion(updatedCotizacion);
+
+        // Actualizar la cotización original para tracking de cambios
+        setCotizacionOriginal(JSON.parse(JSON.stringify(updatedCotizacion)));
         setHasUnsavedChanges(false);
 
         // Mostrar notificación de éxito
@@ -570,13 +654,19 @@ const DetalleCotizacion = () => {
 
   const handlePercentageChange = (percentageType, value) => {
     const safeValue = Math.max(0, parseFloat(value) || 0);
-    
+
     setCotizacion(prev => ({
       ...prev,
       [percentageType]: safeValue
     }));
-    
+
     setHasUnsavedChanges(true);
+
+    // Forzar re-renderizado para actualizar cálculos en tiempo real
+    // Esto asegura que getResumenCostos() se recalcule con los nuevos porcentajes
+    setTimeout(() => {
+      // Pequeño delay para asegurar que el estado se actualice primero
+    }, 0);
   };
 
   const handlePercentageBlur = () => {
@@ -591,53 +681,60 @@ const DetalleCotizacion = () => {
 
   const getSuministrosByType = (tipo) => {
     switch (tipo) {
-      case 'Panel Solar': return [
-        { id: 1, name: 'Panel Jinko 415W Monocristalino', precio: 850000, potencia: 415 },
-        { id: 2, name: 'Panel Canadian Solar 395W Monocristalino', precio: 780000, potencia: 395 },
-        { id: 3, name: 'Panel Trina Solar 400W Monocristalino', precio: 820000, potencia: 400 },
-        { id: 4, name: 'Panel Longi Solar 420W Monocristalino', precio: 880000, potencia: 420 }
-      ];
-      case 'Inversor': return [
-        { id: 1, name: 'Inversor SMA Sunny Tripower 10kW', precio: 4500000, potencia: 10000 },
-        { id: 2, name: 'Inversor Fronius Symo 8.2kW', precio: 3800000, potencia: 8200 },
-        { id: 3, name: 'Inversor Huawei SUN2000 5kW', precio: 2800000, potencia: 5000 },
-        { id: 4, name: 'Inversor ABB UNO-DM-6.0-TL-PLUS', precio: 3500000, potencia: 6000 }
-      ];
-      case 'Batería': return [
-        { id: 1, name: 'Batería Tesla Powerwall 13.5kWh', precio: 15000000, capacidad: 13.5 },
-        { id: 2, name: 'Batería LG Chem RESU 9.8kWh', precio: 12000000, capacidad: 9.8 },
-        { id: 3, name: 'Batería BYD B-Box 10.24kWh', precio: 11000000, capacidad: 10.24 },
-        { id: 4, name: 'Batería Sonnen 10kWh', precio: 13000000, capacidad: 10 }
-      ];
-      default: return [];
+      case 'Panel Solar':
+        return productos.panels.map(panel => ({
+          id: panel.panel_id,
+          name: `${panel.brand || ''} ${panel.model || ''}`.trim() || `Panel ${panel.panel_id}`,
+          precio: parseFloat(panel.price) || 0
+        }));
+      case 'Inversor':
+        return productos.inverters.map(inverter => ({
+          id: inverter.inverter_id,
+          name: `${inverter.name || ''} ${inverter.model || ''}`.trim() || `Inversor ${inverter.inverter_id}`,
+          precio: parseFloat(inverter.price) || 0,
+          potencia: parseFloat(inverter.power_output_kw) || 0
+        }));
+      case 'Batería':
+        return productos.batteries.map(battery => ({
+          id: battery.battery_id,
+          name: `${battery.name || ''} ${battery.model || ''}`.trim() || `Batería ${battery.battery_id}`,
+          precio: parseFloat(battery.price) || 0,
+          capacidad: parseFloat(battery.ah_capacity) || 0
+        }));
+      default:
+        return [];
     }
   };
 
-  // Calcular valor total dinámicamente
+  // Calcular valor total dinámicamente considerando todos los cambios
   const getValorTotalDinamico = () => {
     if (!cotizacion) return 0;
-    
+
     let totalSuministros = 0;
     let totalComplementarios = 0;
-    
-    // Calcular total de suministros
+
+    // Calcular total de suministros considerando cambios en tiempo real
     cotizacion.suministros.forEach((item, index) => {
+      // Si hay un item siendo editado actualmente, usar sus valores calculados
       if (editingItem && editingItem.originalIndex === index && editingType === 'suministro') {
-        totalSuministros += editingItem.total;
+        totalSuministros += editingItem.total || 0;
       } else {
-        totalSuministros += item.total;
+        // Usar el valor del item original, pero si hay cambios pendientes en editingItem, usar esos
+        totalSuministros += item.total || 0;
       }
     });
-    
-    // Calcular total de items complementarios
+
+    // Calcular total de items complementarios considerando cambios en tiempo real
     cotizacion.items_complementarios.forEach((item, index) => {
+      // Si hay un item siendo editado actualmente, usar sus valores calculados
       if (editingItem && editingItem.originalIndex === index && editingType === 'complementario') {
-        totalComplementarios += editingItem.total;
+        totalComplementarios += editingItem.total || 0;
       } else {
-        totalComplementarios += item.total;
+        // Usar el valor del item original
+        totalComplementarios += item.total || 0;
       }
     });
-    
+
     return totalSuministros + totalComplementarios;
   };
 
@@ -900,7 +997,15 @@ const DetalleCotizacion = () => {
         <div className="px-6 py-4 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-slate-900">Suministros</h3>
-            <p className="text-sm text-slate-500">💡 Doble clic en cualquier fila para editar</p>
+            <div className="flex items-center gap-3">
+              {loadingProductos && (
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                  Cargando productos...
+                </div>
+              )}
+              <p className="text-sm text-slate-500">💡 Doble clic en cualquier fila para editar</p>
+            </div>
           </div>
         </div>
         
