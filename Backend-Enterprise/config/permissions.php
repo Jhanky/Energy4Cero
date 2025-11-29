@@ -6,6 +6,7 @@ return [
         'read' => 'users.read',
         'update' => 'users.update',
         'delete' => 'users.delete',
+        'manage_roles' => 'users.manage_roles',
     ],
     'roles' => [
         'create' => 'roles.create',
@@ -13,13 +14,27 @@ return [
         'update' => 'roles.update',
         'delete' => 'roles.delete',
     ],
+    'clients' => [
+        'create' => 'clients.create',
+        'read' => 'clients.read',
+        'update' => 'clients.update',
+        'delete' => 'clients.delete',
+        'export' => 'clients.export',
+    ],
+    'quotations' => [
+        'create' => 'quotations.create',
+        'read' => 'quotations.read',
+        'update' => 'quotations.update',
+        'delete' => 'quotations.delete',
+        'approve' => 'quotations.approve',
+        'export' => 'quotations.export',
+    ],
     'projects' => [
         'create' => 'projects.create',
         'read' => 'projects.read',
         'update' => 'projects.update',
         'delete' => 'projects.delete',
     ],
-
     'inventory' => [
         'create' => 'inventory.create',
         'read' => 'inventory.read',
