@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Role;
+use App\Services\PermissionManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
+    protected $permissionManager;
+
+    public function __construct(PermissionManager $permissionManager)
+    {
+        $this->permissionManager = $permissionManager;
+    }
+
     /**
      * Listar roles con filtros y paginación
      */
@@ -129,6 +137,18 @@ class RoleController extends Controller
                 ], 422);
             }
 
+            // Validar permisos usando PermissionManager
+            $permissionValidation = $this->permissionManager->validatePermissions($request->permissions);
+            if (!$permissionValidation['is_valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permisos inválidos detectados',
+                    'errors' => [
+                        'permissions' => ['Los siguientes permisos no existen: ' . implode(', ', $permissionValidation['invalid'])]
+                    ]
+                ], 422);
+            }
+
             $role = Role::create([
                 'name' => $request->name,
                 'slug' => $request->slug,
@@ -185,6 +205,20 @@ class RoleController extends Controller
                     'message' => 'Datos de entrada inválidos',
                     'errors' => $validator->errors()
                 ], 422);
+            }
+
+            // Validar permisos usando PermissionManager si se incluyen permisos
+            if ($request->has('permissions')) {
+                $permissionValidation = $this->permissionManager->validatePermissions($request->permissions);
+                if (!$permissionValidation['is_valid']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Permisos inválidos detectados',
+                        'errors' => [
+                            'permissions' => ['Los siguientes permisos no existen: ' . implode(', ', $permissionValidation['invalid'])]
+                        ]
+                    ], 422);
+                }
             }
 
             $updateData = $request->only(['name', 'slug', 'description', 'permissions', 'is_active']);
@@ -305,13 +339,16 @@ class RoleController extends Controller
     public function permissions()
     {
         try {
-            // Obtener permisos desde la configuración
-            $permissionsConfig = config('permissions') ?: $this->getDefaultPermissionsConfig();
+            // Obtener permisos con etiquetas usando PermissionManager
+            $permissionsWithLabels = $this->permissionManager->getPermissionsWithLabels();
+            $modules = $this->permissionManager->getModules();
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'permissions' => $permissionsConfig
+                    'permissions' => $permissionsWithLabels,
+                    'modules' => $modules,
+                    'flat_permissions' => $this->permissionManager->getAllPermissions()
                 ],
                 'message' => 'Permisos obtenidos exitosamente'
             ]);
@@ -336,6 +373,7 @@ class RoleController extends Controller
                 'read' => 'users.read',
                 'update' => 'users.update',
                 'delete' => 'users.delete',
+                'manage_roles' => 'users.manage_roles',
             ],
             'roles' => [
                 'create' => 'roles.create',
@@ -343,17 +381,26 @@ class RoleController extends Controller
                 'update' => 'roles.update',
                 'delete' => 'roles.delete',
             ],
+            'clients' => [
+                'create' => 'clients.create',
+                'read' => 'clients.read',
+                'update' => 'clients.update',
+                'delete' => 'clients.delete',
+                'export' => 'clients.export',
+            ],
+            'quotations' => [
+                'create' => 'quotations.create',
+                'read' => 'quotations.read',
+                'update' => 'quotations.update',
+                'delete' => 'quotations.delete',
+                'approve' => 'quotations.approve',
+                'export' => 'quotations.export',
+            ],
             'projects' => [
                 'create' => 'projects.create',
                 'read' => 'projects.read',
                 'update' => 'projects.update',
                 'delete' => 'projects.delete',
-            ],
-            'tasks' => [
-                'create' => 'tasks.create',
-                'read' => 'tasks.read',
-                'update' => 'tasks.update',
-                'delete' => 'tasks.delete',
             ],
             'inventory' => [
                 'create' => 'inventory.create',
@@ -386,6 +433,12 @@ class RoleController extends Controller
                 'read' => 'reports.read',
                 'update' => 'reports.update',
                 'delete' => 'reports.delete',
+            ],
+            'batteries' => [
+                'create' => 'batteries.create',
+                'read' => 'batteries.read',
+                'update' => 'batteries.update',
+                'delete' => 'batteries.delete',
             ],
         ];
     }

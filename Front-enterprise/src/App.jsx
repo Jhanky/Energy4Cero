@@ -10,6 +10,8 @@ import VistaFinanciera from './features/contable/VistaFinanciera';
 import { VistaProveedores, VistaCentrosCostos, VistaFacturas } from './pages/contable';
 import VistaServicioTecnico from './features/soporte/ui/VistaServicioTecnico';
 import VistaUsuarios from './pages/administrativa/VistaUsuarios';
+import VistaRoles from './pages/administrativa/VistaRoles';
+import VistaPermisos from './pages/administrativa/VistaPermisos';
 import VistaConfiguracion from './pages/administrativa/VistaConfiguracion';
 import VistaClientes from './pages/comercial/VistaClientes';
 import VistaCotizaciones from './pages/comercial/VistaCotizaciones';
@@ -143,21 +145,37 @@ function App() {
           />
           
           {/* ========== GESTIÓN ADMINISTRATIVA ========== */}
-          <Route 
-            path="usuarios" 
+          <Route
+            path="usuarios"
             element={
               <ProtectedRoute permission="users.read">
                 <VistaUsuarios />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="documentacion" 
+          <Route
+            path="roles"
+            element={
+              <ProtectedRoute permission="roles.read">
+                <VistaRoles />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="permisos"
+            element={
+              <ProtectedRoute permission="roles.read">
+                <VistaPermisos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="documentacion"
             element={
               <ProtectedRoute permission="settings.read">
                 <VistaDocumentos />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route 
             path="configuracion" 

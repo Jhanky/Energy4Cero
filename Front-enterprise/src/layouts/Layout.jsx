@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Settings, Truck, Building2, LogOut, Package, FileText, Receipt } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Settings, Truck, Building2, LogOut, Package, FileText, Receipt, Shield, Key } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Sidebar, SidebarBody, SidebarSection, SidebarSectionItem, SidebarLink } from '../shared/ui/CustomSidebar';
 import { Button } from '../ui/button';
@@ -21,6 +21,8 @@ function Layout() {
       color: 'blue',
       paginas: [
         { id: 'usuarios', nombre: 'Gestión de Usuarios', icono: Users, path: '/usuarios' },
+        { id: 'roles', nombre: 'Gestión de Roles', icono: Shield, path: '/roles' },
+        { id: 'permisos', nombre: 'Gestión de Permisos', icono: Key, path: '/permisos' },
         { id: 'configuracion', nombre: 'Configuración', icono: Settings, path: '/configuracion' }
       ]
     },
@@ -115,6 +117,8 @@ function Layout() {
       const pagePermissions = {
         // Administrativa
         'usuarios': ['users.read'],
+        'roles': ['roles.read'],
+        'permisos': ['roles.read'],
         'configuracion': ['settings.read'],
 
         // Comercial

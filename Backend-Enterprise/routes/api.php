@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\CityController;
@@ -77,6 +78,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [RoleController::class, 'update'])->middleware('permission:roles.update');
         Route::delete('/{id}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete');
         Route::patch('/{id}/toggle-status', [RoleController::class, 'toggleStatus'])->middleware('permission:roles.update');
+    });
+
+    // Gestión de Permisos
+    Route::prefix('permissions')->group(function () {
+        Route::get('/', [PermissionController::class, 'index'])->middleware('permission:roles.read');
+        Route::get('/statistics', [PermissionController::class, 'statistics'])->middleware('permission:roles.read');
+        Route::get('/modules', [PermissionController::class, 'modules'])->middleware('permission:roles.read');
+        Route::get('/generate-key', [PermissionController::class, 'generateKey'])->middleware('permission:roles.read');
+        Route::get('/{id}', [PermissionController::class, 'show'])->middleware('permission:roles.read');
+        Route::post('/', [PermissionController::class, 'store'])->middleware('permission:roles.create');
+        Route::put('/{id}', [PermissionController::class, 'update'])->middleware('permission:roles.update');
+        Route::delete('/{id}', [PermissionController::class, 'destroy'])->middleware('permission:roles.delete');
+        Route::patch('/{id}/toggle-status', [PermissionController::class, 'toggleStatus'])->middleware('permission:roles.update');
     });
 
     // Gestión de Clientes
