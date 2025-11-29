@@ -1,0 +1,15 @@
+{
+  "project": "VatioCore",
+  "servers": {
+    "frontend": {
+      "url": "http://localhost:5173",
+      "command": "cd Front-enterprise && npm run dev",
+      "restart": "manual"
+    },
+    "backend": {
+      "url": "http://127.0.0.1:8000",
+      "command": "cd Backend-Enterprise && php artisan serve --host=127.0.0.1 --port=8000",
+      "restart": "manual"
+    }
+  }
+}
