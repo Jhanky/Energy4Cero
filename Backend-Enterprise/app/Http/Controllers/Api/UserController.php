@@ -360,7 +360,7 @@ class UserController extends Controller
         try {
             $options = [
                 'roles' => Role::where('is_active', true)
-                    ->select('id', 'name', 'slug')
+                    ->select('role_id', 'name', 'slug')
                     ->orderBy('name')
                     ->get(),
                 'departments' => User::select('department')
