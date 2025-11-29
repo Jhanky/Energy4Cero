@@ -172,4 +172,14 @@ class Project extends Model
     {
         return $query->where('current_state_id', $stateId);
     }
+
+    public function remissions(): HasMany
+    {
+        return $this->hasMany(Remission::class);
+    }
+
+    public function projectMaterials(): HasMany
+    {
+        return $this->hasMany(ProjectMaterial::class);
+    }
 }

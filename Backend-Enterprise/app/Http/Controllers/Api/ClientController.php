@@ -149,6 +149,7 @@ class ClientController extends Controller
                 'city_id' => 'nullable|exists:cities,city_id',
                 'address' => 'nullable|string|max:500',
                 'monthly_consumption' => 'nullable|numeric|min:0',
+                'tarifa' => 'nullable|numeric|min:0',
                 'notes' => 'nullable|string|max:1000',
                 'is_active' => 'boolean',
             ], [
@@ -162,6 +163,8 @@ class ClientController extends Controller
                 'city_id.exists' => 'La ciudad seleccionada no existe',
                 'responsible_user_id.exists' => 'El usuario responsable seleccionado no existe',
                 'nic.unique' => 'Este número de identificación ya está registrado',
+                'tarifa.numeric' => 'La tarifa debe ser un número',
+                'tarifa.min' => 'La tarifa debe ser mayor o igual a 0',
             ]);
 
             if ($validator->fails()) {
@@ -239,6 +242,7 @@ class ClientController extends Controller
                 'address' => 'nullable|string|max:500',
 
                 'monthly_consumption' => 'nullable|numeric|min:0',
+                'tarifa' => 'nullable|numeric|min:0',
                 'notes' => 'nullable|string|max:1000',
                 'is_active' => 'sometimes|boolean',
             ], [
@@ -253,6 +257,8 @@ class ClientController extends Controller
                 'city_id.exists' => 'La ciudad seleccionada no existe',
 
                 'nic.unique' => 'Este número de identificación ya está registrado',
+                'tarifa.numeric' => 'La tarifa debe ser un número',
+                'tarifa.min' => 'La tarifa debe ser mayor o igual a 0',
             ]);
 
             if ($validator->fails()) {

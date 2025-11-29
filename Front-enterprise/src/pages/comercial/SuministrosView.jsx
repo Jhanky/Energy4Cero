@@ -208,6 +208,7 @@ const SuministrosView = () => {
       } else if (activeTab === 'inversores') {
         setFormData({
           name: '',
+          brand: '',
           model: '',
           power_output_kw: '',
           grid_type: '',
@@ -220,6 +221,7 @@ const SuministrosView = () => {
         setFormData({
           name: '',
           model: '',
+          brand: '',
           type: '',
           ah_capacity: '',
           voltage: '',
@@ -247,6 +249,7 @@ const SuministrosView = () => {
       } else if (activeTab === 'inversores') {
         setFormData({
           name: item.name || '',
+          brand: item.brand || '',
           model: item.model || '',
           power_output_kw: item.power_output_kw || '',
           grid_type: item.grid_type || '',
@@ -260,6 +263,7 @@ const SuministrosView = () => {
         setFormData({
           name: item.name || '',
           model: item.model || '',
+          brand: item.brand || '',
           type: item.type || '',
           ah_capacity: item.ah_capacity || '',
           voltage: item.voltage || '',
@@ -292,13 +296,7 @@ const SuministrosView = () => {
       // Log para debug: mostrar qué datos se están enviando
       console.log('🔄 Modo de formulario:', modalMode);
       console.log('🔄 Pestaña activa:', activeTab);
-      // Filtrar formData para excluir name si está presente
-      const filteredFormData = { ...formData };
-      if ('name' in filteredFormData) {
-        delete filteredFormData.name;
-        console.log('⚠️ Campo "name" filtrado de formData para evitar conflictos');
-      }
-      console.log('🔄 Datos del formulario:', filteredFormData);
+      console.log('🔄 Datos del formulario:', formData);
       console.log('🔄 Selected item ID:', selectedItem?.id);
       
       let response;
@@ -307,7 +305,7 @@ const SuministrosView = () => {
       // Añadir datos al FormData con logs
       for (const key in formData) {
         // Excluir campos que no deben enviarse explícitamente
-        if (key !== 'technical_sheet_path' && key !== 'is_active' && key !== 'name') { // Don't send path if new file is uploaded, don't send is_active as it's set by default in backend, and don't send name as it was removed
+        if (key !== 'technical_sheet_path' && key !== 'is_active') { // Don't send path if new file is uploaded, don't send is_active as it's set by default in backend
           if (key === 'technical_sheet' && formData[key] instanceof File) {
             // Solo enviar el archivo si realmente existe
             dataToSend.append(key, formData[key]);
@@ -590,8 +588,11 @@ const SuministrosView = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  getCurrentData().map((item) => (
-                    <TableRow key={item.id} className="transition-all duration-200 hover:bg-gray-50">
+                  getCurrentData().map((item) => {
+                    // Determinar el ID correcto según el tipo de suministro
+                    const itemId = item.id || item.panel_id || item.inverter_id || item.battery_id || Math.random();
+                    return (
+                      <TableRow key={itemId} className="transition-all duration-200 hover:bg-gray-50">
                       <TableCell className="font-medium">{item.model || item.name}</TableCell>
                       <TableCell>{item.brand || '-'}</TableCell>
                       {activeTab === 'paneles' && <TableCell>{item.power_output || '-'}</TableCell>}
@@ -642,7 +643,8 @@ const SuministrosView = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

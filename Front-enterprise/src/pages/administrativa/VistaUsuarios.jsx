@@ -30,19 +30,12 @@ const VistaUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    inactive: 0,
-    by_role: {},
-    by_department: {}
-  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    role: '',
-    status: ''
+    role_id: '',
+    is_active: ''
   });
 
   // Estados de paginación
@@ -95,18 +88,33 @@ const VistaUsuarios = () => {
   const loadUsers = async (page = 1, perPage = pagination.per_page) => {
     try {
       setLoading(true);
+      // Filtrar solo parámetros con valores válidos (no vacíos ni undefined)
+      const validFilters = Object.fromEntries(
+        Object.entries(filters).filter(([key, value]) =>
+          value !== '' && value !== undefined && value !== null
+        )
+      );
+
       const params = {
         search: debouncedSearchTerm,
         page,
         per_page: perPage,
-        ...filters
+        ...validFilters
       };
+
+      console.log('🔍 Parámetros enviados al backend:', params);
+      console.log('🎯 Filtros aplicados (originales):', filters);
+      console.log('🎯 Filtros válidos (filtrados):', validFilters);
 
       const response = await dataService.getUsers(params);
 
+      console.log('📥 Respuesta del backend:', response);
+
       if (response.success) {
-        setUsuarios(response.data.users || []);
-        setStats(response.data.stats || {});
+        const usersData = response.data.users || [];
+        console.log('👥 Usuarios recibidos:', usersData.length, 'usuarios');
+
+        setUsuarios(usersData);
         setPagination(response.data.pagination || {
           current_page: 1,
           per_page: 15,
@@ -116,9 +124,11 @@ const VistaUsuarios = () => {
           to: 0
         });
       } else {
+        console.error('❌ Error en respuesta:', response.message);
         showNotification('error', 'Error al cargar usuarios: ' + response.message);
       }
     } catch (error) {
+      console.error('💥 Error de conexión:', error);
       showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
       setLoading(false);
@@ -305,64 +315,6 @@ const VistaUsuarios = () => {
         </button>
       </div>
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Total Usuarios</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.total}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Activos</p>
-              <p className="text-2xl font-bold text-green-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.active}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <UserCheck className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Inactivos</p>
-              <p className="text-2xl font-bold text-red-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.inactive}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <UserX className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Administradores</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (stats.by_role?.Administrador || 0)}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Filtros y búsqueda */}
       <Card>
@@ -370,11 +322,11 @@ const VistaUsuarios = () => {
           <CardTitle>Usuarios</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-4 mb-4">
             <AdvancedSearchBar
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Buscar usuarios..."
+              placeholder="Buscar por nombre, email o cargo..."
               loading={loading && searchTerm.length > 0}
               className="flex-1 min-w-[200px]"
             />
@@ -382,17 +334,17 @@ const VistaUsuarios = () => {
               filters={filters}
               onFilterChange={setFilters}
               filterOptions={[
-                {
-                  key: 'role',
+                ...(roles.length > 0 ? [{
+                  key: 'role_id',
                   label: 'Rol',
-                  options: roles.map(role => ({ value: role.slug, label: role.name }))
-                },
+                  options: roles.map(role => ({ value: role.role_id, label: role.name }))
+                }] : []),
                 {
-                  key: 'status',
+                  key: 'is_active',
                   label: 'Estado',
                   options: [
-                    { value: 'active', label: 'Activos' },
-                    { value: 'inactive', label: 'Inactivos' }
+                    { value: 'true', label: 'Activos' },
+                    { value: 'false', label: 'Inactivos' }
                   ]
                 }
               ]}

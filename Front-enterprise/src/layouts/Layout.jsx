@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Shield, Settings, Truck, Building2, LogOut, Package, FileText, Receipt } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Settings, Truck, Building2, LogOut, Package, FileText, Receipt } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Sidebar, SidebarBody, SidebarSection, SidebarSectionItem, SidebarLink } from '../shared/ui/CustomSidebar';
 import { Button } from '../ui/button';
@@ -21,7 +21,6 @@ function Layout() {
       color: 'blue',
       paginas: [
         { id: 'usuarios', nombre: 'Gestión de Usuarios', icono: Users, path: '/usuarios' },
-        { id: 'roles', nombre: 'Roles y Permisos', icono: Shield, path: '/roles' },
         { id: 'configuracion', nombre: 'Configuración', icono: Settings, path: '/configuracion' }
       ]
     },
@@ -45,8 +44,7 @@ function Layout() {
         { id: 'resumen', nombre: 'Resumen Ejecutivo', icono: LayoutDashboard, path: '/resumen' },
         { id: 'proyectos', nombre: 'Proyectos', icono: FolderKanban, path: '/proyectos' },
         { id: 'analisis', nombre: 'Análisis', icono: BarChart3, path: '/analisis' },
-        { id: 'aire', nombre: 'Seguimiento Air-e', icono: Leaf, path: '/aire' },
-        { id: 'tareas', nombre: 'Tareas', icono: FolderKanban, path: '/tareas' }
+        { id: 'aire', nombre: 'Seguimiento Air-e', icono: Leaf, path: '/aire' }
       ]
     },
     {
@@ -74,8 +72,7 @@ function Layout() {
         { id: 'servicio', nombre: 'Servicio Técnico', icono: Wrench, path: '/servicio' },
         { id: 'mantenimiento', nombre: 'Mantenimiento', icono: Settings, path: '/mantenimiento' }
       ]
-    },
-
+    }
   ];
 
   // Efecto para refrescar usuario y verificar permisos al cargar
@@ -118,7 +115,6 @@ function Layout() {
       const pagePermissions = {
         // Administrativa
         'usuarios': ['users.read'],
-        'roles': ['roles.read'],
         'configuracion': ['settings.read'],
 
         // Comercial
@@ -131,7 +127,6 @@ function Layout() {
         'proyectos': ['projects.read'],
         'analisis': ['projects.read'],
         'aire': ['projects.read'],
-        'tareas': ['tasks.read'],
 
         // Contable
         'financiera': ['financial.read'],

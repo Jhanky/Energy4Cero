@@ -23,6 +23,7 @@ class Client extends Model
         'address',
 
         'monthly_consumption',
+        'tarifa',
         'notes',
         'is_active',
     ];
@@ -30,7 +31,7 @@ class Client extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'monthly_consumption' => 'decimal:2',
-
+        'tarifa' => 'decimal:2',
     ];
 
     protected $appends = ['id'];

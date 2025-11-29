@@ -13,8 +13,6 @@ use App\Http\Controllers\Api\InverterController;
 use App\Http\Controllers\Api\BatteryController;
 use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\QuotationStatusController;
-use App\Http\Controllers\Api\TaskController;
-use App\Http\Controllers\Api\TaskEvidenceController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\MilestoneController;
 use App\Http\Controllers\Api\DocumentController;
@@ -27,6 +25,9 @@ use App\Http\Controllers\Api\WarehouseController;
 use App\Http\Controllers\Api\ToolController;
 use App\Http\Controllers\Api\MaterialController;
 use App\Http\Controllers\Api\MaintenanceController;
+use App\Http\Controllers\Api\RemissionController;
+use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\ProjectMaterialController;
 
 /*
 |--------------------------------------------------------------------------
@@ -154,16 +155,29 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Gestión de Baterías
     Route::get('batteries/statistics', [BatteryController::class, 'statistics'])->middleware('permission:batteries.read');
-    Route::apiResource('batteries', BatteryController::class);
-    Route::patch('batteries/{id}/toggle-status', [BatteryController::class, 'toggleStatus']);
+    Route::middleware(['permission:batteries.read'])->group(function () {
+        Route::get('batteries', [BatteryController::class, 'index']);
+        Route::get('batteries/{id}', [BatteryController::class, 'show']);
+    });
+    Route::middleware(['permission:batteries.create'])->group(function () {
+        Route::post('batteries', [BatteryController::class, 'store']);
+    });
+    Route::middleware(['permission:batteries.update'])->group(function () {
+        Route::put('batteries/{id}', [BatteryController::class, 'update']);
+        Route::patch('batteries/{id}/toggle-status', [BatteryController::class, 'toggleStatus']);
+    });
+    Route::middleware(['permission:batteries.delete'])->group(function () {
+        Route::delete('batteries/{id}', [BatteryController::class, 'destroy']);
+    });
 
     // Gestión de Cotizaciones
-    Route::apiResource('quotations', QuotationController::class);
-    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus']);
     Route::get('quotations/statistics', [QuotationController::class, 'getStatistics']);
     Route::get('quotation-statuses', [QuotationController::class, 'getStatuses']);
+    Route::apiResource('quotations', QuotationController::class);
+    Route::patch('quotations/{quotation}/status', [QuotationController::class, 'updateStatus']);
     Route::get('quotations/{quotation}/pdf', [QuotationController::class, 'generatePDF']);
     Route::get('quotations/{quotation}/pdfkit', [QuotationController::class, 'generatePDFKit']);
+    Route::get('quotations/{quotation}/simple-pdf', [QuotationController::class, 'generateSimplePDF']);
 
     // Gestión de Estados de Cotizaciones
     Route::apiResource('quotation-statuses', QuotationStatusController::class);
@@ -178,26 +192,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     });
 
-    // Gestión de Tareas
-    Route::prefix('tasks')->group(function () {
-        Route::get('/', [TaskController::class, 'index'])->middleware('permission:tasks.read');
-        Route::get('/statistics', [TaskController::class, 'statistics'])->middleware('permission:tasks.read');
-        Route::get('/my-tasks', [TaskController::class, 'myTasks'])->middleware('permission:tasks.read');
-        Route::get('/{id}', [TaskController::class, 'show'])->middleware('permission:tasks.read');
-        Route::post('/', [TaskController::class, 'store'])->middleware('permission:tasks.create');
-        Route::put('/{id}', [TaskController::class, 'update'])->middleware('permission:tasks.update');
-        Route::patch('/{id}/status', [TaskController::class, 'updateStatus'])->middleware('permission:tasks.update');
-        Route::delete('/{id}', [TaskController::class, 'destroy'])->middleware('permission:tasks.delete');
-    });
 
-    // Gestión de Evidencias de Tareas
-    Route::prefix('task-evidences')->group(function () {
-        Route::get('/task/{taskId}', [TaskEvidenceController::class, 'index']);
-        Route::get('/{evidenceId}', [TaskEvidenceController::class, 'show']);
-        Route::get('/{evidenceId}/url', [TaskEvidenceController::class, 'getFileUrl']);
-        Route::post('/task/{taskId}', [TaskEvidenceController::class, 'store']);
-        Route::delete('/{taskId}/{evidenceId}', [TaskEvidenceController::class, 'destroy']);
-    });
 
     // Gestión de Proyectos
     Route::prefix('projects')->group(function () {
@@ -238,6 +233,17 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('/', [DocumentController::class, 'indexByMilestone'])->middleware('permission:projects.read');
                 Route::post('/', [DocumentController::class, 'storeForMilestone'])->middleware('permission:projects.create');
             });
+        });
+
+        // Rutas de materiales del proyecto
+        Route::prefix('{project}/materials')->group(function () {
+            Route::get('/', [ProjectMaterialController::class, 'index'])->middleware('permission:projects.read');
+            Route::get('/statistics', [ProjectMaterialController::class, 'statistics'])->middleware('permission:projects.read');
+            Route::get('/{id}', [ProjectMaterialController::class, 'show'])->middleware('permission:projects.read');
+            Route::post('/', [ProjectMaterialController::class, 'store'])->middleware('permission:projects.update');
+            Route::post('/bulk', [ProjectMaterialController::class, 'bulkStore'])->middleware('permission:projects.update');
+            Route::put('/{id}', [ProjectMaterialController::class, 'update'])->middleware('permission:projects.update');
+            Route::delete('/{id}', [ProjectMaterialController::class, 'destroy'])->middleware('permission:projects.update');
         });
     });
 
@@ -297,6 +303,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [MaterialController::class, 'update'])->middleware('permission:inventory.update');
         Route::delete('/{id}', [MaterialController::class, 'destroy'])->middleware('permission:inventory.delete');
         Route::patch('/{id}/toggle-status', [MaterialController::class, 'toggleStatus'])->middleware('permission:inventory.update');
+        Route::patch('/{id}/toggle-status', [MaterialController::class, 'toggleStatus'])->middleware('permission:inventory.update');
+    });
+
+    // Gestión de Remisiones
+    Route::prefix('remissions')->group(function () {
+        Route::get('/', [RemissionController::class, 'index'])->middleware('permission:inventory.read');
+        Route::get('/{id}', [RemissionController::class, 'show'])->middleware('permission:inventory.read');
+        Route::post('/', [RemissionController::class, 'store'])->middleware('permission:inventory.create');
+    });
+
+    // Gestión de Inventario
+    Route::prefix('inventory')->group(function () {
+        Route::post('/add-stock', [InventoryController::class, 'addStock'])->middleware('permission:inventory.update');
+        Route::get('/history/{materialId}', [InventoryController::class, 'history'])->middleware('permission:inventory.read');
     });
 
     // Gestión de Tickets

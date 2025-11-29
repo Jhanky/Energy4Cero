@@ -29,6 +29,7 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
     city_id: '',
     address: '',
     monthly_consumption: '',
+    tarifa: '',
     notes: '',
     is_active: true
   };
@@ -236,6 +237,20 @@ const ClienteModal = ({ show, mode, formData, onFormChange, onSubmit, onClose, i
                   onChange={(e) => handleInputChange('monthly_consumption', e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Tarifa ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={safeFormData.tarifa}
+                  onChange={(e) => handleInputChange('tarifa', e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="0.00"
                 />
               </div>
 

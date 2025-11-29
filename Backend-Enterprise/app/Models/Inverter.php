@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Inverter extends Model
 {
@@ -27,4 +28,21 @@ class Inverter extends Model
         'price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Relación con productos usados en cotizaciones
+     */
+    public function usedProducts(): HasMany
+    {
+        return $this->hasMany(UsedProduct::class, 'product_id', 'inverter_id')
+                    ->where('product_type', 'inverter');
+    }
+
+    /**
+     * Verificar si el inversor está siendo usado en cotizaciones
+     */
+    public function isInUse(): bool
+    {
+        return $this->usedProducts()->exists();
+    }
 }

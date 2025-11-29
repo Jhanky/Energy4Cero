@@ -10,7 +10,7 @@ const AdvancedFilters = ({
   const handleFilterChange = (filterKey, value) => {
     const newFilters = {
       ...filters,
-      [filterKey]: value === "none" ? "" : value
+      [filterKey]: value === "all" ? "" : value
     };
     onFilterChange(newFilters);
   };
@@ -22,19 +22,19 @@ const AdvancedFilters = ({
   return (
     <div className={`flex flex-wrap gap-4 ${className}`}>
       {filterOptions.map((filterOption) => {
-        const { key, label, options = [], placeholder = `Seleccionar ${label.toLowerCase()}` } = filterOption;
+        const { key, label, options = [], placeholder = `Filtrar por ${label}` } = filterOption;
 
         return (
-          <div key={key} className="min-w-[180px]">
-            <Select
-              value={filters[key] || "none"}
-              onValueChange={(value) => handleFilterChange(key, value)}
-            >
-              <SelectTrigger className="w-full">
+          <div key={key} className="min-w-[200px]">
+              <Select
+                value={filters[key] || undefined}
+                onValueChange={(value) => handleFilterChange(key, value)}
+              >
+              <SelectTrigger className="w-full h-12 py-3">
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Todos</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
                 {options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}

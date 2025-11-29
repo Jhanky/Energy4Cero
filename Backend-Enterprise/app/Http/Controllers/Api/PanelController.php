@@ -197,15 +197,13 @@ class PanelController extends Controller
             // Verificar si el panel existe
             $panel = Panel::findOrFail($id);
 
-            // Verificar si el panel está siendo usado en algún proyecto
-            // (esto es un ejemplo, deberías adaptarlo a tu lógica de negocio)
-            // $isInUse = $panel->projects()->exists();
-            // if ($isInUse) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'No se puede eliminar el panel porque está siendo usado en proyectos'
-            //     ], 400);
-            // }
+            // Verificar si el panel está siendo usado en cotizaciones
+            if ($panel->isInUse()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar el panel porque está siendo usado en cotizaciones'
+                ], 400);
+            }
 
             // Eliminar ficha técnica si existe
             if ($panel->technical_sheet_path) {

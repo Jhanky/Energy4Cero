@@ -82,6 +82,7 @@ class InverterController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:inverters,name',
+                'brand' => 'required|string|max:255',
                 'model' => 'required|string|max:255|unique:inverters,model',
                 'power_output_kw' => 'required|numeric|min:0',
                 'grid_type' => 'required|string|max:255',
@@ -154,6 +155,7 @@ class InverterController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:inverters,name,' . $id . ',inverter_id',
+                'brand' => 'required|string|max:255',
                 'model' => 'required|string|max:255|unique:inverters,model,' . $id . ',inverter_id',
                 'power_output_kw' => 'required|numeric|min:0',
                 'grid_type' => 'required|string|max:255',
@@ -210,13 +212,23 @@ class InverterController extends Controller
     public function destroy(string $id)
     {
         try {
+            // Verificar si el inversor existe
             $inverter = Inverter::findOrFail($id);
 
-            // Eliminar ficha técnica antigua si existe
+            // Verificar si el inversor está siendo usado en cotizaciones
+            if ($inverter->isInUse()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar el inversor porque está siendo usado en cotizaciones'
+                ], 400);
+            }
+
+            // Eliminar ficha técnica si existe
             if ($inverter->technical_sheet_path) {
                 Storage::disk('public')->delete($inverter->technical_sheet_path);
             }
 
+            // Eliminar el inversor
             $inverter->delete();
 
             return response()->json([
@@ -224,6 +236,7 @@ class InverterController extends Controller
                 'message' => 'Inversor eliminado exitosamente'
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error al eliminar inversor: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar el inversor',

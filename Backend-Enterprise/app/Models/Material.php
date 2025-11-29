@@ -58,4 +58,14 @@ class Material extends Model
     {
         return $query->where('warehouse_id', $warehouseId);
     }
+
+    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InventoryTransaction::class);
+    }
+
+    public function remissionItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RemissionItem::class);
+    }
 }

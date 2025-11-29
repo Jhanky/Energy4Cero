@@ -10,7 +10,6 @@ import VistaFinanciera from './features/contable/VistaFinanciera';
 import { VistaProveedores, VistaCentrosCostos, VistaFacturas } from './pages/contable';
 import VistaServicioTecnico from './features/soporte/ui/VistaServicioTecnico';
 import VistaUsuarios from './pages/administrativa/VistaUsuarios';
-import VistaRoles from './features/administrativa/VistaRoles';
 import VistaConfiguracion from './pages/administrativa/VistaConfiguracion';
 import VistaClientes from './pages/comercial/VistaClientes';
 import VistaCotizaciones from './pages/comercial/VistaCotizaciones';
@@ -24,6 +23,14 @@ import VistaMantenimiento from './pages/soporte/VistaMantenimiento';
 import ComingSoon from './widgets/ComingSoon';
 import { AuthProvider } from './contexts/AuthContext';
 
+// Páginas de error
+import Error404 from './pages/errors/Error404';
+import Error500 from './pages/errors/Error500';
+import Error403 from './pages/errors/Error403';
+import Error401 from './pages/errors/Error401';
+import Error503 from './pages/errors/Error503';
+import ErrorGeneric from './pages/errors/ErrorGeneric';
+
 // Páginas de inicio por rol
 import HomeAdministrativa from './pages/administrativa/HomeAdministrativa';
 import HomeComercial from './pages/comercial/HomeComercial';
@@ -31,10 +38,6 @@ import HomeProyectos from './pages/proyectos/HomeProyectos';
 import HomeContable from './pages/contable/HomeContable';
 import HomeSoporte from './features/soporte/ui/HomeSoporte';
 // import ListaTickets from './views/soporte/ui/ListaTickets'; // TODO: Componente no encontrado, pendiente de implementar
-
-
-// Página de tareas
-import VistaTareas from './pages/tareas/VistaTareas';
 
 function App() {
   return (
@@ -104,17 +107,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          
-          {/* ========== GESTIÓN DE TAREAS ========== */}
-          <Route 
-            path="tareas" 
-            element={
-              <ProtectedRoute permission="tasks.read">
-                <VistaTareas />
-              </ProtectedRoute>
-            } 
-          />
-          
+
           {/* ========== GESTIÓN DE PROYECTOS ========== */}
           <Route 
             path="resumen" 
@@ -155,14 +148,6 @@ function App() {
             element={
               <ProtectedRoute permission="users.read">
                 <VistaUsuarios />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="roles" 
-            element={
-              <ProtectedRoute permission="roles.read">
-                <VistaRoles />
               </ProtectedRoute>
             } 
           />
@@ -327,14 +312,18 @@ function App() {
             }
           />
 
-          {/* Ruta no encontrada - redirigir basado en permisos */}
-          <Route 
-            path="*" 
-            element={
-              <ProtectedRoute>
-                <DefaultRedirect />
-              </ProtectedRoute>
-            } 
+          {/* ========== PÁGINAS DE ERROR ========== */}
+          <Route path="error/404" element={<Error404 />} />
+          <Route path="error/500" element={<Error500 />} />
+          <Route path="error/403" element={<Error403 />} />
+          <Route path="error/401" element={<Error401 />} />
+          <Route path="error/503" element={<Error503 />} />
+          <Route path="error" element={<ErrorGeneric />} />
+
+          {/* Ruta no encontrada - mostrar página 404 */}
+          <Route
+            path="*"
+            element={<Error404 />}
           />
         </Route>
       </Routes>

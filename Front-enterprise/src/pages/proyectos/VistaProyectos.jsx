@@ -1,7 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Download, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {
+  FolderOpen,
+  Edit,
+  Trash2,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  Loader2,
+  User,
+  DollarSign
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import { StatusBadge } from '../../ui/status-badge';
+import dataService from '../../services/dataService';
+import { useAuth } from '../../contexts/AuthContext';
+import ProyectoDeleteModal from './ProyectoDeleteModal';
 import {
   Notification,
   AdvancedSearchBar,
@@ -9,18 +24,26 @@ import {
   AdvancedPagination,
   SkeletonTable
 } from '../../shared/ui';
-import { calcularDiasEnEstado, calcularDiasTotales, calcularDiasRetraso, obtenerColorSemaforo, calcularPorcentajePorEstado } from '../../data/proyectos';
-import proyectosService from '../../services/proyectosService';
-import projectService from '../../services/projectService';
-import DetalleProyecto from './DetalleProyecto';
 
-const VistaProyectos = ({ estados }) => {
+const VistaProyectos = () => {
+  const { user: loggedInUser } = useAuth();
+
+  // Estados para datos del backend
+  const [proyectos, setProyectos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    completed: 0,
+    in_progress: 0
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: '',
-    department: '',
-    semaphore: ''
+    client_id: ''
   });
 
   // Estados de paginación
@@ -33,76 +56,96 @@ const VistaProyectos = ({ estados }) => {
     to: 0
   });
 
-  const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
-  const [proyectos, setProyectos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editingEstado, setEditingEstado] = useState(null);
+  // Estados para modales
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create', 'edit', 'view'
+  const [selectedProyecto, setSelectedProyecto] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // Estados para formulario
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    client_id: '',
+    project_state_id: 1,
+    estimated_cost: '',
+    start_date: '',
+    end_date: '',
+    responsible_user_id: '',
+    location: '',
+    notes: ''
+  });
+
+  // Estados para clientes y usuarios
+  const [clientes, setClientes] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Estados para notificaciones
   const [notification, setNotification] = useState(null);
 
-  // Fetch proyectos with pagination
-  const fetchProyectos = useCallback(async (page = 1, perPage = pagination.per_page) => {
-    setLoading(true);
+  // Función para mostrar notificaciones
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
+
+  // Función para obtener el estado del proyecto como string para StatusBadge
+  const getEstadoProyecto = (estadoId) => {
+    const estadoMap = {
+      1: 'preparacion-solicitud',
+      2: 'solicitud-presentada',
+      3: 'revision-completitud',
+      4: 'revision-tecnica',
+      5: 'concepto-viabilidad',
+      6: 'instalacion-proceso',
+      7: 'inspeccion-pendiente',
+      8: 'inspeccion-realizada',
+      9: 'observaciones-inspeccion',
+      10: 'aprobacion-final',
+      11: 'conectado-operando',
+      12: 'suspendido',
+      13: 'cancelado'
+    };
+    return estadoMap[estadoId] || 'neutral';
+  };
+
+  // Función para cargar proyectos con paginación
+  const loadProyectos = async (page = 1, perPage = pagination.per_page) => {
     try {
+      setLoading(true);
       const params = {
         search: debouncedSearchTerm,
         page,
         per_page: perPage,
         ...filters
       };
-      const response = await proyectosService.getProjects(params);
+
+      const response = await dataService.getProjects(params);
 
       if (response.success) {
-        // Mapear los datos del backend al formato esperado por el frontend
-        const proyectosMapeados = response.data.data.map(proyecto => ({
-          id: proyecto.code, // Usar el código del proyecto como ID para mostrar
-          backendId: proyecto.id, // Guardar el ID real del backend
-          nombre: proyecto.name,
-          cliente: proyecto.client ? {
-            id: proyecto.client.id,
-            name: proyecto.client.name,
-            client_type: proyecto.client.client_type,
-            email: proyecto.client.email,
-            phone: proyecto.client.phone,
-            nic: proyecto.client.nic,
-            address: proyecto.client.address,
-            monthly_consumption: proyecto.client.monthly_consumption,
-            notes: proyecto.client.notes,
-            is_active: proyecto.client.is_active,
-            department: proyecto.client.department,
-            city: proyecto.client.city,
-            responsibleUser: proyecto.client.responsibleUser,
-            responsible_user_id: proyecto.client.responsible_user_id,
-            department_id: proyecto.client.department_id,
-            city_id: proyecto.client.city_id
-          } : 'Cliente no especificado',
-          capacidadAC: proyecto.capacity_ac,
-          estadoActual: proyecto.current_state_id,
-          porcentajeAvance: proyecto.progress_percentage || 0, // Usar el porcentaje de avance del backend
-          departamento: proyecto.department,
-          municipio: proyecto.municipality,
-          direccion: proyecto.address,
-          responsableActual: proyecto.current_responsible || 'No asignado',
-          fechaInicio: proyecto.start_date,
-          fechaEstimadaFinalizacion: proyecto.estimated_completion_date,
-          fechaSolicitudPresentada: proyecto.application_date,
-          fechaRevisionCompletiudIniciada: proyecto.completeness_start_date,
-          fechaRevisionCompletiudFinalizada: proyecto.completeness_end_date,
-          fechaRevisionTecnicaIniciada: proyecto.technical_review_start_date,
-          fechaRevisionTecnicaFinalizada: proyecto.technical_review_end_date,
-          fechaConceptoViabilidad: proyecto.feasibility_concept_date,
-          fechaInstalacionIniciada: proyecto.installation_start_date,
-          fechaInstalacionFinalizada: proyecto.installation_end_date,
-          fechaInspeccionSolicitada: proyecto.inspection_requested_date,
-          fechaInspeccionRealizada: proyecto.inspection_performed_date,
-          fechaAprobacionFinal: proyecto.final_approval_date,
-          fechaConexion: proyecto.connection_date,
-          observacionesAire: proyecto.aire_observations || '',
-          accionesCorrectivas: proyecto.corrective_actions || '',
-          comentariosInternos: proyecto.internal_comments || '',
-          proximaAccion: proyecto.next_action || '',
-          fechaProximaAccion: proyecto.next_action_date
+        let proyectosData = [];
+
+        if (response.data && response.data.projects && Array.isArray(response.data.projects)) {
+          proyectosData = response.data.projects;
+        } else if (response.data && Array.isArray(response.data)) {
+          proyectosData = response.data;
+        }
+
+        // Formatear proyectos
+        const formattedProyectos = proyectosData.map(proyecto => ({
+          ...proyecto,
+          status: getEstadoProyecto(proyecto.project_state_id),
+          client: proyecto.client || null,
+          responsible_user: proyecto.responsible_user || null
         }));
-        setProyectos(proyectosMapeados);
+
+        setProyectos(formattedProyectos);
+        setStats(response.data.stats || {});
         setPagination(response.data.pagination || {
           current_page: 1,
           per_page: 15,
@@ -112,18 +155,41 @@ const VistaProyectos = ({ estados }) => {
           to: 0
         });
       } else {
-        console.error('Error al cargar los proyectos:', response.message);
-        setProyectos([]);
-        setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
+        showNotification('error', 'Error al cargar proyectos: ' + response.message);
       }
     } catch (error) {
-      console.error('Error al cargar los proyectos:', error);
-      setProyectos([]);
-      setPagination(prev => ({ ...prev, total: 0, last_page: 1, from: 0, to: 0 }));
+      showNotification('error', 'Error de conexión: ' + error.message);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchTerm, filters, pagination.per_page]);
+  };
+
+  // Cargar clientes y usuarios
+  const loadClientes = async () => {
+    try {
+      const response = await dataService.getClients();
+      if (response.success) {
+        setClientes(response.data.data || response.data);
+      }
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const response = await dataService.getUsers();
+      if (response.success) {
+        setUsers(response.data.data || response.data);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const loadData = async () => {
+    await Promise.all([loadProyectos(), loadClientes(), loadUsers()]);
+  };
 
   // Efecto para debounce de búsqueda
   useEffect(() => {
@@ -133,93 +199,204 @@ const VistaProyectos = ({ estados }) => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Cargar datos iniciales
+  // Cargar datos al montar el componente y cuando cambien los filtros o búsqueda
   useEffect(() => {
-    fetchProyectos();
-  }, []);
-
-  // Cargar datos cuando cambien los filtros o búsqueda
-  useEffect(() => {
-    if (debouncedSearchTerm !== undefined) {
-      fetchProyectos();
-    }
+    loadProyectos();
   }, [debouncedSearchTerm, filters]);
 
-  const departamentos = [...new Set(proyectos.map(p => p.departamento))];
-
-  // Función para notificaciones
-  const showNotification = (type, message) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 5000);
+  // Funciones para formatear fechas
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  const obtenerNombreEstado = (idEstado) => {
-    const estado = estados.find(e => e.id === idEstado);
-    return estado ? estado.nombre : 'Desconocido';
+  const formatCurrency = (amount) => {
+    if (!amount) return '-';
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP'
+    }).format(amount);
   };
 
-  const obtenerColorEstado = (idEstado) => {
-    const estado = estados.find(e => e.id === idEstado);
-    return estado ? estado.color : '#94a3b8';
+  // Funciones para modales
+  const handleEdit = (proyecto) => {
+    setModalMode('edit');
+    setSelectedProyecto(proyecto);
+    setFormData({
+      name: proyecto.name || '',
+      description: proyecto.description || '',
+      client_id: proyecto.client_id || '',
+      project_state_id: proyecto.project_state_id || 1,
+      estimated_cost: proyecto.estimated_cost || '',
+      start_date: proyecto.start_date || '',
+      end_date: proyecto.end_date || '',
+      responsible_user_id: proyecto.responsible_user_id || '',
+      location: proyecto.location || '',
+      notes: proyecto.notes || ''
+    });
+    setShowModal(true);
   };
 
-  const renderSemaforo = (proyecto) => {
-    const color = obtenerColorSemaforo(proyecto);
-    const colorMap = {
-      'verde': 'bg-green-500',
-      'amarillo': 'bg-yellow-500',
-      'rojo': 'bg-red-500'
-    };
-    return <div className={`w-3 h-3 rounded-full ${colorMap[color]}`}></div>;
+  const handleDelete = (proyecto) => {
+    setUserToDelete(proyecto);
+    setShowDeleteModal(true);
   };
 
-  const handleEstadoClick = (proyecto) => {
-    setEditingEstado(proyecto.id);
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedProyecto(null);
   };
 
-  const handleEstadoChange = async (proyectoId, nuevoEstado) => {
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
+  };
+
+  // Funciones CRUD
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      // Obtener el ID real del proyecto para la API
-      const proyectoOriginal = proyectos.find(p => p.id === proyectoId);
-      if (!proyectoOriginal) return;
-
-      // Llamar a la API para actualizar el estado del proyecto
-      const response = await projectService.updateProjectState(proyectoOriginal.backendId, {
-        current_state_id: parseInt(nuevoEstado)
-      });
-
-      if (response.success) {
-        showNotification('success', `Estado actualizado a: ${obtenerNombreEstado(parseInt(nuevoEstado))}`);
-        fetchProyectos(pagination.current_page); // Refresh the list maintaining current page
-      } else {
-        console.error('Error al actualizar el estado del proyecto:', response.message);
-        showNotification('error', response.message || 'Error al actualizar el estado del proyecto');
+      // Validaciones
+      if (!formData.name?.trim()) {
+        throw new Error('El nombre del proyecto es obligatorio');
       }
 
+      if (!formData.client_id) {
+        throw new Error('Debe seleccionar un cliente');
+      }
+
+      let response;
+      if (modalMode === 'create') {
+        response = await dataService.createProject(formData);
+      } else {
+        response = await dataService.updateProject(selectedProyecto.id, formData);
+      }
+
+      if (response && response.success) {
+        showNotification('success', modalMode === 'create' ? 'Proyecto creado exitosamente' : 'Proyecto actualizado exitosamente');
+        closeModal();
+        loadData();
+      } else {
+        throw new Error(response?.message || 'Error al procesar el proyecto');
+      }
     } catch (error) {
-      console.error('Error al actualizar el estado del proyecto:', error);
-      showNotification('error', error.message || 'Error al actualizar el estado del proyecto');
+      showNotification('error', error.message || 'Error al procesar el proyecto');
     } finally {
-      setEditingEstado(null);
+      setIsSubmitting(false);
     }
   };
 
-  const handleEstadoBlur = () => {
-    setEditingEstado(null);
-  };
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
 
-  if (proyectoSeleccionado) {
-    return (
-      <DetalleProyecto 
-        proyecto={proyectoSeleccionado} 
-        estados={estados}
-        onVolver={() => setProyectoSeleccionado(null)}
-      />
-    );
-  }
+    setIsDeleting(true);
+    try {
+      const response = await dataService.deleteProject(userToDelete.id);
+
+      if (response && response.success) {
+        showNotification('success', 'Proyecto eliminado exitosamente');
+        closeDeleteModal();
+        loadData();
+      } else {
+        throw new Error(response?.message || 'Error al eliminar el proyecto');
+      }
+    } catch (error) {
+      showNotification('error', error.message || 'Error al eliminar el proyecto');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Gestión de Proyectos</h1>
+          <p className="text-slate-600 mt-1">Administra los proyectos de la empresa</p>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <div className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-red-800 font-medium">Error de carga</p>
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Total Proyectos</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.total}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FolderOpen className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">En Progreso</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.in_progress}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Completados</p>
+              <p className="text-2xl font-bold text-green-600">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.completed}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <FolderOpen className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Valor Total</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : formatCurrency(stats.total_value)}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Filtros y búsqueda */}
       <Card>
         <CardHeader>
@@ -241,27 +418,29 @@ const VistaProyectos = ({ estados }) => {
                 {
                   key: 'status',
                   label: 'Estado',
-                  options: estados.map(estado => ({
-                    value: estado.id.toString(),
-                    label: estado.nombre
-                  }))
-                },
-                {
-                  key: 'department',
-                  label: 'Departamento',
-                  options: departamentos.map(dep => ({
-                    value: dep,
-                    label: dep
-                  }))
-                },
-                {
-                  key: 'semaphore',
-                  label: 'Semáforo',
                   options: [
-                    { value: 'verde', label: '🟢 En tiempo' },
-                    { value: 'amarillo', label: '🟡 Atención' },
-                    { value: 'rojo', label: '🔴 Retrasado' }
+                    { value: 'preparacion-solicitud', label: 'Preparación' },
+                    { value: 'solicitud-presentada', label: 'Solicitud Presentada' },
+                    { value: 'revision-completitud', label: 'Revisión Completitud' },
+                    { value: 'revision-tecnica', label: 'Revisión Técnica' },
+                    { value: 'concepto-viabilidad', label: 'Concepto Viabilidad' },
+                    { value: 'instalacion-proceso', label: 'Instalación Proceso' },
+                    { value: 'inspeccion-pendiente', label: 'Inspección Pendiente' },
+                    { value: 'inspeccion-realizada', label: 'Inspección Realizada' },
+                    { value: 'observaciones-inspeccion', label: 'Observaciones Inspección' },
+                    { value: 'aprobacion-final', label: 'Aprobación Final' },
+                    { value: 'conectado-operando', label: 'Conectado Operando' },
+                    { value: 'suspendido', label: 'Suspendido' },
+                    { value: 'cancelado', label: 'Cancelado' }
                   ]
+                },
+                {
+                  key: 'client_id',
+                  label: 'Cliente',
+                  options: clientes.map(cliente => ({
+                    value: cliente.id.toString(),
+                    label: cliente.name
+                  }))
                 }
               ]}
             />
@@ -272,23 +451,21 @@ const VistaProyectos = ({ estados }) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID Proyecto</TableHead>
-                  <TableHead>Nombre</TableHead>
+                  <TableHead>Proyecto</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Capacidad (kW)</TableHead>
-                  <TableHead>Estado Actual</TableHead>
-                  <TableHead>Días en Estado</TableHead>
-                  <TableHead>Avance</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead>Responsable</TableHead>
+                  <TableHead>Costo Estimado</TableHead>
+                  <TableHead>Fechas</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className={`transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
                 {loading ? (
-                  <SkeletonTable columns={9} rows={pagination.per_page || 15} asRows={true} />
+                  <SkeletonTable columns={7} rows={pagination.per_page || 15} asRows={true} />
                 ) : proyectos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       No se encontraron proyectos
                     </TableCell>
                   </TableRow>
@@ -296,96 +473,73 @@ const VistaProyectos = ({ estados }) => {
                   proyectos.map((proyecto) => (
                     <TableRow key={proyecto.id} className="transition-all duration-200 hover:bg-gray-50">
                       <TableCell>
-                        <span className="text-sm font-medium text-slate-900">{proyecto.id}</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm font-medium text-slate-900">{proyecto.nombre}</div>
-                        <div className="text-sm text-slate-500">{proyecto.departamento} - {proyecto.municipio}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm text-slate-900">
-                          {typeof proyecto.cliente === 'object' && proyecto.cliente ? proyecto.cliente.name : proyecto.cliente}
-                        </div>
-                        {typeof proyecto.cliente === 'object' && proyecto.cliente && proyecto.cliente.email && (
-                          <div className="text-sm text-slate-500">{proyecto.cliente.email}</div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-slate-900">{proyecto.capacidadAC}</span>
-                      </TableCell>
-                      <TableCell>
-                        {editingEstado === proyecto.id ? (
-                          <div className="relative">
-                            <select
-                              value={proyecto.estadoActual}
-                              onChange={(e) => handleEstadoChange(proyecto.id, e.target.value)}
-                              onBlur={handleEstadoBlur}
-                              className="w-full px-3 py-1.5 text-sm border border-green-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none"
-                              autoFocus
-                            >
-                              {estados.map(estado => (
-                                <option key={estado.id} value={estado.id}>
-                                  {estado.nombre}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
-                              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                              </svg>
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            <FolderOpen className="w-5 h-5 text-white" />
                           </div>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:shadow-sm transition-all border ${obtenerColorEstado(proyecto.estadoActual) === '#94a3b8' ? 'bg-gray-100 text-gray-800 border-gray-200' : ''}`}
-                            style={{
-                              backgroundColor: obtenerColorEstado(proyecto.estadoActual) !== '#94a3b8' ? obtenerColorEstado(proyecto.estadoActual) : undefined,
-                              color: obtenerColorEstado(proyecto.estadoActual) !== '#94a3b8' ? 'white' : undefined
-                            }}
-                            onClick={() => handleEstadoClick(proyecto)}
-                            title="Clic para cambiar estado"
-                          >
-                            <div className={`w-2 h-2 rounded-full ${obtenerColorEstado(proyecto.estadoActual) !== '#94a3b8' ? 'bg-current' : 'bg-gray-400'}`}></div>
-                            {obtenerNombreEstado(proyecto.estadoActual)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-slate-900">{calcularDiasEnEstado(proyecto)} días</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-200 rounded-full h-2 w-20">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full transition-all"
-                              style={{ width: `${calcularPorcentajePorEstado(proyecto.estadoActual || 0)}%` }}
-                            ></div>
+                          <div>
+                            <p className="font-medium text-slate-900">{proyecto.name}</p>
+                            <p className="text-sm text-slate-600">{proyecto.description}</p>
                           </div>
-                          <span className="text-sm text-slate-900">{calcularPorcentajePorEstado(proyecto.estadoActual || 0)}%</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-600">{proyecto.responsableActual}</span>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-slate-900">
+                            {proyecto.client?.name || 'Sin cliente'}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {proyecto.client?.email || ''}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge variant={proyecto.status} size="sm">
+                          {proyecto.status.replace('-', ' ').toUpperCase()}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-slate-900">
+                            {proyecto.responsible_user?.name || 'No asignado'}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {proyecto.responsible_user?.email || ''}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium text-slate-900">
+                          {formatCurrency(proyecto.estimated_cost)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Calendar className="w-4 h-4" />
+                            Inicio: {formatDate(proyecto.start_date)}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Calendar className="w-4 h-4" />
+                            Fin: {formatDate(proyecto.end_date)}
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <button
-                            onClick={() => {
-                              setProyectoSeleccionado({
-                                ...proyecto,
-                                id: proyecto.backendId
-                              });
-                            }}
-                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Ver detalles"
+                            onClick={() => handleEdit(proyecto)}
+                            className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Editar proyecto"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                            title="Exportar"
+                            onClick={() => handleDelete(proyecto)}
+                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar proyecto"
                           >
-                            <Download className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </TableCell>
@@ -399,14 +553,23 @@ const VistaProyectos = ({ estados }) => {
           {/* Paginación */}
           <AdvancedPagination
             pagination={pagination}
-            onPageChange={(page) => fetchProyectos(page)}
-            onPerPageChange={(perPage) => fetchProyectos(1, perPage)}
+            onPageChange={(page) => loadProyectos(page)}
+            onPerPageChange={(perPage) => loadProyectos(1, perPage)}
             loading={loading}
           />
         </CardContent>
       </Card>
 
-      {/* Modal de Notificación */}
+      {/* Modal de Confirmación de Eliminación */}
+      <ProyectoDeleteModal
+        show={showDeleteModal}
+        proyecto={userToDelete}
+        onConfirm={confirmDelete}
+        onCancel={closeDeleteModal}
+        isDeleting={isDeleting}
+      />
+
+      {/* Notificación Toast */}
       <Notification
         notification={notification}
         onClose={() => setNotification(null)}

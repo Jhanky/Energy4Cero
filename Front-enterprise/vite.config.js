@@ -12,7 +12,6 @@ export default defineConfig({
     },
   },
   server: {
-    historyApiFallback: true,
     // Add CORS headers for development
     cors: {
       origin: "*", // Allow all origins during development

@@ -29,7 +29,7 @@ import { cotizacionesService } from '../../services/cotizacionesService';
 
 const VistaCotizaciones = () => {
   const navigate = useNavigate();
-  
+
   const [cotizaciones, setCotizaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,6 +51,15 @@ const VistaCotizaciones = () => {
     last_page: 1,
     from: 0,
     to: 0
+  });
+
+  // Estados para estadísticas
+  const [statistics, setStatistics] = useState({
+    total: 0,
+    sum_total_value: 0,
+    sum_power_kwp: 0,
+    by_status: [],
+    by_system_type: []
   });
 
   // Estados para modales
@@ -106,13 +115,13 @@ const VistaCotizaciones = () => {
     if (price == null || isNaN(price) || price === '') {
       return '0 COP';
     }
-    
+
     const numericValue = typeof price === 'string' ? parseFloat(price) : price;
-    
+
     if (isNaN(numericValue)) {
       return '0 COP';
     }
-    
+
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
@@ -132,13 +141,13 @@ const VistaCotizaciones = () => {
     if (power == null || isNaN(power) || power === '') {
       return '0 kW';
     }
-    
+
     const numericValue = typeof power === 'string' ? parseFloat(power) : power;
-    
+
     if (isNaN(numericValue)) {
       return '0 kW';
     }
-    
+
     return `${numericValue} kW`;
   };
 
@@ -165,7 +174,7 @@ const VistaCotizaciones = () => {
       showNotification('error', 'Información de cotización inválida para eliminación.');
       return;
     }
-    
+
     setCotizacionToDelete(cotizacion);
     setShowDeleteModal(true);
   };
@@ -189,13 +198,14 @@ const VistaCotizaciones = () => {
         showNotification('error', 'Datos de cotización inválidos.');
         return;
       }
-      
+
       let response;
       if (modalMode === 'create') {
         response = await cotizacionesService.createCotizacion(cotizacionData);
         if (response.success) {
           showNotification('success', 'Cotización creada exitosamente');
           fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
+          fetchStatistics(debouncedSearchTerm, filters); // Refresh statistics
         } else {
           showNotification('error', response.message || 'Error al crear la cotización.');
         }
@@ -206,11 +216,12 @@ const VistaCotizaciones = () => {
           showNotification('error', 'ID de cotización no válido para actualización.');
           return;
         }
-        
+
         response = await cotizacionesService.updateCotizacion(cotizacionId, cotizacionData);
         if (response.success) {
           showNotification('success', 'Cotización actualizada exitosamente');
           fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
+          fetchStatistics(debouncedSearchTerm, filters); // Refresh statistics
         } else {
           showNotification('error', response.message || 'Error al actualizar la cotización.');
         }
@@ -220,7 +231,7 @@ const VistaCotizaciones = () => {
       }
       closeModal();
     } catch (error) {
-      
+
       showNotification('error', error.message || 'Error al procesar la solicitud.');
     } finally {
       setIsSubmitting(false);
@@ -235,17 +246,18 @@ const VistaCotizaciones = () => {
         closeDeleteModal();
         return;
       }
-      
+
       const response = await cotizacionesService.deleteCotizacion(cotizacionToDelete.id);
       if (response.success) {
         showNotification('success', 'Cotización eliminada exitosamente');
         fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
+        fetchStatistics(); // Refresh statistics
       } else {
         showNotification('error', response.message || 'Error al eliminar la cotización.');
       }
       closeDeleteModal();
     } catch (error) {
-      
+
       showNotification('error', error.message || 'Error al eliminar la cotización.');
     }
   };
@@ -257,18 +269,30 @@ const VistaCotizaciones = () => {
         showNotification('error', 'Información de cotización inválida para descarga.');
         return;
       }
-      
+
       showNotification('info', `Generando PDF para cotización ${cotizacion.number}...`);
-      const response = await cotizacionesService.generatePDF(cotizacion.id);
-      if (response.success && response.data?.url) {
-        window.open(response.data.url, '_blank'); // Open PDF in new tab
-        showNotification('success', 'PDF generado y descargando...');
-      } else {
-        showNotification('error', response.message || 'Error al generar el PDF.');
-      }
+
+      // Recibir blob del servicio
+      const { blob, filename } = await cotizacionesService.generatePDF(cotizacion.id);
+
+      // Crear URL temporal para el blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Crear enlace temporal y hacer clic para descargar
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Limpiar recursos
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      showNotification('success', 'PDF descargado exitosamente');
     } catch (error) {
-      
-      showNotification('error', error.message || 'Error de conexión al generar PDF.');
+      console.error('Error al descargar PDF:', error);
+      showNotification('error', error.message || 'Error al generar el PDF.');
     }
   };
 
@@ -285,35 +309,36 @@ const VistaCotizaciones = () => {
         setEditingEstado(null);
         return;
       }
-      
+
       // Validate that quotationStatuses is available
       if (!Array.isArray(quotationStatuses) || quotationStatuses.length === 0) {
         showNotification('error', 'No se han cargado los estados de cotización.');
         setEditingEstado(null);
         return;
       }
-      
+
       // Verificar que el statusId existe en la lista de estados para evitar inyección de IDs inválidos
       const status = quotationStatuses.find(s => s.status_id == statusId);
       if (!status) {
         console.error('Estado no encontrado:', statusId);
-        console.error('Estados disponibles:', quotationStatuses.map(s => ({id: s.status_id, name: s.name})));
+        console.error('Estados disponibles:', quotationStatuses.map(s => ({ id: s.status_id, name: s.name })));
         showNotification('error', 'Estado de cotización no encontrado con ID: ' + statusId);
         setEditingEstado(null);
         return;
       }
-      
+
       const response = await cotizacionesService.changeCotizacionStatus(cotizacionId, statusId);
       if (response.success) {
         showNotification('success', `Estado actualizado a: ${status.name}`);
         fetchCotizaciones(pagination.current_page); // Refresh the list maintaining current page
+        fetchStatistics(); // Refresh statistics
       } else {
         console.error('Error en la respuesta del backend:', response);
         showNotification('error', response.message || 'Error al actualizar el estado.');
       }
       setEditingEstado(null);
     } catch (error) {
-      
+
       console.error('Error al actualizar estado:', error);
       showNotification('error', error.message || 'Error al actualizar el estado.');
       setEditingEstado(null);
@@ -395,13 +420,13 @@ const VistaCotizaciones = () => {
             }
           }));
           setCotizaciones(formattedCotizaciones);
-          setPagination(response.data.pagination || {
-            current_page: 1,
-            per_page: 15,
-            total: 0,
-            last_page: 1,
-            from: 0,
-            to: 0
+          setPagination({
+            current_page: response.data.current_page || 1,
+            per_page: response.data.per_page || 15,
+            total: response.data.total || 0,
+            last_page: response.data.last_page || 1,
+            from: response.data.from || 0,
+            to: response.data.to || 0
           });
         } else {
           setCotizaciones([]);
@@ -425,8 +450,8 @@ const VistaCotizaciones = () => {
   const fetchQuotationStatuses = useCallback(async () => {
     try {
       const response = await cotizacionesService.getStatuses();
-       // Debug log
-      
+      // Debug log
+
       // Handle different response formats
       // If response is an array (direct response), use it directly
       if (Array.isArray(response)) {
@@ -454,7 +479,7 @@ const VistaCotizaciones = () => {
           setQuotationStatuses(response.data);
         } else {
           setQuotationStatuses([]);
-          
+
         }
       }
       // If response has no success field but is an object with an array-like structure
@@ -463,7 +488,7 @@ const VistaCotizaciones = () => {
       }
       // If empty array is returned (which seems to be the case from the logs)
       else if (Array.isArray(response) && response.length === 0) {
-        
+
         setQuotationStatuses([
           { id: 1, name: 'borrador' },
           { id: 2, name: 'enviada' },
@@ -474,7 +499,7 @@ const VistaCotizaciones = () => {
       }
       // If response has a message field but no success field
       else {
-        
+
         // Provide fallback statuses if the API fails
         setQuotationStatuses([
           { id: 1, name: 'borrador' },
@@ -485,7 +510,7 @@ const VistaCotizaciones = () => {
         ]);
       }
     } catch (err) {
-      
+
       // Provide fallback statuses if the API fails
       setQuotationStatuses([
         { id: 1, name: 'borrador' },
@@ -494,6 +519,23 @@ const VistaCotizaciones = () => {
         { id: 4, name: 'aceptada' },
         { id: 5, name: 'rechazada' }
       ]);
+    }
+  }, []);
+
+  // Fetch statistics
+  const fetchStatistics = useCallback(async (searchTerm = '', filters = {}) => {
+    try {
+      const params = {
+        search: searchTerm,
+        ...filters
+      };
+      const response = await cotizacionesService.getStatistics(params);
+      if (response.success && response.data) {
+        setStatistics(response.data);
+      }
+    } catch (err) {
+      console.error('Error al cargar estadísticas:', err);
+      // Mantener valores por defecto en caso de error
     }
   }, []);
 
@@ -509,12 +551,14 @@ const VistaCotizaciones = () => {
   useEffect(() => {
     fetchCotizaciones();
     fetchQuotationStatuses();
+    fetchStatistics('', filters);
   }, []);
 
   // Cargar datos cuando cambien los filtros o búsqueda
   useEffect(() => {
     if (debouncedSearchTerm !== undefined) {
       fetchCotizaciones();
+      fetchStatistics(debouncedSearchTerm, filters);
     }
   }, [debouncedSearchTerm, filters]);
 
@@ -528,7 +572,7 @@ const VistaCotizaciones = () => {
           <h1 className="text-3xl font-bold text-slate-900">Gestión de Cotizaciones</h1>
           <p className="text-slate-600 mt-1">Administra las cotizaciones y propuestas comerciales</p>
         </div>
-        <button 
+        <button
           onClick={handleCreate}
           className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center gap-2"
         >
@@ -545,7 +589,7 @@ const VistaCotizaciones = () => {
             <div>
               <p className="text-sm font-medium text-slate-600">Total Cotizaciones</p>
               <div className="text-2xl font-bold text-slate-900">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : pagination.total || 0}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : statistics.total || 0}
               </div>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -559,7 +603,10 @@ const VistaCotizaciones = () => {
             <div>
               <p className="text-sm font-medium text-slate-600">Aceptadas</p>
               <div className="text-2xl font-bold text-green-600">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : 'N/A'}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> :
+                  (statistics.by_status?.find(s => s.status_id === 4)?.count || 0) +
+                  (statistics.by_status?.find(s => s.status_id === 6)?.count || 0)
+                }
               </div>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -573,7 +620,9 @@ const VistaCotizaciones = () => {
             <div>
               <p className="text-sm font-medium text-slate-600">Valor Total</p>
               <div className="text-2xl font-bold text-purple-600">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div> : 'N/A'}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div> :
+                  formatPrice(statistics.sum_total_value || 0)
+                }
               </div>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -587,7 +636,9 @@ const VistaCotizaciones = () => {
             <div>
               <p className="text-sm font-medium text-slate-600">Potencia Total</p>
               <div className="text-2xl font-bold text-orange-600">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div> : 'N/A'}
+                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div> :
+                  formatPower(statistics.sum_power_kwp || 0)
+                }
               </div>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">

@@ -41,24 +41,35 @@ const InverterModal = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Nombre *</label>
-        <input 
-          type="text" 
-          name="name" 
-          value={formData.name || ''} 
-          onChange={handleInputChange} 
-          className="w-full px-3 py-2 border border-slate-300 rounded-md" 
-          required 
+        <input
+          type="text"
+          name="name"
+          value={formData.name || ''}
+          onChange={handleInputChange}
+          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Marca *</label>
+        <input
+          type="text"
+          name="brand"
+          value={formData.brand || ''}
+          onChange={handleInputChange}
+          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+          required
         />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Modelo *</label>
-        <input 
-          type="text" 
-          name="model" 
-          value={formData.model || ''} 
-          onChange={handleInputChange} 
-          className="w-full px-3 py-2 border border-slate-300 rounded-md" 
-          required 
+        <input
+          type="text"
+          name="model"
+          value={formData.model || ''}
+          onChange={handleInputChange}
+          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+          required
         />
       </div>
       <div>

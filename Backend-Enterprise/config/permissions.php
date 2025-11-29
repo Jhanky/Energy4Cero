@@ -19,12 +19,7 @@ return [
         'update' => 'projects.update',
         'delete' => 'projects.delete',
     ],
-    'tasks' => [
-        'create' => 'tasks.create',
-        'read' => 'tasks.read',
-        'update' => 'tasks.update',
-        'delete' => 'tasks.delete',
-    ],
+
     'inventory' => [
         'create' => 'inventory.create',
         'read' => 'inventory.read',
@@ -56,5 +51,11 @@ return [
         'read' => 'reports.read',
         'update' => 'reports.update',
         'delete' => 'reports.delete',
+    ],
+    'batteries' => [
+        'create' => 'batteries.create',
+        'read' => 'batteries.read',
+        'update' => 'batteries.update',
+        'delete' => 'batteries.delete',
     ],
 ];

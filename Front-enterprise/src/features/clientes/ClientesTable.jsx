@@ -14,6 +14,7 @@ const ClientesTable = ({ clientes }) => {
               <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Ciudad</th>
               <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Dirección</th>
               <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Consumo</th>
+              <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Tarifa</th>
               <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Fecha de Creación</th>
               <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Responsable</th>
               <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Acciones</th>
@@ -60,6 +61,11 @@ const ClientesTable = ({ clientes }) => {
                   </span>
                 </td>
                 <td className="px-6 py-4">
+                  <span className="text-sm text-slate-900">
+                    {cliente.tarifa ? `$${parseFloat(cliente.tarifa).toFixed(2)}` : 'N/A'}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
                   <span className="text-sm text-slate-600">
                     {cliente.created_at ? new Date(cliente.created_at).toLocaleDateString('es-CO') : 'N/A'}
                   </span>
@@ -92,4 +98,3 @@ const ClientesTable = ({ clientes }) => {
 };
 
 export default ClientesTable;
-

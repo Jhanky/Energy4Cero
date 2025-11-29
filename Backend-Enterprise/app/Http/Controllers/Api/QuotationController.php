@@ -22,6 +22,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuotationController extends Controller
 {
@@ -31,31 +33,65 @@ class QuotationController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            // Log para diagnóstico
+            $user = auth()->user();
+            \Log::info('📥 Solicitud de cotizaciones', [
+                'user_id' => $user ? $user->id : 'no-auth',
+                'user_email' => $user ? $user->email : 'no-auth',
+                'user_role' => $user && $user->role ? $user->role->slug : 'no-role',
+                'request_params' => $request->all()
+            ]);
+
             $query = Quotation::with([
-                'client:client_id,name,nic,client_type,department_id,city_id',
-                'user:id,name,email'
+                'client:client_id,name,nic,client_type,department_id,city_id,email',
+                'user:id,name,email',
+                'status:status_id,name,color'
             ]);
 
             // FILTRO DE SEGURIDAD: Usuarios comerciales solo ven sus propias cotizaciones
-            $user = auth()->user();
             if ($user && $user->role && $user->role->slug === 'comercial') {
+                \Log::info('🔒 Aplicando filtro de seguridad para usuario comercial', [
+                    'user_id' => $user->id
+                ]);
                 $query->where('user_id', $user->id);
+            } else {
+                \Log::info('✅ Usuario NO es comercial, mostrando todas las cotizaciones', [
+                    'user_role' => $user && $user->role ? $user->role->slug : 'no-role'
+                ]);
             }
 
-            // Filtros
-            if ($request->has('status_id')) {
+            // Filtros - IMPORTANTE: Usar filled() en lugar de has() para evitar filtrar con valores null
+            if ($request->filled('status_id')) {
                 $query->where('status_id', $request->status_id);
             }
 
-            if ($request->has('system_type')) {
+            if ($request->filled('status')) {
+                $query->whereHas('status', function ($statusQuery) use ($request) {
+                    $statusQuery->where('name', $request->status);
+                });
+            }
+
+            if ($request->filled('client_type')) {
+                $query->whereHas('client', function ($clientQuery) use ($request) {
+                    $clientQuery->where('client_type', $request->client_type);
+                });
+            }
+
+            if ($request->filled('seller')) {
+                $query->whereHas('user', function ($userQuery) use ($request) {
+                    $userQuery->where('name', 'LIKE', '%' . $request->seller . '%');
+                });
+            }
+
+            if ($request->filled('system_type')) {
                 $query->where('system_type', $request->system_type);
             }
 
-            if ($request->has('client_id')) {
+            if ($request->filled('client_id')) {
                 $query->where('client_id', $request->client_id);
             }
 
-            if ($request->has('search')) {
+            if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
                     $q->where('project_name', 'like', "%{$search}%")
@@ -66,12 +102,25 @@ class QuotationController extends Controller
                 });
             }
 
+            // Log de la consulta SQL antes de ejecutar
+            \Log::info('🔍 SQL Query', [
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
+
             // Ordenamiento
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
 
             $quotations = $query->paginate($request->get('per_page', 15));
+
+            \Log::info('📊 Resultado de la consulta', [
+                'total' => $quotations->total(),
+                'count' => $quotations->count(),
+                'per_page' => $quotations->perPage(),
+                'current_page' => $quotations->currentPage()
+            ]);
 
             // Agregar número de cotización y datos adicionales
             $quotations->getCollection()->transform(function ($quotation) {
@@ -1028,10 +1077,48 @@ class QuotationController extends Controller
     /**
      * 7. Estadísticas de Cotizaciones
      */
-    public function statistics(Request $request): JsonResponse
+    public function getStatistics(Request $request): JsonResponse
     {
         try {
-            $total = Quotation::count();
+            $query = Quotation::query();
+    
+            // FILTRO DE SEGURIDAD: Usuarios comerciales solo ven sus propias cotizaciones
+            $user = auth()->user();
+            if ($user && $user->role && $user->role->slug === 'comercial') {
+                $query->where('user_id', $user->id);
+            }
+    
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('project_name', 'like', "%{$search}%")
+                      ->orWhereHas('client', function($clientQuery) use ($search) {
+                          $clientQuery->where('name', 'like', "%{$search}%")
+                                    ->orWhere('nic', 'like', "%{$search}%");
+                      });
+                });
+            }
+    
+            if ($request->has('status_id')) {
+                $query->where('status_id', $request->status_id);
+            }
+            if ($request->has('status')) {
+                $query->whereHas('status', function ($statusQuery) use ($request) {
+                    $statusQuery->where('name', $request->status);
+                });
+            }
+            if ($request->has('client_type')) {
+                $query->whereHas('client', function ($clientQuery) use ($request) {
+                    $clientQuery->where('client_type', $request->client_type);
+                });
+            }
+            if ($request->has('seller')) {
+                $query->whereHas('user', function ($userQuery) use ($request) {
+                    $userQuery->where('name', 'LIKE', '%' . $request->seller . '%');
+                });
+            }
+    
+            $total = $query->count();
 
             $byStatus = Quotation::select('status_id', \DB::raw('COUNT(*) as count'))
                 ->groupBy('status_id')
@@ -1047,6 +1134,7 @@ class QuotationController extends Controller
                 });
 
             $sumTotal = Quotation::sum('total_value');
+            $sumPower = Quotation::sum('power_kwp');
 
             $bySystemType = Quotation::select('system_type', \DB::raw('COUNT(*) as count'))
                 ->groupBy('system_type')
@@ -1063,6 +1151,7 @@ class QuotationController extends Controller
                 'data' => [
                     'total' => $total,
                     'sum_total_value' => (float) $sumTotal,
+                    'sum_power_kwp' => (float) $sumPower,
                     'by_status' => $byStatus,
                     'by_system_type' => $bySystemType,
                 ],
@@ -1102,9 +1191,9 @@ class QuotationController extends Controller
     }
 
     /**
-     * 9. Generar PDF de cotización
+     * 9. Generar PDF de cotización enviando datos a n8n y devolviendo PDF binario
      */
-    public function generatePDF($id): JsonResponse
+    public function generatePDF($id)
     {
         try {
             $quotation = Quotation::with([
@@ -1116,52 +1205,90 @@ class QuotationController extends Controller
             ])->find($id);
 
             if (!$quotation) {
+                \Log::warning('Intento de generar PDF para cotización no encontrada', ['quotation_id' => $id]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Cotización no encontrada'
                 ], 404);
             }
 
-            // Esta es una implementación básica - en un entorno real, usarías una biblioteca como DomPDF o similar
-            $pdfData = [
+            \Log::info('Iniciando generación de PDF para cotización', [
+                'quotation_id' => $quotation->quotation_id,
                 'quotation_number' => $quotation->quotation_number,
-                'project_name' => $quotation->project_name,
-                'client_name' => $quotation->client->name,
-                'client_email' => $quotation->client->email,
-                'client_phone' => $quotation->client->phone,
-                'total_value' => $quotation->total_value,
-                'status' => $quotation->status->name,
-                'created_at' => $quotation->created_at->format('d/m/Y'),
-                'items' => $quotation->items->map(function($item) {
-                    return [
-                        'description' => $item->description,
-                        'quantity' => $item->quantity,
-                        'unit_price' => $item->unit_price,
-                        'total_value' => $item->total_value
-                    ];
-                }),
-                'used_products' => $quotation->usedProducts->map(function($product) {
-                    return [
-                        'product_type' => $product->product_type,
-                        'quantity' => $product->quantity,
-                        'unit_price' => $product->unit_price,
-                        'total_value' => $product->total_value
-                    ];
-                })
-            ];
+                'client_name' => $quotation->client->name
+            ]);
 
-            // En una implementación real, aquí generarías el PDF y devolverías la URL
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'pdf_data' => $pdfData,
-                    'url' => '/pdfs/cotizacion_' . $quotation->quotation_id . '.pdf',
-                    'filename' => 'cotizacion_' . $quotation->quotation_number . '.pdf'
-                ],
-                'message' => 'PDF generado exitosamente'
+            // Enviar webhook a n8n y esperar respuesta con PDF binario
+            $webhookResult = $this->sendQuotationWebhook($quotation);
+
+            if (!$webhookResult['success']) {
+                \Log::error('Error en webhook para generación de PDF', [
+                    'quotation_id' => $quotation->quotation_id,
+                    'error' => $webhookResult['error'] ?? 'Error desconocido'
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al generar PDF: ' . ($webhookResult['error'] ?? 'Error desconocido'),
+                    'error' => $webhookResult['error'] ?? 'Error en webhook'
+                ], 500);
+            }
+
+            // Verificar que se recibió el contenido del PDF
+            $pdfContent = $webhookResult['pdf_content'] ?? null;
+            if (!$pdfContent) {
+                \Log::error('Webhook exitoso pero sin contenido PDF', [
+                    'quotation_id' => $quotation->quotation_id,
+                    'webhook_result' => $webhookResult
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PDF generado pero no se recibió el contenido del archivo'
+                ], 500);
+            }
+
+            // Validar que el contenido sea un PDF válido
+            if (!$this->isValidPdfContent($pdfContent)) {
+                \Log::error('Contenido recibido no es un PDF válido', [
+                    'quotation_id' => $quotation->quotation_id,
+                    'content_length' => strlen($pdfContent),
+                    'content_preview' => substr($pdfContent, 0, 100)
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El archivo generado no es un PDF válido'
+                ], 500);
+            }
+
+            // Nombre del archivo para descarga
+            $filename = 'cotizacion_' . $quotation->quotation_number . '.pdf';
+
+            \Log::info('PDF generado exitosamente', [
+                'quotation_id' => $quotation->quotation_id,
+                'filename' => $filename,
+                'content_length' => strlen($pdfContent)
+            ]);
+
+            // Devolver PDF binario con headers optimizados para descarga
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+                'Content-Length' => strlen($pdfContent),
+                'Content-Transfer-Encoding' => 'binary',
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'private, no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+                'X-Content-Type-Options' => 'nosniff',
+                'X-Frame-Options' => 'DENY',
+                'X-XSS-Protection' => '1; mode=block'
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Error inesperado al generar PDF de cotización', [
+                'quotation_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error al generar PDF de cotización',
@@ -1223,5 +1350,548 @@ class QuotationController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * 11. Generar PDF simple con detalles de la cotización
+     */
+    public function generateSimplePDF($id)
+    {
+        try {
+            $quotation = Quotation::with([
+                'client.department',
+                'client.city',
+                'user',
+                'status',
+                'usedProducts',
+                'items'
+            ])->find($id);
+
+            if (!$quotation) {
+                \Log::warning('Intento de generar PDF simple para cotización no encontrada', ['quotation_id' => $id]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cotización no encontrada'
+                ], 404);
+            }
+
+            \Log::info('Generando PDF simple para cotización', [
+                'quotation_id' => $quotation->quotation_id,
+                'quotation_number' => $quotation->quotation_number
+            ]);
+
+            // Crear PDF con DomPDF usando vista Blade
+            $pdf = Pdf::loadView('pdf.quotation-details', compact('quotation'));
+
+            // Configurar opciones del PDF
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'isPhpEnabled' => true,
+                'dpi' => 96,
+                'defaultPaperSize' => 'a4',
+                'defaultPaperOrientation' => 'portrait'
+            ]);
+
+            // Obtener el contenido binario del PDF usando output() en lugar de download()
+            $pdfContent = $pdf->output();
+
+            // Nombre del archivo
+            $filename = 'detalles_cotizacion_' . $quotation->quotation_number . '.pdf';
+
+            \Log::info('PDF simple generado exitosamente', [
+                'quotation_id' => $quotation->quotation_id,
+                'filename' => $filename,
+                'content_length' => strlen($pdfContent)
+            ]);
+
+            // Devolver PDF como respuesta HTTP directa con headers correctos para descarga
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename),
+                'Content-Length' => strlen($pdfContent),
+                'Content-Transfer-Encoding' => 'binary',
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'private, no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+                'X-Content-Type-Options' => 'nosniff',
+                'X-Frame-Options' => 'DENY',
+                'X-XSS-Protection' => '1; mode=block'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al generar PDF simple de cotización', [
+                'quotation_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar PDF simple de cotización',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Método auxiliar para obtener texto del tipo de producto
+     */
+    private function getProductTypeText(string $productType): string
+    {
+        $types = [
+            'panel' => 'Panel Solar',
+            'inverter' => 'Inversor',
+            'battery' => 'Batería'
+        ];
+
+        return $types[$productType] ?? ucfirst($productType);
+    }
+
+    /**
+     * Enviar webhook a n8n con datos calculados de la cotización y esperar respuesta con PDF binario
+     */
+    private function sendQuotationWebhook(Quotation $quotation): array
+    {
+        $maxRetries = 3;
+        $retryDelay = 2; // segundos
+
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                \Log::info('Intento ' . $attempt . '/' . $maxRetries . ' de envío webhook para cotización #' . $quotation->quotation_id);
+
+                // Variables de entrada según documentación
+                $potencia_kwp = $quotation->power_kwp;
+                $inversion_total = (int)$quotation->total_value;
+                $tarifa_kwh = (int)($quotation->client->tarifa ?? 1100); // Default 1100 si no hay tarifa
+                $ubicacion = $quotation->client->city ? $quotation->client->city->name : 'Bogotá';
+
+                // Calcular generación mensual usando HSP
+                $generacion_mensual = $this->calcularGeneracionMensual($potencia_kwp, $ubicacion);
+
+                // Calcular proyección financiera
+                $proyeccion_financiera = $this->calcularProyeccionFinanciera($generacion_mensual, $tarifa_kwh, $inversion_total);
+
+                // Preparar datos del payload según especificación exacta
+                $webhookData = [
+                    "meta_info" => [
+                        "numero_propuesta" => 'COT-' . date('Y') . '-' . str_pad($quotation->quotation_id, 3, '0', STR_PAD_LEFT),
+                        "fecha_propuesta" => $quotation->created_at->format('d \d\e M \d\e Y', strtotime($quotation->created_at))
+                    ],
+
+                    "datos_cliente" => [
+                        "nombre_cliente" => $quotation->client->name,
+                        "ubicacion_proyecto" => ($quotation->client->city ? $quotation->client->city->name : 'N/A') .
+                                              ', ' .
+                                              ($quotation->client->department ? $quotation->client->department->name : 'N/A')
+                    ],
+
+                    "datos_tecnicos" => [
+                        "tipo_sistema_txt" => $this->getSystemTypeText($quotation),
+                        "potencia_kwp" => (string)$potencia_kwp,
+                        "cantidad_paneles" => $quotation->panel_count,
+                        "tipo_paneles" => $this->getPanelDescription($quotation),
+                        "cantidad_inversor" => 1,
+                        "tipo_inversor" => $this->getInverterDescription($quotation),
+                        "cantidad_baterias" => $this->getBatteryCount($quotation),
+                        "tipo_baterias" => $this->getBatteryDescription($quotation)
+                    ],
+
+                    "datos_graficas_raw" => [
+                        "datos_mensuales_str" => implode(', ', $generacion_mensual),
+                        "valor_inversion_raw" => $inversion_total,
+                        "ahorro_5y_raw" => $proyeccion_financiera['ahorro_5y'],
+                        "ahorro_10y_raw" => $proyeccion_financiera['ahorro_10y'],
+                        "ahorro_15y_raw" => $proyeccion_financiera['ahorro_15y'],
+                        "ahorro_20y_raw" => $proyeccion_financiera['ahorro_20y'],
+                        "ahorro_25y_raw" => $proyeccion_financiera['ahorro_25y']
+                    ],
+
+                    "datos_financieros_display" => [
+                        "generacion_promedio" => number_format($proyeccion_financiera['generacion_promedio'], 0, ',', '.'),
+                        "tarifa_energia" => '$ ' . number_format($tarifa_kwh, 0, ',', '.'),
+                        "ahorro_mensual_pesos" => '$ ' . number_format($proyeccion_financiera['ahorro_mensual'], 0, ',', '.'),
+                        "ahorro_anual_pesos" => '$ ' . number_format($proyeccion_financiera['ahorro_anual'], 0, ',', '.'),
+                        "ahorro_acumulado_25_anos" => $this->formatLargeNumber($proyeccion_financiera['ahorro_25y']),
+                        "anos_retorno" => number_format($proyeccion_financiera['anos_retorno'], 1, ',', '.')
+                    ],
+
+                    "items_presupuesto" => $this->getBudgetItems($quotation),
+
+                    "totales_cierre" => $this->getClosingTotals($quotation)
+                ];
+
+                // Enviar webhook a n8n y esperar respuesta con PDF binario
+                $timeout = 60 + ($attempt - 1) * 30; // Incrementar timeout en reintentos
+                $response = Http::timeout($timeout)->post('https://n8n.jhanky.online/webhook/propuesta', $webhookData);
+
+                if ($response->successful()) {
+                    $responseBody = $response->body();
+                    $contentLength = strlen($responseBody);
+
+                    \Log::info('✅ Webhook enviado exitosamente para cotización #' . $quotation->quotation_id, [
+                        'attempt' => $attempt,
+                        'content_length' => $contentLength,
+                        'content_type' => $response->header('Content-Type')
+                    ]);
+
+                    // Verificar que la respuesta no sea JSON de error (solo primeros bytes, sin modificar contenido binario)
+                    $firstBytes = substr($responseBody, 0, 1);
+                    $lastBytes = substr($responseBody, -1, 1);
+
+                    if (($firstBytes === '{' && $lastBytes === '}') ||
+                        ($firstBytes === '[' && $lastBytes === ']')) {
+                        \Log::warning('Respuesta del webhook parece ser JSON en lugar de PDF binario', [
+                            'quotation_id' => $quotation->quotation_id,
+                            'response_preview' => substr($responseBody, 0, 500)
+                        ]);
+
+                        // Intentar parsear como JSON para obtener mensaje de error
+                        try {
+                            $errorData = json_decode($responseBody, true);
+                            $errorMessage = $errorData['message'] ?? $errorData['error'] ?? 'Error desconocido en webhook';
+                        } catch (\Exception $e) {
+                            $errorMessage = 'Respuesta JSON inválida del webhook';
+                        }
+
+                        if ($attempt < $maxRetries) {
+                            \Log::info('Reintentando webhook en ' . $retryDelay . ' segundos...');
+                            sleep($retryDelay);
+                            continue;
+                        }
+
+                        return [
+                            'success' => false,
+                            'error' => $errorMessage
+                        ];
+                    }
+
+                    return [
+                        'success' => true,
+                        'pdf_content' => $responseBody,
+                        'content_type' => $response->header('Content-Type') ?? 'application/pdf',
+                        'content_length' => $response->header('Content-Length') ?? $contentLength
+                    ];
+                } else {
+                    $errorMsg = 'Error HTTP ' . $response->status() . ': ' . $response->body();
+                    \Log::warning('Error en webhook intento ' . $attempt . '/' . $maxRetries . ': ' . $errorMsg);
+
+                    if ($attempt < $maxRetries) {
+                        \Log::info('Reintentando webhook en ' . $retryDelay . ' segundos...');
+                        sleep($retryDelay);
+                        continue;
+                    }
+
+                    return [
+                        'success' => false,
+                        'error' => $errorMsg
+                    ];
+                }
+
+            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                \Log::warning('Error de conexión en intento ' . $attempt . '/' . $maxRetries . ': ' . $e->getMessage());
+
+                if ($attempt < $maxRetries) {
+                    \Log::info('Reintentando webhook en ' . $retryDelay . ' segundos...');
+                    sleep($retryDelay);
+                    continue;
+                }
+
+                return [
+                    'success' => false,
+                    'error' => 'Error de conexión con el servicio de generación de PDF'
+                ];
+            } catch (\Illuminate\Http\Client\RequestTimeoutException $e) {
+                \Log::warning('Timeout en intento ' . $attempt . '/' . $maxRetries . ': ' . $e->getMessage());
+
+                if ($attempt < $maxRetries) {
+                    \Log::info('Reintentando webhook por timeout en ' . $retryDelay . ' segundos...');
+                    sleep($retryDelay);
+                    continue;
+                }
+
+                return [
+                    'success' => false,
+                    'error' => 'Timeout al generar el PDF. El servicio está tardando demasiado en responder.'
+                ];
+            } catch (\Exception $e) {
+                \Log::error('Error inesperado en intento ' . $attempt . '/' . $maxRetries . ': ' . $e->getMessage());
+
+                if ($attempt < $maxRetries) {
+                    \Log::info('Reintentando webhook por error inesperado en ' . $retryDelay . ' segundos...');
+                    sleep($retryDelay);
+                    continue;
+                }
+
+                return [
+                    'success' => false,
+                    'error' => 'Error inesperado al preparar los datos: ' . $e->getMessage()
+                ];
+            }
+        }
+
+        // Si llegamos aquí, todos los intentos fallaron
+        return [
+            'success' => false,
+            'error' => 'No se pudo generar el PDF después de ' . $maxRetries . ' intentos'
+        ];
+    }
+
+    /**
+     * Métodos auxiliares para obtener información de productos
+     */
+    private function getPanelDescription(Quotation $quotation): string
+    {
+        $panelProduct = $quotation->usedProducts->where('product_type', 'panel')->first();
+        if ($panelProduct) {
+            $panel = Panel::find($panelProduct->product_id);
+            return $panel ? ($panel->brand . ' ' . $panel->model . ' ' . $panel->power . 'W') : 'Paneles Solares';
+        }
+        return 'Paneles Solares';
+    }
+
+    private function getInverterDescription(Quotation $quotation): string
+    {
+        $inverterProduct = $quotation->usedProducts->where('product_type', 'inverter')->first();
+        if ($inverterProduct) {
+            $inverter = Inverter::find($inverterProduct->product_id);
+            return $inverter ? ($inverter->brand . ' ' . $inverter->model . ' ' . $inverter->power . 'kW') : 'Inversor Híbrido';
+        }
+        return 'Inversor Híbrido';
+    }
+
+    private function getBatteryCount(Quotation $quotation): int
+    {
+        $batteryProduct = $quotation->usedProducts->where('product_type', 'battery')->first();
+        return $batteryProduct ? $batteryProduct->quantity : 0;
+    }
+
+    private function getBatteryDescription(Quotation $quotation): string
+    {
+        $batteryProduct = $quotation->usedProducts->where('product_type', 'battery')->first();
+        if ($batteryProduct) {
+            $battery = Battery::find($batteryProduct->product_id);
+            return $battery ? ('Litio ' . $battery->capacity . 'Ah (' . $battery->voltage . 'V)') : 'Batería de Litio';
+        }
+        return 'Batería de Litio';
+    }
+
+    private function generateMonthlyDataString(Quotation $quotation): string
+    {
+        // Generar datos mensuales simulados basados en la potencia del sistema
+        $monthlyKwh = $quotation->power_kwp * 30 * 4.5; // Estimación simplificada
+        $monthlyData = [];
+
+        for ($i = 0; $i < 12; $i++) {
+            // Variación estacional (±15%)
+            $variation = 1 + (sin(deg2rad($i * 30)) * 0.15);
+            $monthlyData[] = (int)($monthlyKwh * $variation);
+        }
+
+        return implode(', ', $monthlyData);
+    }
+
+    private function getPanelUnitPrice(Quotation $quotation): float
+    {
+        $panelProduct = $quotation->usedProducts->where('product_type', 'panel')->first();
+        return $panelProduct ? $panelProduct->unit_price : 0;
+    }
+
+    private function getPanelTotalPrice(Quotation $quotation): float
+    {
+        $panelProduct = $quotation->usedProducts->where('product_type', 'panel')->first();
+        return $panelProduct ? $panelProduct->total_value : 0;
+    }
+
+    private function getInverterUnitPrice(Quotation $quotation): float
+    {
+        $inverterProduct = $quotation->usedProducts->where('product_type', 'inverter')->first();
+        return $inverterProduct ? $inverterProduct->unit_price : 0;
+    }
+
+    private function getInverterTotalPrice(Quotation $quotation): float
+    {
+        $inverterProduct = $quotation->usedProducts->where('product_type', 'inverter')->first();
+        return $inverterProduct ? $inverterProduct->total_value : 0;
+    }
+
+    private function getBatteryUnitPrice(Quotation $quotation): float
+    {
+        $batteryProduct = $quotation->usedProducts->where('product_type', 'battery')->first();
+        return $batteryProduct ? $batteryProduct->unit_price : 0;
+    }
+
+    private function getBatteryTotalPrice(Quotation $quotation): float
+    {
+        $batteryProduct = $quotation->usedProducts->where('product_type', 'battery')->first();
+        return $batteryProduct ? $batteryProduct->total_value : 0;
+    }
+
+    /**
+     * Calcular generación mensual usando Factor K (según cálculos.md)
+     * Factor K: 133.75 kWh generados por cada kW instalado al mes
+     */
+    private function calcularGeneracionMensual(float $potencia_kwp, string $ubicacion): array
+    {
+        // Factor K calibrado para Atlántico/Caribe (según cálculos.md)
+        $factor_k = 133.75;
+
+        // Generación mensual constante (sin variaciones estacionales)
+        $generacion_mensual_kwh = $potencia_kwp * $factor_k;
+
+        // Retornar array con el mismo valor para los 12 meses
+        // Esto es diferente al HSP porque usa un promedio constante
+        return array_fill(0, 12, (int)$generacion_mensual_kwh);
+    }
+
+    /**
+     * Calcular proyección financiera con inflación energética del 5%
+     */
+    private function calcularProyeccionFinanciera(array $generacion_mensual, int $tarifa_kwh, int $inversion_total): array
+    {
+        $generacion_anual = array_sum($generacion_mensual);
+        $generacion_promedio = $generacion_anual / 12;
+
+        // Ahorro inicial (sin inflación)
+        $ahorro_anual_inicial = $generacion_anual * $tarifa_kwh;
+        $ahorro_mensual = $ahorro_anual_inicial / 12;
+
+        // Calcular ahorro acumulado por años con inflación del 5%
+        $ahorro_acumulado = 0;
+        $anos_retorno = 0;
+        $factor_inflacion = 1.05; // 5% anual
+
+        for ($year = 1; $year <= 25; $year++) {
+            $ahorro_anual = $ahorro_anual_inicial * pow($factor_inflacion, $year - 1);
+            $ahorro_acumulado += $ahorro_anual;
+
+            // Calcular retorno de inversión
+            if ($ahorro_acumulado >= $inversion_total && $anos_retorno === 0) {
+                $ahorro_anterior = $ahorro_acumulado - $ahorro_anual;
+                $ahorro_restante = $inversion_total - $ahorro_anterior;
+                $fraccion_anual = $ahorro_restante / $ahorro_anual;
+                $anos_retorno = ($year - 1) + $fraccion_anual;
+            }
+        }
+
+        return [
+            'generacion_promedio' => $generacion_promedio,
+            'ahorro_mensual' => $ahorro_mensual,
+            'ahorro_anual' => $ahorro_anual_inicial,
+            'ahorro_5y' => (int)($ahorro_anual_inicial * ((pow($factor_inflacion, 5) - 1) / ($factor_inflacion - 1))),
+            'ahorro_10y' => (int)($ahorro_anual_inicial * ((pow($factor_inflacion, 10) - 1) / ($factor_inflacion - 1))),
+            'ahorro_15y' => (int)($ahorro_anual_inicial * ((pow($factor_inflacion, 15) - 1) / ($factor_inflacion - 1))),
+            'ahorro_20y' => (int)($ahorro_anual_inicial * ((pow($factor_inflacion, 20) - 1) / ($factor_inflacion - 1))),
+            'ahorro_25y' => (int)$ahorro_acumulado,
+            'anos_retorno' => $anos_retorno > 0 ? $anos_retorno : 25.0
+        ];
+    }
+
+    /**
+     * Obtener texto descriptivo del tipo de sistema
+     */
+    private function getSystemTypeText(Quotation $quotation): string
+    {
+        $systemTypes = [
+            'On-grid' => 'Sistema Solar Conectado a Red',
+            'Off-grid' => 'Sistema Solar Autónomo',
+            'Híbrido' => 'Sistema Solar Híbrido',
+            'Interconectado' => 'Sistema Solar Interconectado'
+        ];
+
+        return $systemTypes[$quotation->system_type] ?? 'Sistema Solar Fotovoltaico';
+    }
+
+    /**
+     * Formatear números grandes (millones)
+     */
+    private function formatLargeNumber(float $number): string
+    {
+        if ($number >= 1000000) {
+            return number_format($number / 1000000, 1, ',', '.') . ' Millones';
+        }
+        return '$ ' . number_format($number, 0, ',', '.');
+    }
+
+    /**
+     * Obtener items del presupuesto formateados
+     */
+    private function getBudgetItems(Quotation $quotation): array
+    {
+        return [
+            "v_unit_paneles" => '$ ' . number_format($this->getPanelUnitPrice($quotation), 0, ',', '.'),
+            "v_total_paneles" => '$ ' . number_format($this->getPanelTotalPrice($quotation), 0, ',', '.'),
+            "v_unit_inversor" => '$ ' . number_format($this->getInverterUnitPrice($quotation), 0, ',', '.'),
+            "v_total_inversor" => '$ ' . number_format($this->getInverterTotalPrice($quotation), 0, ',', '.'),
+            "v_unit_baterias" => '$ ' . number_format($this->getBatteryUnitPrice($quotation), 0, ',', '.'),
+            "v_total_baterias" => '$ ' . number_format($this->getBatteryTotalPrice($quotation), 0, ',', '.'),
+            "v_total_estructura" => '$ ' . number_format($quotation->subtotal * 0.1, 0, ',', '.'), // 10% estimado
+            "v_total_material" => '$ ' . number_format($quotation->subtotal * 0.15, 0, ',', '.'), // 15% estimado
+            "v_total_protecciones" => '$ ' . number_format($quotation->subtotal * 0.05, 0, ',', '.'), // 5% estimado
+            "v_total_mo" => '$ ' . number_format($quotation->subtotal * 0.08, 0, ',', '.'), // 8% estimado
+            "v_total_ing" => '$ ' . number_format($quotation->subtotal * 0.12, 0, ',', '.')  // 12% estimado
+        ];
+    }
+
+    /**
+     * Obtener totales finales del proyecto
+     */
+    private function getClosingTotals(Quotation $quotation): array
+    {
+        return [
+            "subtotal" => '$ ' . number_format($quotation->subtotal, 0, ',', '.'),
+            "imprevistos_valor" => '$ ' . number_format($quotation->contingency, 0, ',', '.'),
+            "admin_valor" => '$ ' . number_format($quotation->administration, 0, ',', '.'),
+            "utilidad_valor" => '$ ' . number_format($quotation->profit, 0, ',', '.'),
+            "iva_utilidad_valor" => '$ ' . number_format($quotation->profit_iva, 0, ',', '.'),
+            "subtotal_3_valor" => '$ ' . number_format($quotation->subtotal3, 0, ',', '.'),
+            "retenciones_valor" => '$ ' . number_format($quotation->withholdings, 0, ',', '.'),
+            "total_proyecto" => '$ ' . number_format($quotation->total_value, 0, ',', '.')
+        ];
+    }
+
+    /**
+     * Validar que el contenido binario sea un PDF válido
+     */
+    private function isValidPdfContent(string $content): bool
+    {
+        // Verificar tamaño mínimo (un PDF válido debe tener al menos algunos bytes)
+        if (strlen($content) < 100) {
+            \Log::warning('Contenido PDF demasiado pequeño', ['size' => strlen($content)]);
+            return false;
+        }
+
+        // Verificar que comience con la firma PDF estándar
+        if (!str_starts_with($content, '%PDF-')) {
+            \Log::warning('Contenido no comienza con firma PDF', ['starts_with' => substr($content, 0, 10)]);
+            return false;
+        }
+
+        // Verificar que termine con %%EOF (sin usar trim() que puede corromper datos binarios)
+        $contentLength = strlen($content);
+        if ($contentLength < 5 || substr($content, -5) !== '%%EOF') {
+            \Log::warning('Contenido no termina con %%EOF', ['ends_with' => substr($content, -10)]);
+            return false;
+        }
+
+        // Verificar que no sea JSON (respuesta de error del webhook) - solo verificar primeros y últimos bytes
+        $firstByte = $content[0] ?? '';
+        $lastByte = $content[$contentLength - 1] ?? '';
+
+        if (($firstByte === '{' && $lastByte === '}') ||
+            ($firstByte === '[' && $lastByte === ']')) {
+            \Log::warning('Contenido parece ser JSON en lugar de PDF', ['content_preview' => substr($content, 0, 200)]);
+            return false;
+        }
+
+        // Verificar que contenga objetos PDF básicos
+        if (!str_contains($content, 'obj') || !str_contains($content, 'endobj')) {
+            \Log::warning('Contenido no contiene objetos PDF válidos');
+            return false;
+        }
+
+        \Log::info('Validación PDF exitosa', ['size' => strlen($content)]);
+        return true;
     }
 }

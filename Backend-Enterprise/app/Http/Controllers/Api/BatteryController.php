@@ -74,6 +74,7 @@ class BatteryController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:batteries,name',
                 'model' => 'required|string|max:255|unique:batteries,model',
+                'brand' => 'required|string|max:255',
                 'type' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'ah_capacity' => 'required|numeric|min:0',
@@ -146,6 +147,7 @@ class BatteryController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:batteries,name,' . $id . ',battery_id',
                 'model' => 'required|string|max:255|unique:batteries,model,' . $id . ',battery_id',
+                'brand' => 'required|string|max:255',
                 'type' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'ah_capacity' => 'required|numeric|min:0',
@@ -201,13 +203,23 @@ class BatteryController extends Controller
     public function destroy(string $id)
     {
         try {
+            // Verificar si la batería existe
             $battery = Battery::findOrFail($id);
 
-            // Eliminar ficha técnica antigua si existe
+            // Verificar si la batería está siendo usada en cotizaciones
+            if ($battery->isInUse()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar la batería porque está siendo usada en cotizaciones'
+                ], 400);
+            }
+
+            // Eliminar ficha técnica si existe
             if ($battery->technical_sheet_path) {
                 Storage::disk('public')->delete($battery->technical_sheet_path);
             }
 
+            // Eliminar la batería
             $battery->delete();
 
             return response()->json([
@@ -215,6 +227,7 @@ class BatteryController extends Controller
                 'message' => 'Batería eliminada exitosamente'
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error al eliminar batería: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar la batería',

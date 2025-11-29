@@ -10,7 +10,6 @@ const HomeAdministrativa = () => {
   const { usuario } = useAuth();
   const [stats, setStats] = useState({
     usuarios: 0,
-    roles: 0,
     documentos: 0,
     configuraciones: 0
   });
@@ -19,7 +18,6 @@ const HomeAdministrativa = () => {
   useEffect(() => {
     setStats({
       usuarios: 24,
-      roles: 5,
       documentos: 18,
       configuraciones: 12
     });
@@ -27,7 +25,6 @@ const HomeAdministrativa = () => {
 
   const quickActions = [
     { id: 'usuarios', nombre: 'Gestionar Usuarios', icono: Users, path: '/usuarios', color: 'bg-blue-500' },
-    { id: 'roles', nombre: 'Roles y Permisos', icono: Shield, path: '/roles', color: 'bg-purple-500' },
     { id: 'documentacion', nombre: 'Documentación', icono: FileText, path: '/documentacion', color: 'bg-green-500' },
     { id: 'configuracion', nombre: 'Configuración', icono: Settings, path: '/configuracion', color: 'bg-orange-500' }
   ];
@@ -53,34 +50,6 @@ const HomeAdministrativa = () => {
           <circle cx="260" cy="60" r="60" fill="#fff" fillOpacity="0.10" />
           <circle cx="200" cy="160" r="50" fill="#fff" fillOpacity="0.07" />
           <circle cx="270" cy="150" r="30" fill="#fff" fillOpacity="0.12" />
-        </svg>
-      ),
-    },
-    {
-      title: 'Roles Activos',
-      value: stats.roles,
-      delta: 0,
-      positive: true,
-      prefix: '',
-      suffix: '',
-      bg: 'bg-fuchsia-600',
-      icon: Shield,
-      svg: (
-        <svg
-          className="absolute right-0 top-0 w-48 h-48 pointer-events-none"
-          viewBox="0 0 200 200"
-          fill="none"
-          style={{ zIndex: 0 }}
-        >
-          <defs>
-            <filter id="blur2" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="10" />
-            </filter>
-          </defs>
-          <ellipse cx="170" cy="60" rx="40" ry="18" fill="#fff" fillOpacity="0.13" filter="url(#blur2)" />
-          <rect x="120" y="20" width="60" height="20" rx="8" fill="#fff" fillOpacity="0.10" />
-          <polygon points="150,0 200,0 200,50" fill="#fff" fillOpacity="0.07" />
-          <circle cx="180" cy="100" r="14" fill="#fff" fillOpacity="0.16" />
         </svg>
       ),
     },
@@ -176,7 +145,7 @@ const HomeAdministrativa = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {statsData.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
@@ -272,15 +241,6 @@ const HomeAdministrativa = () => {
                     <p className="text-xs text-slate-600">Juan Pérez - Hace 2 horas</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">Rol de administrador actualizado</p>
-                    <p className="text-xs text-slate-600">Permisos de seguridad - Hace 1 día</p>
-                  </div>
-                </div>
                 <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-green-600" />
@@ -288,6 +248,15 @@ const HomeAdministrativa = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900">Nuevo documento subido</p>
                     <p className="text-xs text-slate-600">Manual de procedimientos - Hace 3 días</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-100">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Settings className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">Configuración actualizada</p>
+                    <p className="text-xs text-slate-600">Sistema actualizado - Hace 1 semana</p>
                   </div>
                 </div>
               </div>
