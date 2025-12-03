@@ -144,7 +144,7 @@ const HomeComercial = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-green-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-green-600 to-teal-700 p-8 mb-8 text-white shadow-2xl">
         {/* Decorative elements */}

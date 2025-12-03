@@ -156,7 +156,7 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-background rounded-2xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -164,13 +164,13 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
                 <Search className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Seleccionar Proyecto</h2>
-                <p className="text-slate-600">Elige el proyecto para el mantenimiento</p>
+                <h2 className="text-2xl font-bold text-foreground">Seleccionar Proyecto</h2>
+                <p className="text-muted-foreground">Elige el proyecto para el mantenimiento</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -212,7 +212,7 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
           {/* Tabla */}
           <div className="rounded-md border max-h-96 overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-white z-10">
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
                   <TableHead>ID Proyecto</TableHead>
                   <TableHead>Nombre</TableHead>
@@ -229,7 +229,7 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
                   <SkeletonTable columns={8} rows={pagination.per_page || 10} asRows={true} />
                 ) : proyectos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No se encontraron proyectos
                     </TableCell>
                   </TableRow>
@@ -237,27 +237,26 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
                   proyectos.map((proyecto) => (
                     <TableRow
                       key={proyecto.id}
-                      className={`transition-all duration-200 hover:bg-gray-50 ${
-                        selectedProjectId === proyecto.backendId ? 'bg-blue-50 border-blue-200' : ''
-                      }`}
+                      className={`transition-all duration-200 hover:bg-muted/50 ${selectedProjectId === proyecto.backendId ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''
+                        }`}
                     >
                       <TableCell>
-                        <span className="text-sm font-medium text-slate-900">{proyecto.id}</span>
+                        <span className="text-sm font-medium text-foreground">{proyecto.id}</span>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium text-slate-900">{proyecto.nombre}</div>
-                        <div className="text-sm text-slate-500">{proyecto.departamento} - {proyecto.municipio}</div>
+                        <div className="text-sm font-medium text-foreground">{proyecto.nombre}</div>
+                        <div className="text-sm text-muted-foreground">{proyecto.departamento} - {proyecto.municipio}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-slate-900">
+                        <div className="text-sm text-foreground">
                           {typeof proyecto.cliente === 'object' && proyecto.cliente ? proyecto.cliente.name : proyecto.cliente}
                         </div>
                         {typeof proyecto.cliente === 'object' && proyecto.cliente && proyecto.cliente.email && (
-                          <div className="text-sm text-slate-500">{proyecto.cliente.email}</div>
+                          <div className="text-sm text-muted-foreground">{proyecto.cliente.email}</div>
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-900">{proyecto.capacidadAC}</span>
+                        <span className="text-sm text-foreground">{proyecto.capacidadAC}</span>
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -272,17 +271,17 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-200 rounded-full h-2 w-16">
+                          <div className="flex-1 bg-muted rounded-full h-2 w-16">
                             <div
                               className="bg-blue-600 h-2 rounded-full transition-all"
                               style={{ width: `${proyecto.porcentajeAvance}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm text-slate-900">{proyecto.porcentajeAvance}%</span>
+                          <span className="text-sm text-foreground">{proyecto.porcentajeAvance}%</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-600">{proyecto.responsableActual}</span>
+                        <span className="text-sm text-muted-foreground">{proyecto.responsableActual}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -319,7 +318,7 @@ const ProjectSelector = ({ show, onSelect, onClose, selectedProjectId = null }) 
           </div>
 
           {/* Botones de acción */}
-          <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-border">
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>

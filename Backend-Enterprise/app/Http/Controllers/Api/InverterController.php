@@ -22,13 +22,37 @@ class InverterController extends Controller
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('model', 'like', "%{$search}%");
+                    $q->where('model', 'like', "%{$search}%")
+                      ->orWhere('brand', 'like', "%{$search}%");
                 });
             }
 
             if ($request->filled('is_active')) {
                 $query->where('is_active', $request->is_active === 'true');
+            }
+
+            // Filtro de marca
+            if ($request->filled('brand')) {
+                $query->where('brand', $request->brand);
+            }
+
+            // Filtro de potencia
+            if ($request->filled('power_range')) {
+                $range = $request->power_range;
+                switch ($range) {
+                    case '0-5':
+                        $query->where('power_output_kw', '>=', 0)->where('power_output_kw', '<=', 5);
+                        break;
+                    case '5-10':
+                        $query->where('power_output_kw', '>=', 5)->where('power_output_kw', '<=', 10);
+                        break;
+                    case '10-20':
+                        $query->where('power_output_kw', '>=', 10)->where('power_output_kw', '<=', 20);
+                        break;
+                    case '20+':
+                        $query->where('power_output_kw', '>=', 20);
+                        break;
+                }
             }
 
             // Filtros para compatibilidad con cotizaciones
@@ -81,7 +105,6 @@ class InverterController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:inverters,name',
                 'brand' => 'required|string|max:255',
                 'model' => 'required|string|max:255|unique:inverters,model',
                 'power_output_kw' => 'required|numeric|min:0',
@@ -154,7 +177,6 @@ class InverterController extends Controller
             $inverter = Inverter::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:inverters,name,' . $id . ',inverter_id',
                 'brand' => 'required|string|max:255',
                 'model' => 'required|string|max:255|unique:inverters,model,' . $id . ',inverter_id',
                 'power_output_kw' => 'required|numeric|min:0',

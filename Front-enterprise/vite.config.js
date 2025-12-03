@@ -18,8 +18,13 @@ export default defineConfig({
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
     },
-    // Proxy para las imágenes del backend
+    // Proxy para las APIs del backend
     proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
       '/storage': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
@@ -36,9 +41,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
+            // if (id.includes('react') || id.includes('react-dom')) {
+            //   return 'react-vendor';
+            // }
             if (id.includes('@radix-ui')) {
               return 'radix-vendor';
             }
@@ -47,6 +52,19 @@ export default defineConfig({
             }
             if (id.includes('zod') || id.includes('react-hook-form')) {
               return 'utils-vendor';
+            }
+            // Mover dependencias problemáticas a chunks separados
+            if (id.includes('framer-motion')) {
+              return 'animation-vendor';
+            }
+            if (id.includes('next-themes') || id.includes('sonner')) {
+              return 'ui-vendor';
+            }
+            if (id.includes('react-big-calendar') || id.includes('react-day-picker')) {
+              return 'calendar-vendor';
+            }
+            if (id.includes('jspdf')) {
+              return 'pdf-vendor';
             }
             return 'vendor';
           }

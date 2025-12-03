@@ -63,23 +63,23 @@ const VistaServicioTecnico = () => {
   const ticketsAbiertos = tickets.filter(t => [1, 2, 3, 4].includes(t.status_id)).length;
   const ticketsResueltos = tickets.filter(t => t.status_id === 5).length;
   const ticketsCriticos = tickets.filter(t => t.priority_id === 4 && [1, 2, 3, 4].includes(t.status_id)).length;
-  
+
   const tiempoPromedioResolucion = tickets
     .filter(t => t.tiempoResolucion)
-    .reduce((sum, t) => sum + t.tiempoResolucion, 0) / 
+    .reduce((sum, t) => sum + t.tiempoResolucion, 0) /
     tickets.filter(t => t.tiempoResolucion).length || 0;
 
   const satisfaccionPromedio = tickets
     .filter(t => t.satisfaccion)
-    .reduce((sum, t) => sum + t.satisfaccion, 0) / 
+    .reduce((sum, t) => sum + t.satisfaccion, 0) /
     tickets.filter(t => t.satisfaccion).length || 0;
 
   const pqrsAbiertas = pqrs.filter(p => [1, 2, 3].includes(p.estado)).length;
   const pqrsCerradas = pqrs.filter(p => p.estado === 5).length;
-  
+
   const satisfaccionPQRPromedio = pqrs
     .filter(p => p.satisfaccionRespuesta)
-    .reduce((sum, p) => sum + p.satisfaccionRespuesta, 0) / 
+    .reduce((sum, p) => sum + p.satisfaccionRespuesta, 0) /
     pqrs.filter(p => p.satisfaccionRespuesta).length || 0;
 
   // Datos para gráficos
@@ -135,47 +135,47 @@ const VistaServicioTecnico = () => {
     <div className="space-y-6">
       {/* KPIs Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">Tickets Abiertos</p>
-            <Wrench className="w-5 h-5 text-blue-600" />
+            <p className="text-sm font-medium text-muted-foreground">Tickets Abiertos</p>
+            <Wrench className="w-5 h-5 text-blue-600 dark:text-muted-foreground" />
           </div>
-          <p className="text-3xl font-bold text-slate-900">{ticketsAbiertos}</p>
-          <p className="text-sm text-slate-500 mt-1">{ticketsCriticos} críticos</p>
+          <p className="text-3xl font-bold text-foreground">{ticketsAbiertos}</p>
+          <p className="text-sm text-muted-foreground mt-1">{ticketsCriticos} críticos</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">Tiempo Promedio Resolución</p>
-            <Clock className="w-5 h-5 text-purple-600" />
+            <p className="text-sm font-medium text-muted-foreground">Tiempo Promedio Resolución</p>
+            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
-          <p className="text-3xl font-bold text-slate-900">{Math.round(tiempoPromedioResolucion)}h</p>
-          <p className="text-sm text-slate-500 mt-1">últimos 30 días</p>
+          <p className="text-3xl font-bold text-foreground">{Math.round(tiempoPromedioResolucion)}h</p>
+          <p className="text-sm text-muted-foreground mt-1">últimos 30 días</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">PQRs Activas</p>
-            <MessageSquare className="w-5 h-5 text-orange-600" />
+            <p className="text-sm font-medium text-muted-foreground">PQRs Activas</p>
+            <MessageSquare className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           </div>
-          <p className="text-3xl font-bold text-slate-900">{pqrsAbiertas}</p>
-          <p className="text-sm text-slate-500 mt-1">{pqrsCerradas} cerradas</p>
+          <p className="text-3xl font-bold text-foreground">{pqrsAbiertas}</p>
+          <p className="text-sm text-muted-foreground mt-1">{pqrsCerradas} cerradas</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-slate-600">Satisfacción Cliente</p>
-            <Star className="w-5 h-5 text-yellow-600" />
+            <p className="text-sm font-medium text-muted-foreground">Satisfacción Cliente</p>
+            <Star className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
           </div>
-          <p className="text-3xl font-bold text-slate-900">{satisfaccionPromedio.toFixed(1)}/5</p>
-          <p className="text-sm text-slate-500 mt-1">{Math.round(satisfaccionPromedio * 20)}% satisfacción</p>
+          <p className="text-3xl font-bold text-foreground">{satisfaccionPromedio.toFixed(1)}/5</p>
+          <p className="text-sm text-muted-foreground mt-1">{Math.round(satisfaccionPromedio * 20)}% satisfacción</p>
         </div>
       </div>
 
       {/* Tickets Críticos */}
       {ticketsCriticos > 0 && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl shadow-sm border border-red-200 p-6">
-          <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-6">
+          <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Tickets Críticos Requieren Atención Inmediata ({ticketsCriticos})
           </h3>
@@ -183,19 +183,19 @@ const VistaServicioTecnico = () => {
             {tickets
               .filter(t => t.priority_id === 4 && [1, 2, 3, 4].includes(t.status_id))
               .map(ticket => (
-                <div key={ticket.id} className="bg-white rounded-lg p-4 border border-red-200">
+                <div key={ticket.id} className="bg-card rounded-lg p-4 border border-red-200 dark:border-red-800">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-semibold text-slate-900">{ticket.title}</p>
-                      <p className="text-sm text-slate-600 mt-1">{ticket.project?.name || 'Proyecto'} - {ticket.client?.name || 'Cliente'}</p>
+                      <p className="font-semibold text-foreground">{ticket.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{ticket.project?.name || 'Proyecto'} - {ticket.client?.name || 'Cliente'}</p>
                       <div className="flex items-center gap-4 mt-2">
-                        <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800">
+                        <span className="text-xs px-2 py-1 rounded-full bg-red-50 dark:bg-red-900/200 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                           {ticket.ticket_type?.name || 'Tipo'}
                         </span>
-                        <span className="text-xs text-slate-600">
+                        <span className="text-xs text-muted-foreground">
                           Creado hace {calcularTiempoTranscurrido(ticket.created_at)}
                         </span>
-                        <span className="text-xs text-slate-600">
+                        <span className="text-xs text-muted-foreground">
                           Código: {ticket.ticket_code}
                         </span>
                       </div>
@@ -215,8 +215,8 @@ const VistaServicioTecnico = () => {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Tickets por Tipo</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Tickets por Tipo</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -238,8 +238,8 @@ const VistaServicioTecnico = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Tickets por Estado</h3>
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Tickets por Estado</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={ticketsPorEstado}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -257,8 +257,8 @@ const VistaServicioTecnico = () => {
       </div>
 
       {/* Evolución Mensual */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Evolución Mensual</h3>
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Evolución Mensual</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={evolucionMensual}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -274,14 +274,14 @@ const VistaServicioTecnico = () => {
       </div>
 
       {/* PQRs por Tipo */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Distribución de PQRs</h3>
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Distribución de PQRs</h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {pqrsPorTipo.map((tipo, index) => (
-            <div key={index} className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+            <div key={index} className="bg-gradient-to-br from-muted/50 to-muted rounded-lg p-4 border border-border">
               <div className="text-3xl mb-2">{obtenerIconoTipoPQR(tiposPQR.find(t => t.nombre === tipo.nombre)?.id)}</div>
-              <p className="text-sm font-medium text-slate-700">{tipo.nombre}</p>
-              <p className="text-2xl font-bold text-slate-900">{tipo.cantidad}</p>
+              <p className="text-sm font-medium text-foreground">{tipo.nombre}</p>
+              <p className="text-2xl font-bold text-foreground">{tipo.cantidad}</p>
             </div>
           ))}
         </div>
@@ -292,40 +292,37 @@ const VistaServicioTecnico = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-card rounded-xl shadow-sm border border-border p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Servicio Técnico</h2>
-            <p className="text-slate-600 mt-1">Gestión de tickets y PQRs</p>
+            <h2 className="text-2xl font-bold text-foreground">Servicio Técnico</h2>
+            <p className="text-muted-foreground mt-1">Gestión de tickets y PQRs</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setVistaActiva('resumen')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                vistaActiva === 'resumen'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${vistaActiva === 'resumen'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
             >
               Resumen
             </button>
             <button
               onClick={() => setVistaActiva('tickets')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                vistaActiva === 'tickets'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${vistaActiva === 'tickets'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
             >
               Tickets
             </button>
             <button
               onClick={() => setVistaActiva('pqrs')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                vistaActiva === 'pqrs'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${vistaActiva === 'pqrs'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
             >
               PQRs
             </button>
@@ -336,12 +333,12 @@ const VistaServicioTecnico = () => {
       {/* Contenido según vista activa */}
       {vistaActiva === 'resumen' && renderResumen()}
       {vistaActiva === 'tickets' && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Lista de Tickets</h3>
+            <h3 className="text-lg font-semibold text-foreground">Lista de Tickets</h3>
             <button
               onClick={() => setMostrarFormTicket(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Nuevo Ticket
@@ -351,20 +348,20 @@ const VistaServicioTecnico = () => {
             {loadingTickets ? (
               <div className="flex items-center justify-center py-8">
                 <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="ml-3 text-slate-600">Cargando tickets...</span>
+                <span className="ml-3 text-muted-foreground">Cargando tickets...</span>
               </div>
             ) : tickets.length === 0 ? (
               <div className="text-center py-8">
                 <Wrench className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600">No hay tickets disponibles</p>
+                <p className="text-muted-foreground">No hay tickets disponibles</p>
               </div>
             ) : (
               tickets.map(ticket => (
-                <div key={ticket.id} className="border border-slate-200 rounded-lg p-4">
+                <div key={ticket.id} className="border border-border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-medium text-slate-900">{ticket.ticket_code}</span>
+                        <span className="text-sm font-medium text-foreground">{ticket.ticket_code}</span>
                         <span className={`text-xs px-2 py-1 rounded-full ${obtenerColorEstadoTicket(ticket.ticket_state?.id || ticket.status_id)} text-white`}>
                           {ticket.ticket_state?.name || 'Sin estado'}
                         </span>
@@ -372,9 +369,9 @@ const VistaServicioTecnico = () => {
                           {ticket.ticket_priority?.name || 'Sin prioridad'}
                         </span>
                       </div>
-                      <h4 className="font-semibold text-slate-900 mb-1">{ticket.title}</h4>
-                      <p className="text-sm text-slate-600 mb-2">{ticket.client?.name || 'Cliente'} - {ticket.project?.name || 'Proyecto'}</p>
-                      <div className="flex items-center gap-4 text-xs text-slate-500">
+                      <h4 className="font-semibold text-foreground mb-1">{ticket.title}</h4>
+                      <p className="text-sm text-muted-foreground mb-2">{ticket.client?.name || 'Cliente'} - {ticket.project?.name || 'Proyecto'}</p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Tipo: {ticket.ticket_type?.name || 'Sin tipo'}</span>
                         <span>Creado: {calcularTiempoTranscurrido(ticket.created_at)}</span>
                         <span>Asignado a: {ticket.assigned_to?.name || 'Sin asignar'}</span>
@@ -382,7 +379,7 @@ const VistaServicioTecnico = () => {
                     </div>
                     <button
                       onClick={() => setTicketSeleccionado(ticket)}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      className="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 text-sm font-medium"
                     >
                       Ver Detalle
                     </button>
@@ -394,12 +391,12 @@ const VistaServicioTecnico = () => {
         </div>
       )}
       {vistaActiva === 'pqrs' && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Lista de PQRs</h3>
+            <h3 className="text-lg font-semibold text-foreground">Lista de PQRs</h3>
             <button
               onClick={() => setMostrarFormPQR(true)}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2"
+              className="px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-lg hover:bg-orange-700 dark:hover:bg-orange-800 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Nueva PQR
@@ -407,19 +404,19 @@ const VistaServicioTecnico = () => {
           </div>
           <div className="space-y-4">
             {pqrs.map(pqr => (
-              <div key={pqr.id} className="border border-slate-200 rounded-lg p-4">
+              <div key={pqr.id} className="border border-border rounded-lg p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-sm font-medium text-slate-900">{pqr.id}</span>
+                      <span className="text-sm font-medium text-foreground">{pqr.id}</span>
                       <span className={`text-xs px-2 py-1 rounded-full ${obtenerColorTipoPQR(pqr.tipo)} text-white`}>
                         {obtenerNombreTipoPQR(pqr.tipo)}
                       </span>
-                      <span className="text-xs text-slate-500">{pqr.categoria}</span>
+                      <span className="text-xs text-muted-foreground">{pqr.categoria}</span>
                     </div>
-                    <h4 className="font-semibold text-slate-900 mb-1">{pqr.titulo}</h4>
-                    <p className="text-sm text-slate-600 mb-2">{pqr.cliente} - {pqr.proyectoNombre}</p>
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <h4 className="font-semibold text-foreground mb-1">{pqr.titulo}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">{pqr.cliente} - {pqr.proyectoNombre}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>Responsable: {pqr.responsable}</span>
                       <span>Creado: {calcularTiempoTranscurrido(pqr.fechaCreacion)}</span>
                       <span>Canal: {pqr.canalRecepcion}</span>
@@ -427,7 +424,7 @@ const VistaServicioTecnico = () => {
                   </div>
                   <button
                     onClick={() => setPqrSeleccionado(pqr)}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                    className="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 text-sm font-medium"
                   >
                     Ver Detalle
                   </button>
@@ -437,35 +434,35 @@ const VistaServicioTecnico = () => {
           </div>
         </div>
       )}
-      
+
       {/* Formularios modales */}
       {mostrarFormTicket && (
-        <FormTicket 
-          onSubmit={manejarCrearTicket} 
-          onCancel={() => setMostrarFormTicket(false)} 
+        <FormTicket
+          onSubmit={manejarCrearTicket}
+          onCancel={() => setMostrarFormTicket(false)}
         />
       )}
-      
+
       {mostrarFormPQR && (
-        <FormPQR 
-          onSubmit={manejarCrearPQR} 
-          onCancel={() => setMostrarFormPQR(false)} 
+        <FormPQR
+          onSubmit={manejarCrearPQR}
+          onCancel={() => setMostrarFormPQR(false)}
         />
       )}
-      
+
       {/* Componentes de detalle */}
       {ticketSeleccionado && (
-        <DetalleTicket 
-          ticket={ticketSeleccionado} 
-          onClose={() => setTicketSeleccionado(null)} 
+        <DetalleTicket
+          ticket={ticketSeleccionado}
+          onClose={() => setTicketSeleccionado(null)}
           onUpdate={manejarActualizarTicket}
         />
       )}
-      
+
       {pqrSeleccionado && (
-        <DetallePQR 
-          pqr={pqrSeleccionado} 
-          onClose={() => setPqrSeleccionado(null)} 
+        <DetallePQR
+          pqr={pqrSeleccionado}
+          onClose={() => setPqrSeleccionado(null)}
           onUpdate={manejarActualizarPQR}
         />
       )}

@@ -13,8 +13,8 @@ class Inverter extends Model
     protected $primaryKey = 'inverter_id';
 
     protected $fillable = [
-        'name',
         'model',
+        'brand',
         'power_output_kw',
         'grid_type',
         'system_type',

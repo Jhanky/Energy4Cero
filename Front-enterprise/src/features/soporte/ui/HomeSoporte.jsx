@@ -109,7 +109,7 @@ const HomeSoporte = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-700 via-slate-700 to-zinc-800 p-8 mb-8 text-white shadow-2xl">
         <div className="absolute top-4 right-8 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
         <div className="absolute bottom-4 left-8 w-16 h-16 bg-white/5 rounded-full blur-lg"></div>

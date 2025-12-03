@@ -1,103 +1,270 @@
-import { AlertTriangle, X, User, Mail, Shield } from 'lucide-react';
+import { AlertTriangle, X, User, Mail, Shield, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const UsuarioDeleteModal = ({ show, usuario, onConfirm, onCancel }) => {
+const UsuarioDeleteModal = ({ show, usuario, onConfirm, onCancel, isDeleting = false }) => {
   if (!show || !usuario) return null;
 
+  // Variantes de animación para el modal
+  const modalVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.9,
+      y: 20
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 25,
+        stiffness: 300,
+        duration: 0.3
+      }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      y: -10,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
+  // Variantes para el overlay
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 }
+  };
+
+  // Variantes para el ícono de advertencia
+  const iconVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 300,
+        delay: 0.1
+      }
+    },
+    pulse: {
+      scale: [1, 1.1, 1],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  // Variantes para los botones
+  const buttonVariants = {
+    idle: { scale: 1 },
+    hover: {
+      scale: 1.02,
+      transition: { duration: 0.2 }
+    },
+    tap: {
+      scale: 0.98,
+      transition: { duration: 0.1 }
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full">
-        {/* Header con icono de advertencia */}
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                Confirmar Eliminación
-              </h3>
-              <p className="text-sm text-slate-600">
-                Esta acción no se puede deshacer
-              </p>
-            </div>
-            <button
-              onClick={onCancel}
-              className="flex-shrink-0 p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          variants={overlayVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
+          <motion.div
+            className="bg-white dark:bg-slate-800 rounded-xl max-w-md w-full shadow-xl"
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            {/* Header con icono de advertencia */}
+            <motion.div
+              className="p-6 border-b border-slate-200 dark:border-slate-700"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Contenido */}
-        <div className="p-6">
-          <p className="text-slate-700 mb-4">
-            ¿Estás seguro de que deseas eliminar al usuario{' '}
-            <span className="font-semibold text-slate-900">{usuario.name}</span>?
-          </p>
-          
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {usuario.name.split(' ').map(n => n[0]).join('')}
-                  </span>
+              <div className="flex items-start gap-4">
+                <motion.div
+                  className="flex-shrink-0 w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center"
+                  variants={iconVariants}
+                  initial="hidden"
+                  animate={["visible", "pulse"]}
+                >
+                  <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </motion.div>
+                <div className="flex-1">
+                  <motion.h3
+                    className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Confirmar Eliminación
+                  </motion.h3>
+                  <motion.p
+                    className="text-sm text-slate-600 dark:text-slate-400"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    Esta acción no se puede deshacer
+                  </motion.p>
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900">{usuario.name}</p>
-                  <p className="text-sm text-slate-600">{usuario.position}</p>
-                </div>
+                <motion.button
+                  onClick={onCancel}
+                  className="flex-shrink-0 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  variants={buttonVariants}
+                  initial="idle"
+                  whileHover={!isDeleting ? "hover" : "idle"}
+                  whileTap={!isDeleting ? "tap" : "idle"}
+                  disabled={isDeleting}
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
               </div>
-              
-              <div className="text-sm space-y-2">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Mail className="w-4 h-4" />
-                  <span>{usuario.email}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Shield className="w-4 h-4" />
-                  <span>{usuario.role?.name || 'Sin rol'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <User className="w-4 h-4" />
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    usuario.status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {usuario.status === 'active' ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700">
-              <strong>⚠️ Advertencia:</strong> Al eliminar este usuario, se perderán todos sus datos y no podrá acceder al sistema.
-            </p>
-          </div>
-        </div>
+            </motion.div>
 
-        {/* Botones */}
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-          <button
-            onClick={onCancel}
-            className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            Eliminar Usuario
-          </button>
-        </div>
-      </div>
-    </div>
+            {/* Contenido */}
+            <motion.div
+              className="p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <motion.p
+                className="text-slate-700 dark:text-slate-300 mb-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                ¿Estás seguro de que deseas eliminar al usuario{' '}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{usuario.name}</span>?
+              </motion.p>
+
+              <motion.div
+                className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                <div className="space-y-3">
+                  <motion.div
+                    className="flex items-center gap-3"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {usuario.name.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{usuario.name}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{usuario.position}</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    className="text-sm space-y-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <Mail className="w-4 h-4" />
+                      <span>{usuario.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <Shield className="w-4 h-4" />
+                      <span>{usuario.role?.name || 'Sin rol'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                      <User className="w-4 h-4" />
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        usuario.status === 'active'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      }`}>
+                        {usuario.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.0 }}
+              >
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  <strong>⚠️ Advertencia:</strong> Al eliminar este usuario, se perderán todos sus datos y no podrá acceder al sistema.
+                </p>
+              </motion.div>
+            </motion.div>
+
+            {/* Botones */}
+            <motion.div
+              className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 }}
+            >
+              <motion.button
+                onClick={onCancel}
+                className="px-6 py-2 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                variants={buttonVariants}
+                initial="idle"
+                whileHover={!isDeleting ? "hover" : "idle"}
+                whileTap={!isDeleting ? "tap" : "idle"}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </motion.button>
+              <motion.button
+                onClick={onConfirm}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center"
+                variants={buttonVariants}
+                initial="idle"
+                whileHover={!isDeleting ? "hover" : "idle"}
+                whileTap={!isDeleting ? "tap" : "idle"}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4" />
+                    Eliminar Usuario
+                  </>
+                )}
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

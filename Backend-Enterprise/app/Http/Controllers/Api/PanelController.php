@@ -21,11 +21,38 @@ class PanelController extends Controller
             // Filtros
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where('model', 'like', "%{$search}%");
+                $query->where(function($q) use ($search) {
+                    $q->where('model', 'like', "%{$search}%")
+                      ->orWhere('brand', 'like', "%{$search}%");
+                });
             }
 
             if ($request->filled('is_active')) {
                 $query->where('is_active', $request->is_active === 'true');
+            }
+
+            // Filtro de marca
+            if ($request->filled('brand')) {
+                $query->where('brand', $request->brand);
+            }
+
+            // Filtro de potencia
+            if ($request->filled('power_range')) {
+                $range = $request->power_range;
+                switch ($range) {
+                    case '0-200':
+                        $query->where('power_output', '>=', 0)->where('power_output', '<=', 200);
+                        break;
+                    case '200-400':
+                        $query->where('power_output', '>=', 200)->where('power_output', '<=', 400);
+                        break;
+                    case '400-600':
+                        $query->where('power_output', '>=', 400)->where('power_output', '<=', 600);
+                        break;
+                    case '600+':
+                        $query->where('power_output', '>=', 600);
+                        break;
+                }
             }
 
             // Ordenamiento

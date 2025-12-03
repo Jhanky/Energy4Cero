@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
+import { Input } from "@/ui/input";
 
 const AdvancedSearchBar = ({
   value,
@@ -34,18 +35,16 @@ const AdvancedSearchBar = ({
   return (
     <div className={`relative ${className}`}>
       <Search
-        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${
-          loading && localValue ? 'text-blue-500 animate-pulse' : 'text-gray-400'
-        }`}
+        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && localValue ? 'text-blue-500 animate-pulse' : 'text-muted-foreground'
+          }`}
       />
-      <input
+      <Input
         type="text"
         placeholder={placeholder}
         value={localValue}
         onChange={handleInputChange}
-        className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 ${
-          loading && localValue ? 'ring-2 ring-blue-200 border-blue-300' : ''
-        }`}
+        className={`pl-10 pr-4 transition-all duration-200 ${loading && localValue ? 'ring-2 ring-blue-200 border-blue-300' : ''
+          }`}
       />
       {loading && localValue && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">

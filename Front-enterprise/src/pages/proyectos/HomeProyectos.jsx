@@ -144,7 +144,7 @@ const HomeProyectos = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-700 p-8 mb-8 text-white shadow-2xl">
         {/* Decorative elements */}

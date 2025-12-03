@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
 
 const AdvancedFilters = ({
   filters = {},
@@ -26,20 +26,23 @@ const AdvancedFilters = ({
 
         return (
           <div key={key} className="min-w-[200px]">
-              <Select
-                value={filters[key] || undefined}
-                onValueChange={(value) => handleFilterChange(key, value)}
-              >
+            <Select
+              value={filters[key] || undefined}
+              onValueChange={(value) => handleFilterChange(key, value)}
+            >
               <SelectTrigger className="w-full h-12 py-3">
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                {options.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {options.map((option) => {
+                  if (option.value === "" || option.value === null || option.value === undefined) return null;
+                  return (
+                    <SelectItem key={option.value} value={String(option.value)}>
+                      {option.label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

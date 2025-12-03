@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, Calendar, User, Users, FileText, Upload, Plus, Trash2, Search } from 'lucide-react';
+import { X, Calendar, User, Users, FileText, Upload, Plus, Trash2, Search, Loader2 } from 'lucide-react';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Label } from '@/ui/label';
+import { Textarea } from '@/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
+import { toast } from 'sonner';
 import { tiposHito, tiposDocumento } from '../../data/hitos';
 import userService from '../../services/userService';
 
@@ -31,7 +39,6 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const [notification, setNotification] = useState(null);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -101,7 +108,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
       } else {
         console.warn('La respuesta no contiene datos válidos:', response);
         // Mostrar notificación de error
-        showNotification('warning', 'No se pudieron cargar los usuarios. Puede continuar creando el hito sin asignar responsable o participantes.');
+        toast.warning('No se pudieron cargar los usuarios. Puede continuar creando el hito sin asignar responsable o participantes.');
         // Usar array vacío si no hay datos válidos
         setTodosUsuarios([]);
         setUsuariosFiltrados([]);
@@ -110,7 +117,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
       // Mostrar notificación de error
-      showNotification('error', 'Error al cargar la lista de usuarios. Puede continuar creando el hito sin asignar responsable o participantes.');
+      toast.error('Error al cargar la lista de usuarios. Puede continuar creando el hito sin asignar responsable o participantes.');
       // En caso de error, usar array vacío
       setTodosUsuarios([]);
       setUsuariosFiltrados([]);
@@ -212,7 +219,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
       // Validar tamaño máximo (10MB)
       const maxSize = 10 * 1024 * 1024; // 10MB en bytes
       if (file.size > maxSize) {
-        alert('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
+        toast.error('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
         event.target.value = '';
         return;
       }
@@ -231,7 +238,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        alert('Tipo de archivo no permitido. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF.');
+        toast.error('Tipo de archivo no permitido. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF.');
         event.target.value = '';
         return;
       }
@@ -317,7 +324,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
       // Si hay un archivo seleccionado en el input pero no se agregó como documento
       const fileInput = document.getElementById('file-input');
       if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        showNotification('warning', 'Has seleccionado un archivo pero no lo has agregado. Recuerda hacer clic en "Agregar Documento" antes de crear el hito.');
+        toast.warning('Has seleccionado un archivo pero no lo has agregado. Recuerda hacer clic en "Agregar Documento" antes de crear el hito.');
         return; // Detener el proceso si hay un archivo seleccionado pero no agregado
       }
     }
@@ -333,7 +340,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
 
     try {
       await onSave(hitoData);
-      showNotification('success', 'Hito/Evento creado exitosamente');
+      toast.success('Hito/Evento creado exitosamente');
 
       // Resetear formulario
       setFormData({
@@ -356,7 +363,7 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
 
     } catch (error) {
       console.error('Error al guardar el hito:', error);
-      showNotification('error', 'Error al crear el hito/evento');
+      toast.error('Error al crear el hito/evento');
     } finally {
       setSubmitting(false);
     }
@@ -399,13 +406,6 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
     }
   };
 
-  const showNotification = (type, message) => {
-    setNotification({ type, message });
-    setTimeout(() => {
-      setNotification(null);
-    }, 4000); // Ocultar después de 4 segundos
-  };
-
   // Cerrar lista de usuarios al hacer clic fuera
   const handleClickOutside = (e) => {
     if (e.target.closest('.usuarios-dropdown')) return;
@@ -413,457 +413,383 @@ const HitoModal = ({ isOpen, onClose, onSave, proyecto }) => {
     setMostrarListaResponsable(false);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={handleClickOutside}>
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Crear Nuevo Hito/Evento</h2>
-            <p className="text-sm text-slate-600 mt-1">Proyecto: {proyecto?.nombre}</p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Crear Nuevo Hito/Evento</DialogTitle>
+          <p className="text-sm text-muted-foreground">Proyecto: {proyecto?.nombre}</p>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Información Básica */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Tipo de Hito */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Tipo de Hito/Evento *
-              </label>
-              <select
-                value={formData.tipo}
-                onChange={(e) => handleTipoChange(e.target.value)}
-                disabled={submitting}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.tipo ? 'border-red-500' : 'border-slate-300'
-                } ${submitting ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-              >
-                <option value="">Seleccionar tipo...</option>
-                {tiposHito.map(tipo => (
-                  <option key={tipo.id} value={tipo.id}>
-                    {tipo.icono} {tipo.nombre}
-                  </option>
-                ))}
-              </select>
-              {errors.tipo && <p className="text-red-500 text-sm mt-1">{errors.tipo}</p>}
-            </div>
-
-            {/* Fecha */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Fecha *
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="date"
-                  value={formData.fecha}
-                  onChange={(e) => handleInputChange('fecha', e.target.value)}
-                  disabled={submitting}
-                  className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.fecha ? 'border-red-500' : 'border-slate-300'
-                  } ${submitting ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                />
-              </div>
-              {errors.fecha && <p className="text-red-500 text-sm mt-1">{errors.fecha}</p>}
-            </div>
-          </div>
-
-          {/* Título */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Título *
-            </label>
-            <input
-              type="text"
-              value={formData.titulo}
-              onChange={(e) => handleInputChange('titulo', e.target.value)}
-              placeholder="Título del hito o evento"
-              disabled={submitting}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.titulo ? 'border-red-500' : 'border-slate-300'
-              } ${submitting ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-            />
-            {errors.titulo && <p className="text-red-500 text-sm mt-1">{errors.titulo}</p>}
-          </div>
-
-          {/* Descripción */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Descripción *
-            </label>
-            <textarea
-              value={formData.descripcion}
-              onChange={(e) => handleInputChange('descripcion', e.target.value)}
-              placeholder="Descripción detallada del hito o evento"
-              rows={4}
-              disabled={submitting}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.descripcion ? 'border-red-500' : 'border-slate-300'
-              } ${submitting ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-            />
-            {errors.descripcion && <p className="text-red-500 text-sm mt-1">{errors.descripcion}</p>}
-          </div>
-
-          {/* Responsable */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Responsable {todosUsuarios.length > 0 ? '*' : '(Opcional)'}
-            </label>
-            <div className="relative usuarios-dropdown">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={busquedaResponsable}
-                  onChange={(e) => handleBusquedaResponsable(e.target.value)}
-                  placeholder={loadingUsuarios ? "Cargando usuarios..." : "Buscar responsable por nombre, cargo o departamento..."}
-                  disabled={loadingUsuarios}
-                  className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.responsable ? 'border-red-500' : 'border-slate-300'
-                  } ${loadingUsuarios ? 'bg-slate-50 cursor-not-allowed' : ''}`}
-                  onFocus={() => setMostrarListaResponsable(busquedaResponsable.length > 0)}
-                />
-                {loadingUsuarios && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Lista desplegable de usuarios para responsable */}
-              {mostrarListaResponsable && usuariosFiltradosResponsable.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {usuariosFiltradosResponsable.map((usuario) => (
-                    <button
-                      key={usuario.id}
-                      type="button"
-                      onClick={() => seleccionarResponsable(usuario)}
-                      className="w-full px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex items-center gap-3"
-                    >
-                      <span className="text-2xl">{usuario.avatar}</span>
-                      <div className="flex-1">
-                        <p className="font-medium text-slate-900">{usuario.nombre}</p>
-                        <p className="text-sm text-slate-600 flex items-center gap-1">
-                          {usuario.rolIcono && <span>{usuario.rolIcono}</span>}
-                          {usuario.cargo}
-                        </p>
-                        <p className="text-xs text-slate-500">{usuario.departamento}</p>
-                      </div>
-                    </button>
-                  ))}
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Información Básica */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Tipo de Hito */}
+                <div className="space-y-2">
+                  <Label htmlFor="tipo">Tipo de Hito/Evento *</Label>
+                  <Select value={formData.tipo} onValueChange={handleTipoChange} disabled={submitting}>
+                    <SelectTrigger className={errors.tipo ? 'border-destructive' : ''}>
+                      <SelectValue placeholder="Seleccionar tipo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tiposHito.map(tipo => (
+                        <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                          {tipo.icono} {tipo.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.tipo && <p className="text-sm text-destructive">{errors.tipo}</p>}
                 </div>
-              )}
-              
-              {mostrarListaResponsable && usuariosFiltradosResponsable.length === 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg p-4 text-center text-slate-500">
-                  No se encontraron usuarios
-                </div>
-              )}
-            </div>
-            {errors.responsable && <p className="text-red-500 text-sm mt-1">{errors.responsable}</p>}
-          </div>
 
-          {/* Participantes */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Participantes
-            </label>
-            <div className="relative mb-3 usuarios-dropdown">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={busquedaParticipante}
-                  onChange={(e) => handleBusquedaParticipante(e.target.value)}
-                  placeholder={loadingUsuarios ? "Cargando usuarios..." : "Buscar usuario por nombre, cargo o departamento..."}
-                  disabled={loadingUsuarios}
-                  className={`w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    loadingUsuarios ? 'bg-slate-50 cursor-not-allowed' : ''
-                  }`}
-                  onFocus={() => setMostrarListaUsuarios(busquedaParticipante.length > 0)}
-                />
-                {loadingUsuarios && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Lista desplegable de usuarios */}
-              {mostrarListaUsuarios && usuariosFiltrados.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {usuariosFiltrados.map((usuario) => (
-                    <button
-                      key={usuario.id}
-                      type="button"
-                      onClick={() => seleccionarParticipante(usuario)}
-                      className="w-full px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex items-center gap-3"
-                    >
-                      <span className="text-2xl">{usuario.avatar}</span>
-                      <div className="flex-1">
-                        <p className="font-medium text-slate-900">{usuario.nombre}</p>
-                        <p className="text-sm text-slate-600 flex items-center gap-1">
-                          {usuario.rolIcono && <span>{usuario.rolIcono}</span>}
-                          {usuario.cargo}
-                        </p>
-                        <p className="text-xs text-slate-500">{usuario.departamento}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {mostrarListaUsuarios && usuariosFiltrados.length === 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg p-4 text-center text-slate-500">
-                  No se encontraron usuarios
-                </div>
-              )}
-            </div>
-            
-            {formData.participantes.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-slate-700">
-                  Participantes seleccionados ({formData.participantes.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {formData.participantes.map((participante, index) => {
-                    // Buscar el nombre del participante basado en el ID
-                    const usuario = todosUsuarios.find(u => u.id.toString() === participante.toString());
-                    const nombreMostrar = usuario ? usuario.nombre : `Usuario ${participante}`;
-                    return (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm"
-                      >
-                        <Users className="w-4 h-4" />
-                        {nombreMostrar}
-                        <button
-                          type="button"
-                          onClick={() => eliminarParticipante(participante)}
-                          className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-200 rounded"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Documentos */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Documentos Adjuntos
-            </label>
-            
-            {/* Formulario para agregar documento */}
-            <div className="bg-slate-50 rounded-lg p-4 mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Documento *</label>
-                  <select
-                    value={nuevoDocumento.tipo}
-                    onChange={(e) => setNuevoDocumento(prev => ({ ...prev, tipo: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Seleccionar tipo...</option>
-                    {tiposDocumento.map(tipo => (
-                      <option key={tipo.id} value={tipo.id}>
-                        {tipo.icono} {tipo.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Seleccionar Archivo *</label>
+                {/* Fecha */}
+                <div className="space-y-2">
+                  <Label htmlFor="fecha">Fecha *</Label>
                   <div className="relative">
-                    <input
-                      id="file-input"
-                      type="file"
-                      onChange={handleFileChange}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="fecha"
+                      type="date"
+                      value={formData.fecha}
+                      onChange={(e) => handleInputChange('fecha', e.target.value)}
+                      disabled={submitting}
+                      className={`pl-10 ${errors.fecha ? 'border-destructive' : ''}`}
                     />
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF (máx. 10MB)
-                  </p>
+                  {errors.fecha && <p className="text-sm text-destructive">{errors.fecha}</p>}
                 </div>
-                
               </div>
-              
-              <button
-                type="button"
-                onClick={agregarDocumento}
-                disabled={!nuevoDocumento.tipo || !nuevoDocumento.archivo}
-                className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4" />
-                Agregar Documento
-              </button>
-            </div>
 
-            {/* Lista de documentos agregados */}
-            {formData.documentos.length > 0 && (
+              {/* Título */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-slate-700">
-                    Documentos Agregados ({formData.documentos.length})
-                  </h4>
-                </div>
-                {formData.documentos.map((doc) => {
-                  const tipoDoc = tiposDocumento.find(t => t.id === doc.tipo);
-                  return (
-                    <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-300 transition-colors">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-2xl flex-shrink-0">{tipoDoc?.icono}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-slate-900 truncate">{doc.nombre}</p>
-                          <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <span>{tipoDoc?.nombre}</span>
-                            <span>•</span>
-                            <span>{doc.tamaño}</span>
-                            {doc.archivo && (
-                              <>
-                                <span>•</span>
-                                <span className="text-green-600 font-medium">Archivo seleccionado</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                <Label htmlFor="titulo">Título *</Label>
+                <Input
+                  id="titulo"
+                  type="text"
+                  value={formData.titulo}
+                  onChange={(e) => handleInputChange('titulo', e.target.value)}
+                  placeholder="Título del hito o evento"
+                  disabled={submitting}
+                  className={errors.titulo ? 'border-destructive' : ''}
+                />
+                {errors.titulo && <p className="text-sm text-destructive">{errors.titulo}</p>}
+              </div>
+
+              {/* Descripción */}
+              <div className="space-y-2">
+                <Label htmlFor="descripcion">Descripción *</Label>
+                <Textarea
+                  id="descripcion"
+                  value={formData.descripcion}
+                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                  placeholder="Descripción detallada del hito o evento"
+                  rows={4}
+                  disabled={submitting}
+                  className={errors.descripcion ? 'border-destructive' : ''}
+                />
+                {errors.descripcion && <p className="text-sm text-destructive">{errors.descripcion}</p>}
+              </div>
+
+              {/* Responsable */}
+              <div className="space-y-2">
+                <Label htmlFor="responsable">Responsable {todosUsuarios.length > 0 ? '*' : '(Opcional)'}</Label>
+                <div className="relative usuarios-dropdown">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="responsable"
+                      type="text"
+                      value={busquedaResponsable}
+                      onChange={(e) => handleBusquedaResponsable(e.target.value)}
+                      placeholder={loadingUsuarios ? "Cargando usuarios..." : "Buscar responsable por nombre, cargo o departamento..."}
+                      disabled={loadingUsuarios}
+                      className={`pl-10 ${errors.responsable ? 'border-destructive' : ''}`}
+                      onFocus={() => setMostrarListaResponsable(busquedaResponsable.length > 0)}
+                    />
+                    {loadingUsuarios && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        {doc.archivo && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Crear URL temporal para previsualizar
-                              const url = URL.createObjectURL(doc.archivo);
-                              window.open(url, '_blank');
-                            }}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Previsualizar archivo"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </button>
-                        )}
+                    )}
+                  </div>
+
+                  {/* Lista desplegable de usuarios para responsable */}
+                  {mostrarListaResponsable && usuariosFiltradosResponsable.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {usuariosFiltradosResponsable.map((usuario) => (
                         <button
+                          key={usuario.id}
                           type="button"
-                          onClick={() => eliminarDocumento(doc.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Eliminar documento"
+                          onClick={() => seleccionarResponsable(usuario)}
+                          className="w-full px-4 py-3 text-left hover:bg-muted border-b border-border last:border-b-0 flex items-center gap-3"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <span className="text-2xl">{usuario.avatar}</span>
+                          <div className="flex-1">
+                            <p className="font-medium text-foreground">{usuario.nombre}</p>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              {usuario.rolIcono && <span>{usuario.rolIcono}</span>}
+                              {usuario.cargo}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{usuario.departamento}</p>
+                          </div>
                         </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {mostrarListaResponsable && usuariosFiltradosResponsable.length === 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg p-4 text-center text-muted-foreground">
+                      No se encontraron usuarios
+                    </div>
+                  )}
+                </div>
+                {errors.responsable && <p className="text-sm text-destructive">{errors.responsable}</p>}
+              </div>
+
+              {/* Participantes */}
+              <div className="space-y-2">
+                <Label htmlFor="participantes">Participantes</Label>
+                <div className="relative mb-3 usuarios-dropdown">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="participantes"
+                      type="text"
+                      value={busquedaParticipante}
+                      onChange={(e) => handleBusquedaParticipante(e.target.value)}
+                      placeholder={loadingUsuarios ? "Cargando usuarios..." : "Buscar usuario por nombre, cargo o departamento..."}
+                      disabled={loadingUsuarios}
+                      className="pl-10"
+                      onFocus={() => setMostrarListaUsuarios(busquedaParticipante.length > 0)}
+                    />
+                    {loadingUsuarios && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lista desplegable de usuarios */}
+                  {mostrarListaUsuarios && usuariosFiltrados.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {usuariosFiltrados.map((usuario) => (
+                        <button
+                          key={usuario.id}
+                          type="button"
+                          onClick={() => seleccionarParticipante(usuario)}
+                          className="w-full px-4 py-3 text-left hover:bg-muted border-b border-border last:border-b-0 flex items-center gap-3"
+                        >
+                          <span className="text-2xl">{usuario.avatar}</span>
+                          <div className="flex-1">
+                            <p className="font-medium text-foreground">{usuario.nombre}</p>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              {usuario.rolIcono && <span>{usuario.rolIcono}</span>}
+                              {usuario.cargo}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{usuario.departamento}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {mostrarListaUsuarios && usuariosFiltrados.length === 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg p-4 text-center text-muted-foreground">
+                      No se encontraron usuarios
+                    </div>
+                  )}
+                </div>
+
+                {formData.participantes.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">
+                      Participantes seleccionados ({formData.participantes.length})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.participantes.map((participante, index) => {
+                        // Buscar el nombre del participante basado en el ID
+                        const usuario = todosUsuarios.find(u => u.id.toString() === participante.toString());
+                        const nombreMostrar = usuario ? usuario.nombre : `Usuario ${participante}`;
+                        return (
+                          <div
+                            key={index}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-muted text-foreground rounded-lg text-sm"
+                          >
+                            <Users className="w-4 h-4" />
+                            {nombreMostrar}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => eliminarParticipante(participante)}
+                              className="h-auto p-1 hover:bg-destructive hover:text-destructive-foreground"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Documentos */}
+              <div className="space-y-4">
+                <Label>Documentos Adjuntos</Label>
+
+                {/* Formulario para agregar documento */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tipo-documento">Tipo de Documento *</Label>
+                        <Select value={nuevoDocumento.tipo} onValueChange={(value) => setNuevoDocumento(prev => ({ ...prev, tipo: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar tipo..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tiposDocumento.map(tipo => (
+                              <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                                {tipo.icono} {tipo.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="file-input">Seleccionar Archivo *</Label>
+                        <Input
+                          id="file-input"
+                          type="file"
+                          onChange={handleFileChange}
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF (máx. 10MB)
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
+
+                    <Button
+                      type="button"
+                      onClick={agregarDocumento}
+                      disabled={!nuevoDocumento.tipo || !nuevoDocumento.archivo}
+                      className="mt-4"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Documento
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Lista de documentos agregados */}
+                {formData.documentos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-foreground">
+                        Documentos Agregados ({formData.documentos.length})
+                      </h4>
+                    </div>
+                    {formData.documentos.map((doc) => {
+                      const tipoDoc = tiposDocumento.find(t => t.id === doc.tipo);
+                      return (
+                        <Card key={doc.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <span className="text-2xl flex-shrink-0">{tipoDoc?.icono}</span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-foreground truncate">{doc.nombre}</p>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>{tipoDoc?.nombre}</span>
+                                    <span>•</span>
+                                    <span>{doc.tamaño}</span>
+                                    {doc.archivo && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="text-green-600 font-medium">Archivo seleccionado</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {doc.archivo && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      // Crear URL temporal para previsualizar
+                                      const url = URL.createObjectURL(doc.archivo);
+                                      window.open(url, '_blank');
+                                    }}
+                                    title="Previsualizar archivo"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => eliminarDocumento(doc.id)}
+                                  className="hover:bg-destructive hover:text-destructive-foreground"
+                                  title="Eliminar documento"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Notas */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Notas Adicionales
-            </label>
-            <textarea
-              value={formData.notas}
-              onChange={(e) => handleInputChange('notas', e.target.value)}
-              placeholder="Notas adicionales o comentarios"
-              rows={3}
-              disabled={submitting}
-              className={`w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                submitting ? 'bg-slate-50 cursor-not-allowed' : ''
-              }`}
-            />
-          </div>
+              {/* Notas */}
+              <div className="space-y-2">
+                <Label htmlFor="notas">Notas Adicionales</Label>
+                <Textarea
+                  id="notas"
+                  value={formData.notas}
+                  onChange={(e) => handleInputChange('notas', e.target.value)}
+                  placeholder="Notas adicionales o comentarios"
+                  rows={3}
+                  disabled={submitting}
+                />
+              </div>
 
-
-          {/* Botones */}
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-6 py-2 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`px-6 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                submitting
-                  ? 'bg-blue-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white`}
-            >
-              {submitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Registrando Hito...
-                </>
-              ) : (
-                <>
-                  <FileText className="w-4 h-4" />
-                  Crear Hito/Evento
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Banner de notificación */}
-      {notification && (
-        <div className="fixed bottom-4 right-4 z-50 max-w-md animate-in slide-in-from-right">
-          <div className={`flex items-center gap-3 p-4 border rounded-lg shadow-lg ${
-            notification.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-              notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            }`}>
-              {notification.type === 'success' ? (
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="font-medium">{notification.message}</p>
-            </div>
-            <button
-              onClick={() => setNotification(null)}
-              className="text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+              {/* Botones */}
+              <DialogFooter>
+                <Button variant="outline" onClick={handleClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Registrando Hito...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Crear Hito/Evento
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </CardContent>
+        </Card>
+      </DialogContent>
+    </Dialog>
   );
 };
 

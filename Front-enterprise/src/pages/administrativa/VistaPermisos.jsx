@@ -334,8 +334,8 @@ function VistaPermisos() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Permisos</h1>
-          <p className="text-gray-600 mt-1">Administra los permisos del sistema</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Permisos</h1>
+          <p className="text-muted-foreground mt-1">Administra los permisos del sistema</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={openCreateDialog} className="flex items-center gap-2">
@@ -359,19 +359,19 @@ function VistaPermisos() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Activos</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
+            <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
-            <UserX className="h-4 w-4 text-red-600" />
+            <UserX className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.inactive}</div>
           </CardContent>
         </Card>
         <Card>
@@ -394,7 +394,7 @@ function VistaPermisos() {
           <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-gray-400'}`} />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-muted-foreground'}`} />
                 <Input
                   placeholder="Buscar permisos..."
                   value={searchTerm}
@@ -409,7 +409,7 @@ function VistaPermisos() {
                 )}
               </div>
             </div>
-            <Select value={filters.module || "none"} onValueChange={(value) => setFilters({...filters, module: value === "none" ? "" : value})}>
+            <Select value={filters.module || "none"} onValueChange={(value) => setFilters({ ...filters, module: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos los módulos" />
               </SelectTrigger>
@@ -422,7 +422,7 @@ function VistaPermisos() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filters.is_active || "none"} onValueChange={(value) => setFilters({...filters, is_active: value === "none" ? "" : value})}>
+            <Select value={filters.is_active || "none"} onValueChange={(value) => setFilters({ ...filters, is_active: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
@@ -454,22 +454,22 @@ function VistaPermisos() {
                   ))
                 ) : permissions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No se encontraron permisos
                     </TableCell>
                   </TableRow>
                 ) : (
                   permissions.map((permission) => (
-                    <TableRow key={permission.id} className="transition-all duration-200 hover:bg-gray-50">
+                    <TableRow key={permission.id} className="transition-all duration-200 hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-semibold">
                             <Key className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{permission.label}</p>
+                            <p className="font-medium text-foreground">{permission.label}</p>
                             {permission.description && (
-                              <p className="text-sm text-slate-600">{permission.description}</p>
+                              <p className="text-sm text-muted-foreground">{permission.description}</p>
                             )}
                           </div>
                         </div>
@@ -485,7 +485,7 @@ function VistaPermisos() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-sm bg-muted px-2 py-1 rounded">
                           {permission.key}
                         </code>
                       </TableCell>
@@ -532,7 +532,7 @@ function VistaPermisos() {
           {/* Paginación */}
           {!loading && permissions.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Mostrando {pagination.from}-{pagination.to} de {pagination.total} permisos
               </div>
               <div className="flex items-center gap-4">

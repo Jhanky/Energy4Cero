@@ -46,6 +46,14 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
+// Gestión de Departamentos y Ciudades (públicos para datos de ubicación)
+Route::get('departments', [DepartmentController::class, 'index']);
+Route::get('departments/{id}', [DepartmentController::class, 'show']);
+Route::get('departments/region/{region}', [DepartmentController::class, 'byRegion']);
+Route::get('cities', [CityController::class, 'index']);
+Route::get('cities/{id}', [CityController::class, 'show']);
+Route::get('cities/department/{departmentId}', [CityController::class, 'byDepartment']);
+
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth:sanctum')->group(function () {
     // Autenticación
@@ -66,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [UserController::class, 'update'])->middleware('permission:users.update');
         Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('permission:users.delete');
         Route::patch('/{id}/toggle-status', [UserController::class, 'toggleStatus'])->middleware('permission:users.update');
+        Route::patch('/theme', [UserController::class, 'updateTheme']);
     });
 
     // Gestión de Roles
@@ -149,13 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}/download-file', [InvoiceController::class, 'downloadFile'])->middleware('auth.api');
     });
     
-    // Gestión de Departamentos
-    Route::apiResource('departments', DepartmentController::class);
-    Route::get('departments/region/{region}', [DepartmentController::class, 'byRegion']);
-    
-    // Gestión de Ciudades
-    Route::apiResource('cities', CityController::class);
-    Route::get('cities/department/{departmentId}', [CityController::class, 'byDepartment']);
+
 
     // Gestión de Paneles
     Route::get('panels/statistics', [PanelController::class, 'statistics'])->middleware('permission:panels.read');

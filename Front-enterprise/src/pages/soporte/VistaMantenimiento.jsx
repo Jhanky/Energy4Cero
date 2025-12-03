@@ -184,9 +184,9 @@ const createCustomToolbar = (setCalendarView, setCurrentDate) => {
     };
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
         {/* Título del período actual */}
-        <div className="text-lg font-semibold text-gray-900">
+        <div className="text-lg font-semibold text-foreground">
           {label}
         </div>
 
@@ -461,17 +461,17 @@ const MaintenanceModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-bold text-foreground">
               {mode === 'create' && 'Nuevo Mantenimiento'}
               {mode === 'edit' && 'Editar Mantenimiento'}
               {mode === 'view' && 'Detalles del Mantenimiento'}
             </h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-muted-foreground hover:text-muted-foreground transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -480,7 +480,7 @@ const MaintenanceModal = ({
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Título *
                 </label>
                 <input
@@ -489,9 +489,8 @@ const MaintenanceModal = ({
                   value={formData.title || ''}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   disabled={mode === 'view'}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.title ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${formErrors.title ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-input'
+                    }`}
                   placeholder="Ej: Mantenimiento Preventivo - Paneles Solares"
                 />
                 {formErrors.title && (
@@ -500,7 +499,7 @@ const MaintenanceModal = ({
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Descripción
                 </label>
                 <textarea
@@ -509,13 +508,13 @@ const MaintenanceModal = ({
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   disabled={mode === 'view'}
                   rows={3}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-input rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="Descripción detallada del mantenimiento"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Tipo *
                 </label>
                 <select
@@ -523,9 +522,8 @@ const MaintenanceModal = ({
                   value={formData.type || ''}
                   onChange={(e) => handleInputChange('type', e.target.value)}
                   disabled={mode === 'view'}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.type ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${formErrors.type ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-input'
+                    }`}
                 >
                   <option value="">Seleccionar tipo</option>
                   <option value="preventive">Preventivo</option>
@@ -541,7 +539,7 @@ const MaintenanceModal = ({
 
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Prioridad *
                 </label>
                 <select
@@ -549,9 +547,8 @@ const MaintenanceModal = ({
                   value={formData.priority || ''}
                   onChange={(e) => handleInputChange('priority', e.target.value)}
                   disabled={mode === 'view'}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.priority ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${formErrors.priority ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-input'
+                    }`}
                 >
                   <option value="">Seleccionar prioridad</option>
                   <option value="low">Baja</option>
@@ -565,7 +562,7 @@ const MaintenanceModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Fecha Programada *
                 </label>
                 <input
@@ -574,9 +571,8 @@ const MaintenanceModal = ({
                   value={formData.scheduled_date || ''}
                   onChange={(e) => handleInputChange('scheduled_date', e.target.value)}
                   disabled={mode === 'view'}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.scheduled_date ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${formErrors.scheduled_date ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-input'
+                    }`}
                 />
                 {formErrors.scheduled_date && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.scheduled_date[0]}</p>
@@ -584,7 +580,7 @@ const MaintenanceModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Hora Programada *
                 </label>
                 <input
@@ -593,9 +589,8 @@ const MaintenanceModal = ({
                   value={formData.scheduled_time || ''}
                   onChange={(e) => handleInputChange('scheduled_time', e.target.value)}
                   disabled={mode === 'view'}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    formErrors.scheduled_time ? 'border-red-300 bg-red-50' : 'border-slate-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 ${formErrors.scheduled_time ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-input'
+                    }`}
                 />
                 {formErrors.scheduled_time && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.scheduled_time[0]}</p>
@@ -603,13 +598,13 @@ const MaintenanceModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Proyecto
                 </label>
                 {loadingProjects ? (
                   <div className="flex items-center justify-center py-2">
                     <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                    <span className="text-xs text-slate-500">Cargando...</span>
+                    <span className="text-xs text-muted-foreground">Cargando...</span>
                   </div>
                 ) : (
                   <select
@@ -617,7 +612,7 @@ const MaintenanceModal = ({
                     value={formData.project_id || ''}
                     onChange={(e) => handleInputChange('project_id', e.target.value)}
                     disabled={mode === 'view'}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-4 py-3 border border-input rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   >
                     <option value="">Seleccionar proyecto</option>
                     {availableProjects.map(project => (
@@ -632,21 +627,20 @@ const MaintenanceModal = ({
 
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Participantes
                 </label>
                 <div className="relative usuarios-dropdown">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="text"
                       value={busquedaParticipante}
                       onChange={(e) => handleBusquedaParticipante(e.target.value)}
                       placeholder={loadingUsuarios ? "Cargando usuarios..." : "Buscar usuario por nombre, cargo o departamento..."}
                       disabled={mode === 'view' || loadingUsuarios}
-                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                        loadingUsuarios ? 'bg-slate-50 cursor-not-allowed' : 'border-slate-300'
-                      }`}
+                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${loadingUsuarios ? 'bg-slate-50 cursor-not-allowed' : 'border-input'
+                        }`}
                       onFocus={() => setMostrarListaUsuarios(busquedaParticipante.length > 0)}
                     />
                     {loadingUsuarios && (
@@ -658,18 +652,18 @@ const MaintenanceModal = ({
 
                   {/* Lista desplegable de usuarios */}
                   {mostrarListaUsuarios && usuariosFiltrados.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-card border border-input rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {usuariosFiltrados.map((usuario) => (
                         <button
                           key={usuario.id}
                           type="button"
                           onClick={() => seleccionarParticipante(usuario)}
-                          className="w-full px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex items-center gap-3"
+                          className="w-full px-4 py-3 text-left hover:bg-accent hover:text-accent-foreground border-b border-slate-100 last:border-b-0 flex items-center gap-3"
                         >
                           <span className="text-2xl">{usuario.rolIcono || getRolIcono('usuario')}</span>
                           <div className="flex-1">
-                            <p className="font-medium text-slate-900">{usuario.nombre}</p>
-                            <p className="text-sm text-slate-500">{usuario.cargo} • {usuario.departamento}</p>
+                            <p className="font-medium text-foreground">{usuario.nombre}</p>
+                            <p className="text-sm text-muted-foreground">{usuario.cargo} • {usuario.departamento}</p>
                           </div>
                         </button>
                       ))}
@@ -677,7 +671,7 @@ const MaintenanceModal = ({
                   )}
 
                   {mostrarListaUsuarios && usuariosFiltrados.length === 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg p-4 text-center text-slate-500">
+                    <div className="absolute z-10 w-full mt-1 bg-card border border-input rounded-lg shadow-lg p-4 text-center text-muted-foreground">
                       No se encontraron usuarios
                     </div>
                   )}
@@ -685,7 +679,7 @@ const MaintenanceModal = ({
 
                 {formData.participants && formData.participants.length > 0 && (
                   <div className="space-y-2 mt-3">
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-sm font-medium text-foreground">
                       Participantes seleccionados ({formData.participants.length})
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -695,14 +689,14 @@ const MaintenanceModal = ({
                         return (
                           <span
                             key={index}
-                            className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm"
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 dark:text-blue-300 rounded-lg text-sm"
                           >
                             <User className="w-4 h-4" />
                             {nombreMostrar}
                             <button
                               type="button"
                               onClick={() => eliminarParticipante(participanteId)}
-                              className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-200 rounded"
+                              className="text-blue-600 hover:text-blue-800 dark:text-blue-300 p-1 hover:bg-blue-200 rounded"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -715,7 +709,7 @@ const MaintenanceModal = ({
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Notas
                 </label>
                 <textarea
@@ -724,7 +718,7 @@ const MaintenanceModal = ({
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   disabled={mode === 'view'}
                   rows={3}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-input rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder="Notas adicionales"
                 />
               </div>
@@ -733,19 +727,19 @@ const MaintenanceModal = ({
             {/* Documentos/Evidencias */}
             {mode !== 'view' && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-4">
+                <label className="block text-sm font-medium text-foreground mb-4">
                   Documentos y Evidencias
                 </label>
 
                 {/* Subida de nuevos archivos */}
                 <div className="mb-4">
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-green-400 transition-colors">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-input rounded-xl cursor-pointer hover:border-green-400 transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-2 text-gray-400" />
-                      <p className="mb-2 text-sm text-gray-500">
+                      <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                      <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Haz clic para subir</span> o arrastra y suelta
                       </p>
-                      <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (MAX. 10MB)</p>
+                      <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (MAX. 10MB)</p>
                     </div>
                     <input
                       type="file"
@@ -760,21 +754,21 @@ const MaintenanceModal = ({
                 {/* Archivos subidos recientemente */}
                 {uploadedFiles.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Archivos a subir:</h4>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Archivos a subir:</h4>
                     <div className="space-y-2">
                       {uploadedFiles.map((fileData) => (
-                        <div key={fileData.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div key={fileData.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                           <FileText className="w-5 h-5 text-blue-500" />
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{fileData.file.name}</p>
-                            <p className="text-xs text-gray-500">{formatFileSize(fileData.file.size)}</p>
+                            <p className="text-sm font-medium text-foreground">{fileData.file.name}</p>
+                            <p className="text-xs text-muted-foreground">{formatFileSize(fileData.file.size)}</p>
                           </div>
                           <input
                             type="text"
                             placeholder="Descripción (opcional)"
                             value={fileData.description}
                             onChange={(e) => updateFileDescription(fileData.id, e.target.value)}
-                            className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                            className="flex-1 px-3 py-1 text-sm border border-input rounded focus:ring-1 focus:ring-green-500 focus:border-green-500"
                           />
                           <button
                             type="button"
@@ -792,14 +786,14 @@ const MaintenanceModal = ({
                 {/* Evidencias existentes (solo en modo edición) */}
                 {mode === 'edit' && existingEvidences.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Documentos existentes:</h4>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Documentos existentes:</h4>
                     <div className="space-y-2">
                       {existingEvidences.map((evidence) => (
-                        <div key={evidence.evidence_id} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                        <div key={evidence.evidence_id} className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <Paperclip className="w-5 h-5 text-blue-500" />
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{evidence.file_name}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm font-medium text-foreground">{evidence.file_name}</p>
+                            <p className="text-xs text-muted-foreground">
                               {formatFileSize(evidence.file_size)} • {evidence.description || 'Sin descripción'}
                             </p>
                           </div>
@@ -821,16 +815,16 @@ const MaintenanceModal = ({
             {/* Mostrar evidencias en modo vista */}
             {mode === 'view' && existingEvidences.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-4">
+                <label className="block text-sm font-medium text-foreground mb-4">
                   Documentos Adjuntos
                 </label>
                 <div className="space-y-2">
                   {existingEvidences.map((evidence) => (
-                    <div key={evidence.evidence_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div key={evidence.evidence_id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                       <Paperclip className="w-5 h-5 text-blue-500" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{evidence.file_name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-foreground">{evidence.file_name}</p>
+                        <p className="text-xs text-muted-foreground">
                           {formatFileSize(evidence.file_size)} • {evidence.description || 'Sin descripción'}
                         </p>
                       </div>
@@ -841,11 +835,11 @@ const MaintenanceModal = ({
             )}
 
             {mode !== 'view' && (
-              <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
+              <div className="flex justify-end gap-4 pt-6 border-t border-border">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="px-6 py-3 border border-input text-foreground rounded-xl hover:bg-accent hover:text-accent-foreground transition-colors"
                   disabled={isSubmitting}
                 >
                   Cancelar
@@ -862,7 +856,7 @@ const MaintenanceModal = ({
             )}
 
             {mode === 'view' && (
-              <div className="flex justify-end pt-6 border-t border-slate-200">
+              <div className="flex justify-end pt-6 border-t border-border">
                 <button
                   type="button"
                   onClick={onClose}
@@ -879,51 +873,179 @@ const MaintenanceModal = ({
   );
 };
 
+import { motion, AnimatePresence } from 'framer-motion';
+
 // Componente Modal de Eliminación de Mantenimiento
 const MaintenanceDeleteModal = ({ show, maintenance, onConfirm, onClose, isDeleting }) => {
   if (!show || !maintenance) return null;
 
+  // Variantes de animación para el modal
+  const modalVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.9,
+      y: 20
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 25,
+        stiffness: 300,
+        duration: 0.3
+      }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      y: -10,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
+  // Variantes para el overlay
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 }
+  };
+
+  // Variantes para el ícono de advertencia
+  const iconVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 300,
+        delay: 0.1
+      }
+    },
+    pulse: {
+      scale: [1, 1.1, 1],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  // Variantes para los botones
+  const buttonVariants = {
+    idle: { scale: 1 },
+    hover: {
+      scale: 1.02,
+      transition: { duration: 0.2 }
+    },
+    tap: {
+      scale: 0.98,
+      transition: { duration: 0.1 }
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
-        <div className="p-6">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          variants={overlayVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
+          <motion.div
+            className="bg-card dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full"
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className="p-6">
+              <motion.div
+                className="flex items-center justify-center mb-4"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <motion.div
+                  className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center"
+                  variants={iconVariants}
+                  initial="hidden"
+                  animate={["visible", "pulse"]}
+                >
+                  <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </motion.div>
+              </motion.div>
+
+              <motion.h3
+                className="text-lg font-semibold text-center text-foreground dark:text-slate-100 mb-2"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Eliminar Mantenimiento
+              </motion.h3>
+
+              <motion.p
+                className="text-sm text-muted-foreground dark:text-slate-400 text-center mb-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                ¿Estás seguro de que deseas eliminar el mantenimiento <strong className="text-foreground dark:text-slate-100">"{maintenance.title}"</strong>?
+                Esta acción no se puede deshacer.
+              </motion.p>
+
+              <motion.div
+                className="flex gap-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <motion.button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-3 border border-input dark:border-slate-600 text-foreground dark:text-slate-300 rounded-xl hover:bg-muted/50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  variants={buttonVariants}
+                  initial="idle"
+                  whileHover={!isDeleting ? "hover" : "idle"}
+                  whileTap={!isDeleting ? "tap" : "idle"}
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={onConfirm}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[120px]"
+                  variants={buttonVariants}
+                  initial="idle"
+                  whileHover={!isDeleting ? "hover" : "idle"}
+                  whileTap={!isDeleting ? "tap" : "idle"}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    'Eliminar'
+                  )}
+                </motion.button>
+              </motion.div>
             </div>
-          </div>
-
-          <h3 className="text-lg font-semibold text-center text-gray-900 mb-2">
-            Eliminar Mantenimiento
-          </h3>
-
-          <p className="text-sm text-gray-600 text-center mb-6">
-            ¿Estás seguro de que deseas eliminar el mantenimiento <strong>"{maintenance.title}"</strong>?
-            Esta acción no se puede deshacer.
-          </p>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-              disabled={isDeleting}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={isDeleting}
-              className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isDeleting ? 'Eliminando...' : 'Eliminar'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
@@ -1329,21 +1451,21 @@ const VistaMantenimiento = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
+      case 'scheduled': return 'bg-blue-100 text-blue-800 dark:text-blue-300';
+      case 'in_progress': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      case 'completed': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'cancelled': return 'bg-gray-100 text-gray-800';
-      case 'overdue': return 'bg-red-100 text-red-800';
+      case 'overdue': return 'bg-red-100 text-red-800 dark:text-red-300';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'low': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'critical': return 'bg-red-100 text-red-800';
+      case 'low': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      case 'high': return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
+      case 'critical': return 'bg-red-100 text-red-800 dark:text-red-300';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -1353,8 +1475,8 @@ const VistaMantenimiento = () => {
       case 'preventive': return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'corrective': return <Wrench className="w-4 h-4 text-orange-600" />;
       case 'predictive': return <BarChart3 className="w-4 h-4 text-blue-600" />;
-      case 'condition_based': return <AlertTriangle className="w-4 h-4 text-purple-600" />;
-      default: return <Wrench className="w-4 h-4 text-gray-600" />;
+      case 'condition_based': return <AlertTriangle className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
+      default: return <Wrench className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -1363,8 +1485,8 @@ const VistaMantenimiento = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 mb-2">Acceso denegado</h3>
-          <p className="text-slate-600">No tiene permiso para ver los mantenimientos.</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">Acceso denegado</h3>
+          <p className="text-muted-foreground">No tiene permiso para ver los mantenimientos.</p>
         </div>
       </div>
     );
@@ -1374,17 +1496,16 @@ const VistaMantenimiento = () => {
     <div className="space-y-6">
       {/* Notificación */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
-          notification.type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
-          notification.type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
-          notification.type === 'warning' ? 'bg-yellow-100 border border-yellow-400 text-yellow-700' :
-          'bg-blue-100 border border-blue-400 text-blue-700'
-        }`}>
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${notification.type === 'success' ? 'bg-green-100 dark:bg-green-900/30 border border-green-400 text-green-700' :
+            notification.type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
+              notification.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 text-yellow-700' :
+                'bg-blue-100 border border-blue-400 text-blue-700'
+          }`}>
           <div className="flex items-center gap-2">
             <span className="text-lg">
               {notification.type === 'success' ? '✅' :
-               notification.type === 'error' ? '❌' :
-               notification.type === 'warning' ? '⚠️' : 'ℹ️'}
+                notification.type === 'error' ? '❌' :
+                  notification.type === 'warning' ? '⚠️' : 'ℹ️'}
             </span>
             <p className="text-sm font-medium">{notification.message}</p>
           </div>
@@ -1397,8 +1518,8 @@ const VistaMantenimiento = () => {
             <Wrench className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Gestión de Mantenimiento</h1>
-            <p className="text-slate-600">Programa y realiza seguimiento de mantenimientos programados</p>
+            <h1 className="text-2xl font-bold text-foreground">Gestión de Mantenimiento</h1>
+            <p className="text-muted-foreground">Programa y realiza seguimiento de mantenimientos programados</p>
           </div>
         </div>
 
@@ -1451,7 +1572,7 @@ const VistaMantenimiento = () => {
               <div className="flex items-center justify-center py-12" style={{ height: '600px' }}>
                 <div className="text-center">
                   <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600">Cargando mantenimientos...</p>
+                  <p className="text-muted-foreground">Cargando mantenimientos...</p>
                 </div>
               </div>
             ) : (
@@ -1497,10 +1618,10 @@ const VistaMantenimiento = () => {
 
                   {/* Overlay de carga para detalles del calendario */}
                   {loadingCalendarDetail && (
-                    <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    <div className="absolute inset-0 bg-card bg-opacity-80 flex items-center justify-center z-10">
                       <div className="text-center">
                         <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-600">Cargando detalles del mantenimiento...</p>
+                        <p className="text-muted-foreground">Cargando detalles del mantenimiento...</p>
                       </div>
                     </div>
                   )}
@@ -1509,7 +1630,7 @@ const VistaMantenimiento = () => {
                 {/* Leyenda de colores */}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <div className="w-4 h-4 bg-red-50 dark:bg-red-900/200 rounded"></div>
                     <span>Crítico</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1539,12 +1660,12 @@ const VistaMantenimiento = () => {
           <CardContent>
             <div className="space-y-4">
               {maintenances.map((maintenance) => (
-                <div key={maintenance.maintenance_id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div key={maintenance.maintenance_id} className="border rounded-lg p-4 hover:bg-muted/50">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         {getTypeIcon(maintenance.type)}
-                        <h3 className="font-medium text-gray-900">{maintenance.title}</h3>
+                        <h3 className="font-medium text-foreground">{maintenance.title}</h3>
                         <Badge className={getStatusColor(maintenance.status)}>
                           {maintenance.status}
                         </Badge>
@@ -1552,8 +1673,8 @@ const VistaMantenimiento = () => {
                           {maintenance.priority}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{maintenance.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground mb-2">{maintenance.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           {new Date(maintenance.scheduled_date).toLocaleDateString()}
@@ -1614,12 +1735,12 @@ const VistaMantenimiento = () => {
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
-              <Wrench className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Formulario de Mantenimiento</h3>
-              <p className="text-gray-600 mb-4">
+              <Wrench className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Formulario de Mantenimiento</h3>
+              <p className="text-muted-foreground mb-4">
                 Aquí se mostrará el formulario para crear/editar mantenimientos.
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Funcionalidad en desarrollo - Próximamente disponible
               </p>
               <Button onClick={handleBackToCalendar} className="mt-4">
@@ -1636,7 +1757,7 @@ const VistaMantenimiento = () => {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Cargando detalles del mantenimiento...</p>
+                <p className="text-muted-foreground">Cargando detalles del mantenimiento...</p>
               </div>
             </div>
           ) : currentMaintenance && (
@@ -1652,7 +1773,7 @@ const VistaMantenimiento = () => {
                         </div>
                       </div>
                       <div className="flex-1">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        <h1 className="text-2xl font-bold text-foreground mb-2">
                           {currentMaintenance.title}
                         </h1>
                         <div className="flex items-center gap-3 mb-3">
@@ -1664,7 +1785,7 @@ const VistaMantenimiento = () => {
                           </Badge>
                         </div>
                         {currentMaintenance.description && (
-                          <p className="text-gray-600 text-base leading-relaxed">
+                          <p className="text-muted-foreground text-base leading-relaxed">
                             {currentMaintenance.description}
                           </p>
                         )}
@@ -1709,8 +1830,8 @@ const VistaMantenimiento = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Fecha Programada</label>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-muted-foreground">Fecha Programada</label>
+                      <p className="text-lg font-semibold text-foreground mt-1">
                         {new Date(currentMaintenance.scheduled_date).toLocaleDateString('es-ES', {
                           weekday: 'long',
                           year: 'numeric',
@@ -1721,9 +1842,9 @@ const VistaMantenimiento = () => {
                     </div>
                     {currentMaintenance.scheduled_time && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Hora Programada</label>
-                        <p className="text-lg font-semibold text-gray-900 mt-1 flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
+                        <label className="text-sm font-medium text-muted-foreground">Hora Programada</label>
+                        <p className="text-lg font-semibold text-foreground mt-1 flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
                           {currentMaintenance.scheduled_time}
                         </p>
                       </div>
@@ -1733,10 +1854,10 @@ const VistaMantenimiento = () => {
                     <div className="border-t pt-4">
                       <div className="space-y-3">
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Tipo de Mantenimiento</label>
+                          <label className="text-sm font-medium text-muted-foreground">Tipo de Mantenimiento</label>
                           <div className="flex items-center gap-2 mt-1">
                             {getTypeIcon(currentMaintenance.type)}
-                            <span className="capitalize font-medium text-gray-900">
+                            <span className="capitalize font-medium text-foreground">
                               {currentMaintenance.type === 'preventive' && 'Preventivo'}
                               {currentMaintenance.type === 'corrective' && 'Correctivo'}
                               {currentMaintenance.type === 'predictive' && 'Predictivo'}
@@ -1745,7 +1866,7 @@ const VistaMantenimiento = () => {
                           </div>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Prioridad</label>
+                          <label className="text-sm font-medium text-muted-foreground">Prioridad</label>
                           <Badge className={`${getPriorityColor(currentMaintenance.priority)} mt-1 px-3 py-1`}>
                             {currentMaintenance.priority === 'low' && 'Baja'}
                             {currentMaintenance.priority === 'medium' && 'Media'}
@@ -1770,10 +1891,10 @@ const VistaMantenimiento = () => {
                     <CardContent className="space-y-4">
                       {/* Información básica del proyecto */}
                       <div>
-                        <p className="text-lg font-semibold text-gray-900 mb-1">
+                        <p className="text-lg font-semibold text-foreground mb-1">
                           {currentMaintenance.project.name}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Código: {currentMaintenance.project.code || `PROJ-${currentMaintenance.project.id.toString().padStart(4, '0')}`}
                         </p>
                       </div>
@@ -1784,32 +1905,32 @@ const VistaMantenimiento = () => {
                           <div className="border-t pt-4">
                             <div className="space-y-3">
                               <div>
-                                <label className="text-sm font-medium text-gray-500">Cliente</label>
-                                <p className="text-base font-semibold text-gray-900">
+                                <label className="text-sm font-medium text-muted-foreground">Cliente</label>
+                                <p className="text-base font-semibold text-foreground">
                                   {currentMaintenance.project.additional_info.client.name}
                                 </p>
                               </div>
                               <div>
-                                <label className="text-sm font-medium text-gray-500">Dirección</label>
-                                <p className="text-sm text-gray-700">
+                                <label className="text-sm font-medium text-muted-foreground">Dirección</label>
+                                <p className="text-sm text-foreground">
                                   {currentMaintenance.project.additional_info.client.address || 'No especificada'}
                                 </p>
                                 {(currentMaintenance.project.additional_info.client.city || currentMaintenance.project.additional_info.client.department) && (
-                                  <p className="text-sm text-gray-600 mt-1">
+                                  <p className="text-sm text-muted-foreground mt-1">
                                     {[currentMaintenance.project.additional_info.client.city, currentMaintenance.project.additional_info.client.department].filter(Boolean).join(', ')}
                                   </p>
                                 )}
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                  <label className="text-sm font-medium text-gray-500">Email</label>
-                                  <p className="text-sm text-gray-700">
+                                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                                  <p className="text-sm text-foreground">
                                     {currentMaintenance.project.additional_info.client.email || 'No especificado'}
                                   </p>
                                 </div>
                                 <div>
-                                  <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                                  <p className="text-sm text-gray-700">
+                                  <label className="text-sm font-medium text-muted-foreground">Teléfono</label>
+                                  <p className="text-sm text-foreground">
                                     {currentMaintenance.project.additional_info.client.phone || 'No especificado'}
                                   </p>
                                 </div>
@@ -1824,10 +1945,10 @@ const VistaMantenimiento = () => {
                         <>
                           <div className="border-t pt-4">
                             <div>
-                              <label className="text-sm font-medium text-gray-500 mb-3 block">Potencia Instalada</label>
+                              <label className="text-sm font-medium text-muted-foreground mb-3 block">Potencia Instalada</label>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {currentMaintenance.project.additional_info.installed_power.dc_kw && (
-                                  <div className="text-center p-2 bg-blue-50 rounded-lg">
+                                  <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                     <p className="text-lg font-bold text-blue-600">
                                       {currentMaintenance.project.additional_info.installed_power.dc_kw}
                                     </p>
@@ -1843,11 +1964,11 @@ const VistaMantenimiento = () => {
                                   </div>
                                 )}
                                 {currentMaintenance.project.additional_info.installed_power.nominal_power && (
-                                  <div className="text-center p-2 bg-purple-50 rounded-lg">
-                                    <p className="text-lg font-bold text-purple-600">
+                                  <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
                                       {currentMaintenance.project.additional_info.installed_power.nominal_power}
                                     </p>
-                                    <p className="text-xs text-purple-700 font-medium">kW Nominal</p>
+                                    <p className="text-xs text-purple-700 dark:text-purple-300 font-medium">kW Nominal</p>
                                   </div>
                                 )}
                                 {currentMaintenance.project.additional_info.installed_power.total_panels && (
@@ -1859,7 +1980,7 @@ const VistaMantenimiento = () => {
                                   </div>
                                 )}
                                 {currentMaintenance.project.additional_info.installed_power.total_inverters && (
-                                  <div className="text-center p-2 bg-red-50 rounded-lg">
+                                  <div className="text-center p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
                                     <p className="text-lg font-bold text-red-600">
                                       {currentMaintenance.project.additional_info.installed_power.total_inverters}
                                     </p>
@@ -1901,34 +2022,34 @@ const VistaMantenimiento = () => {
 
                           return (
                             <div key={index}>
-                              <h4 className="font-semibold text-gray-900 mb-2 capitalize text-sm">
+                              <h4 className="font-semibold text-foreground mb-2 capitalize text-sm">
                                 {getEquipmentTypeName(equipmentGroup.type)}
                               </h4>
                               <div className="space-y-2">
                                 {equipmentGroup.items.map((item, itemIndex) => (
-                                <div key={itemIndex} className="bg-gray-50 px-3 py-3 rounded-lg">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="font-semibold text-gray-900">
-                                      {item.brand}
-                                    </span>
-                                    <span className="text-gray-600 font-medium">
-                                      Cantidad: {item.quantity}
-                                    </span>
+                                  <div key={itemIndex} className="bg-muted/50 px-3 py-3 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="font-semibold text-foreground">
+                                        {item.brand}
+                                      </span>
+                                      <span className="text-muted-foreground font-medium">
+                                        Cantidad: {item.quantity}
+                                      </span>
+                                    </div>
+                                    {item.model && (
+                                      <div className="text-sm text-foreground mb-1">
+                                        <span className="font-medium">Modelo:</span> {item.model}
+                                      </div>
+                                    )}
+                                    {(item.power_info || item.capacity_info) && (
+                                      <div className="text-sm text-foreground">
+                                        <span className="font-medium">
+                                          {item.power_info ? 'Potencia:' : 'Capacidad:'}
+                                        </span>{' '}
+                                        {item.power_info || item.capacity_info}
+                                      </div>
+                                    )}
                                   </div>
-                                  {item.model && (
-                                    <div className="text-sm text-gray-700 mb-1">
-                                      <span className="font-medium">Modelo:</span> {item.model}
-                                    </div>
-                                  )}
-                                  {(item.power_info || item.capacity_info) && (
-                                    <div className="text-sm text-gray-700">
-                                      <span className="font-medium">
-                                        {item.power_info ? 'Potencia:' : 'Capacidad:'}
-                                      </span>{' '}
-                                      {item.power_info || item.capacity_info}
-                                    </div>
-                                  )}
-                                </div>
                                 ))}
                               </div>
                             </div>
@@ -1952,16 +2073,16 @@ const VistaMantenimiento = () => {
                   <CardContent>
                     <div className="space-y-3">
                       {currentMaintenance.participant_users.map((participant) => (
-                        <div key={participant.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div key={participant.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold text-sm">
                               {participant.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">{participant.name}</p>
-                            <p className="text-sm text-gray-600">{participant.position || 'Sin cargo asignado'}</p>
-                            <p className="text-xs text-gray-500">{participant.email}</p>
+                            <p className="font-medium text-foreground">{participant.name}</p>
+                            <p className="text-sm text-muted-foreground">{participant.position || 'Sin cargo asignado'}</p>
+                            <p className="text-xs text-muted-foreground">{participant.email}</p>
                           </div>
                         </div>
                       ))}
@@ -1975,12 +2096,12 @@ const VistaMantenimiento = () => {
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-purple-600" />
+                      <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       Notas Adicionales
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                       {currentMaintenance.notes}
                     </p>
                   </CardContent>
@@ -1999,13 +2120,13 @@ const VistaMantenimiento = () => {
                   <CardContent>
                     <div className="space-y-3">
                       {currentMaintenance.evidences.map((evidence) => (
-                        <div key={evidence.evidence_id} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div key={evidence.evidence_id} className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg hover:bg-gray-100 transition-colors">
                           <Paperclip className="w-5 h-5 text-blue-500 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {evidence.file_name}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {evidence.description || 'Sin descripción'}
                             </p>
                           </div>

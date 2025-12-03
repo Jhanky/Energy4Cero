@@ -278,8 +278,8 @@ function VistaUsuarios() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
-          <p className="text-gray-600 mt-1">Administra los usuarios del sistema</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Usuarios</h1>
+          <p className="text-muted-foreground mt-1">Administra los usuarios del sistema</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={openCreateDialog} className="flex items-center gap-2">
@@ -303,55 +303,55 @@ function VistaUsuarios() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Activos</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
+            <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
-            <Users className="h-4 w-4 text-red-600" />
+            <Users className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.inactive}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-            <Users className="h-4 w-4 text-red-600" />
+            <Users className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.administrators}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.administrators}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Gerentes</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
+            <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.managers}</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.managers}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Técnicos</CardTitle>
-            <Users className="h-4 w-4 text-orange-600" />
+            <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.technicians}</div>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.technicians}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Otros</CardTitle>
-            <Users className="h-4 w-4 text-gray-600" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.others}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.others}</div>
           </CardContent>
         </Card>
       </div>
@@ -365,7 +365,7 @@ function VistaUsuarios() {
           <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-gray-400'}`} />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-muted-foreground'}`} />
                 <Input
                   placeholder="Buscar usuarios..."
                   value={searchTerm}
@@ -380,7 +380,7 @@ function VistaUsuarios() {
                 )}
               </div>
             </div>
-            <Select value={filters.role_id || "none"} onValueChange={(value) => setFilters({...filters, role_id: value === "none" ? "" : value})}>
+            <Select value={filters.role_id || "none"} onValueChange={(value) => setFilters({ ...filters, role_id: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos los roles" />
               </SelectTrigger>
@@ -393,7 +393,7 @@ function VistaUsuarios() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filters.is_active || "none"} onValueChange={(value) => setFilters({...filters, is_active: value === "none" ? "" : value})}>
+            <Select value={filters.is_active || "none"} onValueChange={(value) => setFilters({ ...filters, is_active: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
@@ -426,20 +426,20 @@ function VistaUsuarios() {
                   ))
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No se encontraron usuarios
                     </TableCell>
                   </TableRow>
                 ) : (
                   users.map((user) => (
-                    <TableRow key={user.id} className="transition-all duration-200 hover:bg-gray-50">
+                    <TableRow key={user.id} className="transition-all duration-200 hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold">
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{user.name}</p>
+                            <p className="font-medium text-foreground">{user.name}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -485,7 +485,7 @@ function VistaUsuarios() {
           {/* Información de paginación y controles */}
           {!loading && users.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Mostrando {pagination.from}-{pagination.to} de {pagination.total} usuarios
               </div>
               <div className="flex items-center gap-4">
@@ -536,11 +536,11 @@ function VistaUsuarios() {
 
                       return (
                         <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => loadUsers(pageNum, undefined, debouncedSearchTerm)}
-                        isActive={pageNum === pagination.current_page}
-                        className="cursor-pointer"
-                      >
+                          <PaginationLink
+                            onClick={() => loadUsers(pageNum, undefined, debouncedSearchTerm)}
+                            isActive={pageNum === pagination.current_page}
+                            className="cursor-pointer"
+                          >
                             {pageNum}
                           </PaginationLink>
                         </PaginationItem>
@@ -614,7 +614,7 @@ function VistaUsuarios() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="role_id">Rol *</Label>
-                <Select value={formData.role_id} onValueChange={(value) => setFormData({...formData, role_id: value})}>
+                <Select value={formData.role_id} onValueChange={(value) => setFormData({ ...formData, role_id: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
@@ -720,7 +720,7 @@ function VistaUsuarios() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-role_id">Rol *</Label>
-                <Select value={formData.role_id} onValueChange={(value) => setFormData({...formData, role_id: value})}>
+                <Select value={formData.role_id} onValueChange={(value) => setFormData({ ...formData, role_id: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>

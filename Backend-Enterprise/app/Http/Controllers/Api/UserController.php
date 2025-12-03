@@ -353,6 +353,48 @@ class UserController extends Controller
     }
 
     /**
+     * Actualizar el tema del usuario actual
+     */
+    public function updateTheme(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'theme' => 'required|in:light,dark,system',
+            ], [
+                'theme.required' => 'El tema es obligatorio',
+                'theme.in' => 'El tema debe ser light, dark o system',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos de entrada inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user = auth()->user();
+            $user->theme = $request->theme;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $user
+                ],
+                'message' => 'Tema actualizado exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar tema',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Obtener opciones para formularios (roles, departamentos, etc.)
      */
     public function options()

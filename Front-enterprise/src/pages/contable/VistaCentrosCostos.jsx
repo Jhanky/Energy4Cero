@@ -137,12 +137,12 @@ const VistaCentrosCostos = () => {
 
   // Filtrar centros de costos
   const centrosFiltrados = centrosCostos.filter(centro => {
-    const cumpleBusqueda = 
+    const cumpleBusqueda =
       centro.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       centro.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       centro.responsable.toLowerCase().includes(searchTerm.toLowerCase()) ||
       centro.tipo.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const cumpleTipo = !filters.tipo || centro.tipo === filters.tipo;
     const cumpleEstado = !filters.estado || centro.estado === filters.estado;
     const cumpleResponsable = !filters.responsable || centro.responsable === filters.responsable;
@@ -156,28 +156,28 @@ const VistaCentrosCostos = () => {
   const getEstadoColor = (estado) => {
     switch (estado) {
       case 'activo':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'cerrado':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
       case 'pausado':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   const getTipoColor = (tipo) => {
     switch (tipo) {
       case 'Proyecto':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'Administrativo':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       case 'Comercial':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'Técnico':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -362,8 +362,8 @@ const VistaCentrosCostos = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Centros de Costos</h1>
-          <p className="text-slate-600 mt-1">Administra los centros de costos y presupuestos</p>
+          <h1 className="text-2xl font-bold text-foreground">Centros de Costos</h1>
+          <p className="text-muted-foreground mt-1">Administra los centros de costos y presupuestos</p>
         </div>
         <button
           onClick={handleCreateCostCenter}
@@ -430,7 +430,7 @@ const VistaCentrosCostos = () => {
               responsable: ''
             })}
           />
-          <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
               Mostrando <span className="font-semibold">{centrosCostos.length}</span> de <span className="font-semibold">{totalRecords}</span> centros de costos
             </span>
@@ -450,9 +450,9 @@ const VistaCentrosCostos = () => {
             <SkeletonTable columns={7} rows={perPage} />
           ) : centrosCostos.length === 0 ? (
             <div className="text-center py-12">
-              <Building2 className="mx-auto h-12 w-12 text-slate-400" />
-              <h3 className="mt-2 text-sm font-medium text-slate-900">No hay centros de costos</h3>
-              <p className="mt-1 text-sm text-slate-500">Comienza creando tu primer centro de costos.</p>
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-2 text-sm font-medium text-foreground">No hay centros de costos</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Comienza creando tu primer centro de costos.</p>
               <div className="mt-6">
                 <button
                   onClick={handleCreateCostCenter}
@@ -507,12 +507,11 @@ const VistaCentrosCostos = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-200 rounded-full h-2 w-20">
+                          <div className="flex-1 bg-muted rounded-full h-2 w-20">
                             <div
-                              className={`h-2 rounded-full transition-all ${
-                                centro.porcentajeUso >= 90 ? 'bg-red-500' :
-                                centro.porcentajeUso >= 75 ? 'bg-yellow-500' : 'bg-green-500'
-                              }`}
+                              className={`h-2 rounded-full transition-all ${centro.porcentajeUso >= 90 ? 'bg-red-500' :
+                                  centro.porcentajeUso >= 75 ? 'bg-yellow-500' : 'bg-green-500'
+                                }`}
                               style={{ width: `${Math.min(centro.porcentajeUso, 100)}%` }}
                             ></div>
                           </div>
@@ -520,28 +519,28 @@ const VistaCentrosCostos = () => {
                             {centro.porcentajeUso.toFixed(1)}%
                           </span>
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           Gastado: {formatearMoneda(centro.gastado)}
                         </div>
                       </TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(centro.estado)}`}>
                           {centro.estado === 'activo' ? 'Activo' :
-                           centro.estado === 'cerrado' ? 'Cerrado' : 'Pausado'}
+                            centro.estado === 'cerrado' ? 'Cerrado' : 'Pausado'}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEditCostCenter(centro)}
-                            className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-purple-600 hover:bg-purple-50/10 rounded-lg transition-colors"
                             title="Editar centro de costo"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteCostCenter(centro)}
-                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50/10 rounded-lg transition-colors"
                             title="Eliminar centro de costo"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -580,14 +579,14 @@ const VistaCentrosCostos = () => {
 
       {/* Modal de Crear Centro de Costos */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-border">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">Registrar Nuevo Centro de Costos</h3>
+                <h3 className="text-lg font-semibold text-foreground">Registrar Nuevo Centro de Costos</h3>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -595,34 +594,34 @@ const VistaCentrosCostos = () => {
 
               <form onSubmit={handleCreateSubmit}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Nombre *</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Nombre *</label>
                   <input
                     type="text"
                     value={costCenterForm.name}
                     onChange={(e) => handleFormChange('name', e.target.value)}
                     placeholder="Nombre del centro de costos"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                   {formErrors.name && <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>}
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Descripción</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Descripción</label>
                   <textarea
                     value={costCenterForm.description}
                     onChange={(e) => handleFormChange('description', e.target.value)}
                     placeholder="Descripción del centro de costos"
                     rows={3}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Estado</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Estado</label>
                   <select
                     value={costCenterForm.status}
                     onChange={(e) => handleFormChange('status', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   >
                     <option value="activo">Activo</option>
                     <option value="pausado">Pausado</option>
@@ -641,7 +640,7 @@ const VistaCentrosCostos = () => {
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
                     disabled={submitting}
-                    className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted disabled:opacity-50"
                   >
                     Cancelar
                   </button>
@@ -668,14 +667,14 @@ const VistaCentrosCostos = () => {
 
       {/* Modal de Editar Centro de Costos */}
       {isEditModalOpen && selectedCostCenter && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-border">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">Editar Centro de Costos</h3>
+                <h3 className="text-lg font-semibold text-foreground">Editar Centro de Costos</h3>
                 <button
                   onClick={() => setIsEditModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -684,21 +683,21 @@ const VistaCentrosCostos = () => {
               <form onSubmit={handleEditSubmit}>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Código *</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Código *</label>
                     <input
                       type="text"
                       value={costCenterForm.code}
                       onChange={(e) => handleFormChange('code', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                     {formErrors.code && <p className="text-sm text-red-600 mt-1">{formErrors.code}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Tipo *</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Tipo *</label>
                     <select
                       value={costCenterForm.type}
                       onChange={(e) => handleFormChange('type', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     >
                       <option value="Proyecto">Proyecto</option>
                       <option value="Administrativo">Administrativo</option>
@@ -709,33 +708,33 @@ const VistaCentrosCostos = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Nombre *</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Nombre *</label>
                   <input
                     type="text"
                     value={costCenterForm.name}
                     onChange={(e) => handleFormChange('name', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                   {formErrors.name && <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>}
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Descripción</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Descripción</label>
                   <textarea
                     value={costCenterForm.description}
                     onChange={(e) => handleFormChange('description', e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Responsable *</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Responsable *</label>
                     <select
                       value={costCenterForm.responsible_user_id}
                       onChange={(e) => handleFormChange('responsible_user_id', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     >
                       <option value="">Seleccionar responsable</option>
                       {users.map(user => (
@@ -745,11 +744,11 @@ const VistaCentrosCostos = () => {
                     {formErrors.responsible_user_id && <p className="text-sm text-red-600 mt-1">{formErrors.responsible_user_id}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Estado</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Estado</label>
                     <select
                       value={costCenterForm.status}
                       onChange={(e) => handleFormChange('status', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     >
                       <option value="activo">Activo</option>
                       <option value="pausado">Pausado</option>
@@ -760,12 +759,12 @@ const VistaCentrosCostos = () => {
 
                 {costCenterForm.type === 'Proyecto' && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Presupuesto *</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Presupuesto *</label>
                     <input
                       type="number"
                       value={costCenterForm.budget}
                       onChange={(e) => handleFormChange('budget', e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                     {formErrors.budget && <p className="text-sm text-red-600 mt-1">{formErrors.budget}</p>}
                   </div>
@@ -782,7 +781,7 @@ const VistaCentrosCostos = () => {
                     type="button"
                     onClick={() => setIsEditModalOpen(false)}
                     disabled={submitting}
-                    className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted disabled:opacity-50"
                   >
                     Cancelar
                   </button>

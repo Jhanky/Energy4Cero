@@ -208,8 +208,8 @@ function VistaBodegas() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Bodegas</h1>
-          <p className="text-gray-600 mt-1">Administra las bodegas del sistema</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Bodegas</h1>
+          <p className="text-muted-foreground mt-1">Administra las bodegas del sistema</p>
         </div>
         <Button onClick={openCreateDialog} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -231,28 +231,28 @@ function VistaBodegas() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Activas</CardTitle>
-            <Building2 className="h-4 w-4 text-green-600" />
+            <Building2 className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactivas</CardTitle>
-            <Building2 className="h-4 w-4 text-red-600" />
+            <Building2 className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.inactive}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Con Herramientas</CardTitle>
-            <Building2 className="h-4 w-4 text-blue-600" />
+            <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.with_tools}</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.with_tools}</div>
           </CardContent>
         </Card>
       </div>
@@ -266,7 +266,7 @@ function VistaBodegas() {
           <div className="flex gap-4 mb-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Buscar bodegas..."
                   value={searchTerm}
@@ -295,14 +295,14 @@ function VistaBodegas() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
                       <div className="flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
                         Cargando...
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : warehouses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No se encontraron bodegas
                     </TableCell>
                   </TableRow>
@@ -342,7 +342,7 @@ function VistaBodegas() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(warehouse)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

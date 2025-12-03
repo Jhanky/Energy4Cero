@@ -78,13 +78,13 @@ const VistaCotizaciones = () => {
 
   const getEstadoColor = (estadoName) => {
     switch (estadoName) {
-      case 'enviada': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pendiente': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'aceptada': return 'bg-green-100 text-green-800 border-green-200';
-      case 'rechazada': return 'bg-red-100 text-red-800 border-red-200';
-      case 'borrador': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'contratada': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'enviada': return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800';
+      case 'pendiente': return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800';
+      case 'aceptada': return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800';
+      case 'rechazada': return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800';
+      case 'borrador': return 'bg-muted text-muted-foreground border-border';
+      case 'contratada': return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -569,8 +569,8 @@ const VistaCotizaciones = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Gestión de Cotizaciones</h1>
-          <p className="text-slate-600 mt-1">Administra las cotizaciones y propuestas comerciales</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Cotizaciones</h1>
+          <p className="text-muted-foreground mt-1">Administra las cotizaciones y propuestas comerciales</p>
         </div>
         <button
           onClick={handleCreate}
@@ -584,65 +584,65 @@ const VistaCotizaciones = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Total Cotizaciones</p>
-              <div className="text-2xl font-bold text-slate-900">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> : statistics.total || 0}
+              <p className="text-sm font-medium text-muted-foreground">Total Cotizaciones</p>
+              <div className="text-2xl font-bold text-foreground">
+                {loading ? <div className="animate-pulse bg-muted h-8 w-16 rounded"></div> : statistics.total || 0}
               </div>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Aceptadas</p>
-              <div className="text-2xl font-bold text-green-600">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div> :
+              <p className="text-sm font-medium text-muted-foreground">Aceptadas</p>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {loading ? <div className="animate-pulse bg-muted h-8 w-16 rounded"></div> :
                   (statistics.by_status?.find(s => s.status_id === 4)?.count || 0) +
                   (statistics.by_status?.find(s => s.status_id === 6)?.count || 0)
                 }
               </div>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Valor Total</p>
-              <div className="text-2xl font-bold text-purple-600">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div> :
+              <p className="text-sm font-medium text-muted-foreground">Valor Total</p>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {loading ? <div className="animate-pulse bg-muted h-8 w-24 rounded"></div> :
                   formatPrice(statistics.sum_total_value || 0)
                 }
               </div>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Potencia Total</p>
-              <div className="text-2xl font-bold text-orange-600">
-                {loading ? <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div> :
+              <p className="text-sm font-medium text-muted-foreground">Potencia Total</p>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {loading ? <div className="animate-pulse bg-muted h-8 w-20 rounded"></div> :
                   formatPower(statistics.sum_power_kwp || 0)
                 }
               </div>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
         </div>
@@ -716,49 +716,49 @@ const VistaCotizaciones = () => {
                   <SkeletonTable columns={8} rows={pagination.per_page || 15} asRows={true} />
                 ) : cotizaciones.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No se encontraron cotizaciones
                     </TableCell>
                   </TableRow>
                 ) : (
                   cotizaciones.map((cotizacion) => (
-                    <TableRow key={cotizacion.id} className="transition-all duration-200 hover:bg-gray-50">
+                    <TableRow key={cotizacion.id} className="transition-all duration-200 hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
                             <FileText className="w-5 h-5 text-white" />
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{cotizacion.number}</p>
-                            <p className="text-sm text-slate-600">{formatDate(cotizacion.issue_date)}</p>
+                            <p className="font-medium text-foreground">{cotizacion.number}</p>
+                            <p className="text-sm text-muted-foreground">{formatDate(cotizacion.issue_date)}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                             {cotizacion.client?.type === 'empresa' || cotizacion.client?.type === 'comercial' || cotizacion.client?.type === 'industrial' ? (
-                              <Building className="w-4 h-4 text-slate-600" />
+                              <Building className="w-4 h-4 text-muted-foreground" />
                             ) : (
-                              <User className="w-4 h-4 text-slate-600" />
+                              <User className="w-4 h-4 text-muted-foreground" />
                             )}
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{cotizacion.client?.name}</p>
-                            <p className="text-sm text-slate-600">{cotizacion.client?.email}</p>
+                            <p className="font-medium text-foreground">{cotizacion.client?.name}</p>
+                            <p className="text-sm text-muted-foreground">{cotizacion.client?.email}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm text-slate-900">{cotizacion.project_name}</p>
+                        <p className="text-sm text-foreground">{cotizacion.project_name}</p>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm font-medium text-slate-900">
+                        <span className="text-sm font-medium text-foreground">
                           {formatPower(cotizacion.total_power_kw || 0)}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm font-medium text-slate-900">
+                        <span className="text-sm font-medium text-foreground">
                           {formatPrice(cotizacion.total_value || 0)}
                         </span>
                       </TableCell>
@@ -774,7 +774,7 @@ const VistaCotizaciones = () => {
                                 }
                               }}
                               onBlur={handleEstadoBlur}
-                              className="w-full px-3 py-1.5 text-sm border border-green-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none"
+                              className="w-full px-3 py-1.5 text-sm border border-input rounded-lg bg-background shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none text-foreground"
                               autoFocus
                             >
                               <option value="">Seleccionar estado...</option>
@@ -784,7 +784,7 @@ const VistaCotizaciones = () => {
                                 </option>
                               )) : null}
                             </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                               <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                               </svg>
@@ -802,27 +802,27 @@ const VistaCotizaciones = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-600">{cotizacion.user?.name}</span>
+                        <span className="text-sm text-muted-foreground">{cotizacion.user?.name}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => handleView(cotizacion)}
-                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-lg transition-colors"
                             title="Ver detalles"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDownload(cotizacion)}
-                            className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-lg transition-colors"
                             title="Descargar PDF"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(cotizacion)}
-                            className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors"
                             title="Eliminar cotización"
                           >
                             <Trash2 className="w-4 h-4" />

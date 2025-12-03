@@ -13,7 +13,6 @@ class Battery extends Model
     protected $primaryKey = 'battery_id';
 
     protected $fillable = [
-        'name',
         'model',
         'brand',
         'type',

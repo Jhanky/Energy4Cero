@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Calendar, User, MessageSquare, FolderKanban } from 'lucide-react';
-import { 
+import {
   tiposPQR,
   categoriasPQR,
   obtenerNombreTipoPQR
@@ -18,7 +18,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
     responsable: '',
     canalRecepcion: ''
   });
-  
+
   const [proyectos, setProyectos] = useState([]);
   const [loadingProyectos, setLoadingProyectos] = useState(false);
 
@@ -50,12 +50,12 @@ const FormPQR = ({ onSubmit, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'proyectoId') {
       console.log('Valor del proyecto seleccionado (PQR):', value, typeof value);
       console.log('Lista de proyectos actual (PQR):', proyectos);
       console.log('IDs de proyectos en la lista (PQR):', proyectos.map(p => p.id));
-      
+
       // Intentar encontrar el proyecto con conversión de tipos
       let proyectoSeleccionado = proyectos.find(p => p.id === value);
       if (!proyectoSeleccionado) {
@@ -64,7 +64,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
       if (!proyectoSeleccionado) {
         proyectoSeleccionado = proyectos.find(p => String(p.id) === value); // Convertir a string
       }
-      
+
       console.log('Proyecto seleccionado (PQR):', proyectoSeleccionado);
       if (proyectoSeleccionado) {
         console.log('Cliente del proyecto (PQR):', proyectoSeleccionado.client);
@@ -73,14 +73,14 @@ const FormPQR = ({ onSubmit, onCancel }) => {
       } else {
         console.log('No se encontró el proyecto en la lista (PQR)');
       }
-      
-      const nombreCliente = proyectoSeleccionado ? 
-        (proyectoSeleccionado.client?.name || 
-         proyectoSeleccionado.client_name || 
-         '') : '';
-         
+
+      const nombreCliente = proyectoSeleccionado ?
+        (proyectoSeleccionado.client?.name ||
+          proyectoSeleccionado.client_name ||
+          '') : '';
+
       console.log('Nombre final del cliente a asignar (PQR):', nombreCliente);
-      
+
       setFormData(prev => ({
         ...prev,
         [name]: value,
@@ -97,7 +97,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const proyectoSeleccionado = proyectos.find(p => p.id === formData.proyectoId);
-    
+
     const newPQR = {
       ...formData,
       id: `PQR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -118,17 +118,17 @@ const FormPQR = ({ onSubmit, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+      <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-orange-600" />
+            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">Crear Nueva PQR</h2>
+            <h2 className="text-xl font-semibold text-foreground">Crear Nueva PQR</h2>
           </div>
           <button
             onClick={onCancel}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+            className="p-1 text-muted-foreground hover:text-muted-foreground rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -137,13 +137,13 @@ const FormPQR = ({ onSubmit, onCancel }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Proyecto
               </label>
               {loadingProyectos ? (
                 <div className="flex items-center justify-center py-2">
                   <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                  <span className="text-xs text-slate-500">Cargando...</span>
+                  <span className="text-xs text-muted-foreground">Cargando...</span>
                 </div>
               ) : (
                 <select
@@ -151,7 +151,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
                   value={formData.proyectoId}
                   onChange={handleChange}
                   required
-                  className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                 >
                   <option value="">Seleccionar proyecto</option>
                   {proyectos.map(proyecto => (
@@ -164,12 +164,12 @@ const FormPQR = ({ onSubmit, onCancel }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Cliente
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400" />
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <input
                   type="text"
@@ -177,7 +177,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
                   value={formData.cliente}
                   onChange={handleChange}
                   required
-                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full pl-10 pr-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                   placeholder="Nombre del cliente"
                   readOnly
                 />
@@ -187,7 +187,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Tipo
               </label>
               <select
@@ -195,7 +195,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
                 value={formData.tipo}
                 onChange={handleChange}
                 required
-                className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               >
                 <option value="">Seleccionar tipo</option>
                 {tiposPQR.map(tipo => (
@@ -206,11 +206,11 @@ const FormPQR = ({ onSubmit, onCancel }) => {
               </select>
               {formData.tipo && (
                 <div className="mt-1">
-                  <span 
+                  <span
                     className={`inline-block w-3 h-3 rounded-full mr-2`}
                     style={{ backgroundColor: tiposPQR.find(t => t.id == formData.tipo)?.color }}
                   ></span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {tiposPQR.find(t => t.id == formData.tipo)?.nombre}
                   </span>
                 </div>
@@ -218,7 +218,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Categoría
               </label>
               <select
@@ -226,7 +226,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
                 value={formData.categoria}
                 onChange={handleChange}
                 required
-                className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               >
                 <option value="">Seleccionar categoría</option>
                 {categoriasPQR.map(categoria => (
@@ -240,7 +240,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Responsable
               </label>
               <input
@@ -249,13 +249,13 @@ const FormPQR = ({ onSubmit, onCancel }) => {
                 value={formData.responsable}
                 onChange={handleChange}
                 required
-                className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                 placeholder="Nombre del responsable"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Canal de Recepción
               </label>
               <input
@@ -264,14 +264,14 @@ const FormPQR = ({ onSubmit, onCancel }) => {
                 value={formData.canalRecepcion}
                 onChange={handleChange}
                 required
-                className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                 placeholder="Correo, llamada, etc."
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Título
             </label>
             <input
@@ -280,13 +280,13 @@ const FormPQR = ({ onSubmit, onCancel }) => {
               value={formData.titulo}
               onChange={handleChange}
               required
-              className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               placeholder="Título de la PQR"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Descripción
             </label>
             <textarea
@@ -295,7 +295,7 @@ const FormPQR = ({ onSubmit, onCancel }) => {
               onChange={handleChange}
               required
               rows={4}
-              className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               placeholder="Descripción detallada de la petición, queja, reclamo, sugerencia o felicitación"
             />
           </div>
@@ -304,13 +304,13 @@ const FormPQR = ({ onSubmit, onCancel }) => {
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium rounded-lg border border-slate-300 hover:bg-slate-50"
+              className="px-4 py-2 text-muted-foreground hover:text-foreground font-medium rounded-lg border border-input hover:bg-muted/50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 flex items-center gap-2"
+              className="px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white font-medium rounded-lg hover:bg-orange-700 dark:hover:bg-orange-800 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Crear PQR

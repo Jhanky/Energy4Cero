@@ -1,6 +1,12 @@
-import { X, Loader2, FileText, User, Building, Calendar, DollarSign, Zap, Plus, Trash2, Sun, Cpu, Battery, ChevronRight } from 'lucide-react';
+import { Loader2, FileText, User, Building, Calendar, DollarSign, Zap, Plus, Trash2, Sun, Cpu, Battery, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import apiService from '../../services/api';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Label } from '@/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';
+import { Checkbox } from '@/ui/checkbox';
 
 const CotizacionModal = ({
   show,
@@ -224,16 +230,16 @@ const CotizacionModal = ({
         battery_id: '',
         battery_count: 0,
         requires_financing: false,
-        profit_percentage: 0.05,
+        profit_percentage: 0.10,
         iva_profit_percentage: 0.19,
         commercial_management_percentage: 0.03,
-        administration_percentage: 0.08,
-        contingency_percentage: 0.02,
+        administration_percentage: 0.10,
+        contingency_percentage: 0.05,
         withholding_percentage: 0.035,
-        labor_cost_per_kw: 250000,
+        labor_cost_per_kw: 350000,
         procedures_cost: 7000000,
         support_structure_cost_per_panel: 110000,
-        electrical_material_cost_per_kw: 280000,
+        electrical_material_cost_per_kw: 345000,
         overhead_structure_value: 0,
         subtotal: 0,
         profit: 0,
@@ -451,7 +457,7 @@ const CotizacionModal = ({
           model: selectedPanel.model,
           quantity: data.panel_count,
           unit_price: selectedPanel.price || 0,
-          profit_percentage: 0.25  // 25% como especificaste
+          profit_percentage: 0.35  // 35% como especificaste
         });
       }
     }
@@ -467,7 +473,7 @@ const CotizacionModal = ({
           model: selectedInverter.model,
           quantity: data.inverter_count,
           unit_price: selectedInverter.price || 0,
-          profit_percentage: 0.25  // 25% como especificaste
+          profit_percentage: 0.35  // 35% como especificaste
         });
       }
     }
@@ -483,7 +489,7 @@ const CotizacionModal = ({
           model: selectedBattery.model,
           quantity: data.battery_count,
           unit_price: selectedBattery.price || 0,
-          profit_percentage: 0.25  // 25% como especificaste
+          profit_percentage: 0.35  // 35% como especificaste
         });
       }
     }
@@ -498,7 +504,7 @@ const CotizacionModal = ({
       quantity: parseFloat(data.power_kwp) || 0,
       unit: 'kW',
       unit_price: data.labor_cost_per_kw || 0,
-      profit_percentage: 0.25  // 25% como especificaste para todos excepto trámites
+      profit_percentage: 0.35  // 35% como especificaste
     });
 
     // Material eléctrico (cantidad por kW instalado)
@@ -508,7 +514,7 @@ const CotizacionModal = ({
       quantity: parseFloat(data.power_kwp) || 0,
       unit: 'kW',
       unit_price: data.electrical_material_cost_per_kw || 0,
-      profit_percentage: 0.25  // 25% como especificaste
+      profit_percentage: 0.35  // 35% como especificaste
     });
 
     // Estructura de soporte (cantidad por número de paneles)
@@ -518,7 +524,7 @@ const CotizacionModal = ({
       quantity: data.panel_count || 0,
       unit: 'panel',
       unit_price: data.support_structure_cost_per_panel || 0,
-      profit_percentage: 0.25  // 25% como especificaste
+      profit_percentage: 0.35  // 35% como especificaste
     });
 
     // Trámites (cantidad es 1)
@@ -573,49 +579,51 @@ const CotizacionModal = ({
           <div className="space-y-6">
             {/* Información Básica */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Información Básica</h3>
-              
+              <h3 className="text-lg font-semibold text-foreground mb-4">Información Básica</h3>
+
               <div className="space-y-4">
                 {/* Cliente - Ancho completo */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Cliente *</label>
-                  <select
-                    value={formData.client_id}
-                    onChange={(e) => handleInputChange('client_id', e.target.value ? parseInt(e.target.value) : '')}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    required
+                  <Label htmlFor="client_id">Cliente *</Label>
+                  <Select
+                    value={formData.client_id?.toString() || ''}
+                    onValueChange={(value) => handleInputChange('client_id', value ? parseInt(value) : '')}
                   >
-                    <option value="">Seleccione un cliente</option>
-                    {clients.map(client => (
-                      <option key={client.client_id} value={client.client_id}>
-                        {client.name} - {client.email}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Seleccione un cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map(client => (
+                        <SelectItem key={client.client_id} value={client.client_id.toString()}>
+                          {client.name} - {client.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Proyecto - Ancho completo */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Nombre del Proyecto *</label>
-                  <input
+                  <Label htmlFor="project_name">Nombre del Proyecto *</Label>
+                  <Input
+                    id="project_name"
                     type="text"
                     value={formData.project_name}
                     onChange={(e) => handleInputChange('project_name', e.target.value)}
                     placeholder="Nombre del proyecto"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     required
                   />
                 </div>
 
                 {/* Potencia del Sistema - Ancho completo */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Potencia del Sistema (kWp) *</label>
-                  <input
+                  <Label htmlFor="power_kwp">Potencia del Sistema (kWp) *</Label>
+                  <Input
+                    id="power_kwp"
                     type="number"
                     value={formData.power_kwp}
                     onChange={(e) => handleInputChange('power_kwp', e.target.value)}
                     placeholder="Potencia del sistema en kWp"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     required
                     step="0.01"
                     min="0"
@@ -625,100 +633,109 @@ const CotizacionModal = ({
                 {/* Tipo de Sistema y Tipo de Red - 2 columnas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Sistema *</label>
-                    <select
+                    <Label htmlFor="system_type">Tipo de Sistema *</Label>
+                    <Select
                       value={formData.system_type}
-                      onChange={(e) => handleInputChange('system_type', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
+                      onValueChange={(value) => handleInputChange('system_type', value)}
                     >
-                      <option value="">Seleccione el tipo de sistema</option>
-                      <option value="on-grid">On-grid</option>
-                      <option value="off-grid">Off-grid</option>
-                      <option value="hibrido">Híbrido</option>
-                    </select>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Seleccione el tipo de sistema" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="on-grid">On-grid</SelectItem>
+                        <SelectItem value="off-grid">Off-grid</SelectItem>
+                        <SelectItem value="hibrido">Híbrido</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Red *</label>
-                    <select
+                    <Label htmlFor="network_type">Tipo de Red *</Label>
+                    <Select
                       value={formData.network_type}
-                      onChange={(e) => handleInputChange('network_type', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
+                      onValueChange={(value) => handleInputChange('network_type', value)}
                     >
-                      <option value="">Seleccione el tipo de red</option>
-                      <option value="monofasico">Monofásico</option>
-                      <option value="bifasico">Bifásico</option>
-                      <option value="trifasico 220v">Trifásico 220V</option>
-                      <option value="trifasico 440v">Trifásico 440V</option>
-                    </select>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Seleccione el tipo de red" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monofasico">Monofásico</SelectItem>
+                        <SelectItem value="bifasico">Bifásico</SelectItem>
+                        <SelectItem value="trifasico 220v">Trifásico 220V</SelectItem>
+                        <SelectItem value="trifasico 440v">Trifásico 440V</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 {/* Panel e Inversor - 2 columnas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Panel Solar *</label>
-                    <select
-                      value={formData.panel_id}
-                      onChange={(e) => handleInputChange('panel_id', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
+                    <Label htmlFor="panel_id">Panel Solar *</Label>
+                    <Select
+                      value={formData.panel_id?.toString() || ''}
+                      onValueChange={(value) => handleInputChange('panel_id', value)}
                     >
-                      <option value="">Seleccione un panel</option>
-                      {panels.map(panel => (
-                        <option key={panel.panel_id} value={panel.panel_id}>
-                          {panel.brand} - {panel.model} ({panel.power_output} W)
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Seleccione un panel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {panels.map(panel => (
+                          <SelectItem key={panel.panel_id} value={panel.panel_id.toString()}>
+                            {panel.brand} - {panel.model} ({panel.power_output} W)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Inversor *</label>
-                    <select
-                      value={formData.inverter_id}
-                      onChange={(e) => handleInputChange('inverter_id', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
+                    <Label htmlFor="inverter_id">Inversor *</Label>
+                    <Select
+                      value={formData.inverter_id?.toString() || ''}
+                      onValueChange={(value) => handleInputChange('inverter_id', value)}
                       disabled={!formData.system_type || !formData.network_type}
                     >
-                      <option value="">Seleccione un inversor</option>
-                      {inversoresFiltrados.map(inverter => (
-                        <option key={inverter.inverter_id} value={inverter.inverter_id}>
-                          {inverter.name} - {inverter.model} ({inverter.power_output_kw} kW)
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Seleccione un inversor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {inversoresFiltrados.map(inverter => (
+                          <SelectItem key={inverter.inverter_id} value={inverter.inverter_id.toString()}>
+                            {inverter.name} - {inverter.model} ({inverter.power_output_kw} kW)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 {/* Número de paneles e inversores - 2 columnas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Número de Paneles *</label>
-                    <input
+                    <Label htmlFor="panel_count">Número de Paneles *</Label>
+                    <Input
+                      id="panel_count"
                       type="number"
                       value={formData.panel_count}
                       min="1"
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-slate-50"
+                      className="bg-muted"
                       required
-                      readOnly // Hacer el campo de solo lectura para que se calcule automáticamente
+                      readOnly
                     />
-                    <div className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Calculado automáticamente: {formData.power_kwp || 0}kW / {getSelectedPanelPower() || 0}W ≈ {formData.panel_count || 0} paneles
-                    </div>
+                    </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Cantidad de Inversores *</label>
-                    <input
+                    <Label htmlFor="inverter_count">Cantidad de Inversores *</Label>
+                    <Input
+                      id="inverter_count"
                       type="number"
                       value={formData.inverter_count}
                       onChange={(e) => handleInputChange('inverter_count', parseInt(e.target.value) || 1)}
                       min="1"
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     />
                   </div>
@@ -728,48 +745,45 @@ const CotizacionModal = ({
                 {formData.system_type === 'hibrido' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Batería</label>
-                      <select
-                        value={formData.battery_id}
-                        onChange={(e) => handleInputChange('battery_id', e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      <Label htmlFor="battery_id">Batería</Label>
+                      <Select
+                        value={formData.battery_id?.toString() || ''}
+                        onValueChange={(value) => handleInputChange('battery_id', value)}
                       >
-                        <option value="">Seleccione una batería</option>
-                        {batteries.map(battery => (
-                          <option key={battery.battery_id} value={battery.battery_id}>
-                            {battery.brand} - {battery.model} ({battery.capacity} kWh)
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Seleccione una batería" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {batteries.map(battery => (
+                            <SelectItem key={battery.battery_id} value={battery.battery_id.toString()}>
+                              {battery.brand} - {battery.model} ({battery.capacity} kWh)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Cantidad de Baterías</label>
-                      <input
+                      <Label htmlFor="battery_count">Cantidad de Baterías</Label>
+                      <Input
+                        id="battery_count"
                         type="number"
                         value={formData.battery_count}
                         onChange={(e) => handleInputChange('battery_count', parseInt(e.target.value) || 0)}
                         min="0"
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
                   </div>
                 )}
 
                 {/* Financiamiento */}
-                <div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="requires_financing"
-                      checked={formData.requires_financing}
-                      onChange={(e) => handleInputChange('requires_financing', e.target.checked)}
-                      className="mt-1 w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
-                    />
-                    <label htmlFor="requires_financing" className="text-sm font-medium text-slate-700">
-                      Requiere Financiamiento
-                    </label>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="requires_financing"
+                    checked={formData.requires_financing}
+                    onCheckedChange={(checked) => handleInputChange('requires_financing', checked)}
+                  />
+                  <Label htmlFor="requires_financing">Requiere Financiamiento</Label>
                 </div>
               </div>
             </div>
@@ -781,84 +795,84 @@ const CotizacionModal = ({
           <div className="space-y-6">
             {/* Porcentajes de cálculo */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Porcentajes de Cálculo</h3>
-              
+              <h3 className="text-lg font-semibold text-foreground mb-4">Porcentajes de Cálculo</h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">% Utilidad</label>
-                  <input
+                  <Label htmlFor="profit_percentage">% Utilidad</Label>
+                  <Input
+                    id="profit_percentage"
                     type="number"
-                    value={formData.profit_percentage * 100} // Convertir a porcentaje para mostrar
+                    value={formData.profit_percentage * 100}
                     onChange={(e) => handleInputChange('profit_percentage', parseFloat(e.target.value)/100 || 0)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">% IVA sobre Utilidad</label>
-                  <input
+                  <Label htmlFor="iva_profit_percentage">% IVA sobre Utilidad</Label>
+                  <Input
+                    id="iva_profit_percentage"
                     type="number"
                     value={formData.iva_profit_percentage * 100}
                     onChange={(e) => handleInputChange('iva_profit_percentage', parseFloat(e.target.value)/100 || 0)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">% Gestión Comercial</label>
-                  <input
+                  <Label htmlFor="commercial_management_percentage">% Gestión Comercial</Label>
+                  <Input
+                    id="commercial_management_percentage"
                     type="number"
                     value={formData.commercial_management_percentage * 100}
                     onChange={(e) => handleInputChange('commercial_management_percentage', parseFloat(e.target.value)/100 || 0)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">% Administración</label>
-                  <input
+                  <Label htmlFor="administration_percentage">% Administración</Label>
+                  <Input
+                    id="administration_percentage"
                     type="number"
                     value={formData.administration_percentage * 100}
                     onChange={(e) => handleInputChange('administration_percentage', parseFloat(e.target.value)/100 || 0)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">% Contingencia</label>
-                  <input
+                  <Label htmlFor="contingency_percentage">% Contingencia</Label>
+                  <Input
+                    id="contingency_percentage"
                     type="number"
                     value={formData.contingency_percentage * 100}
                     onChange={(e) => handleInputChange('contingency_percentage', parseFloat(e.target.value)/100 || 0)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">% Retenciones</label>
-                  <input
+                  <Label htmlFor="withholding_percentage">% Retenciones</Label>
+                  <Input
+                    id="withholding_percentage"
                     type="number"
                     value={parseFloat((formData.withholding_percentage * 100).toFixed(1))}
                     onChange={(e) => handleInputChange('withholding_percentage', parseFloat(e.target.value)/100 || 0)}
                     step="0.1"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                 </div>
               </div>
@@ -866,24 +880,24 @@ const CotizacionModal = ({
 
             {/* Valores del Sistema */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Valores del Sistema</h3>
-              
+              <h3 className="text-lg font-semibold text-foreground mb-4">Valores del Sistema</h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Mano de obra */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                <div className="bg-muted p-4 rounded-lg">
+                  <Label htmlFor="labor_cost_per_kw" className="text-sm">
                     Mano de obra (* kW a instalar)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="labor_cost_per_kw"
                     type="number"
                     value={formData.labor_cost_per_kw}
                     onChange={(e) => handleInputChange('labor_cost_per_kw', parseFloat(e.target.value) || 0)}
                     placeholder="Ingrese el costo por kW"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     min="0"
                   />
                   <div className="mt-2">
-                    <span className="text-slate-600">Total:</span>
+                    <span className="text-muted-foreground">Total:</span>
                     <span className="font-medium ml-2">
                       {formData.power_kwp ? formatCurrency(formData.labor_cost_per_kw * parseFloat(formData.power_kwp)) : formatCurrency(0)}
                     </span>
@@ -891,35 +905,35 @@ const CotizacionModal = ({
                 </div>
 
                 {/* Trámites */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                <div className="bg-muted p-4 rounded-lg">
+                  <Label htmlFor="procedures_cost" className="text-sm">
                     Trámites
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="procedures_cost"
                     type="number"
                     value={formData.procedures_cost}
                     onChange={(e) => handleInputChange('procedures_cost', parseFloat(e.target.value) || 0)}
                     placeholder="Ingrese el costo de trámites"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     min="0"
                   />
                 </div>
 
                 {/* Estructura de soporte */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                <div className="bg-muted p-4 rounded-lg">
+                  <Label htmlFor="support_structure_cost_per_panel" className="text-sm">
                     Estructura de soporte (* número de paneles)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="support_structure_cost_per_panel"
                     type="number"
                     value={formData.support_structure_cost_per_panel}
                     onChange={(e) => handleInputChange('support_structure_cost_per_panel', parseFloat(e.target.value) || 0)}
                     placeholder="Ingrese el costo por panel"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     min="0"
                   />
                   <div className="mt-2">
-                    <span className="text-slate-600">Total:</span>
+                    <span className="text-muted-foreground">Total:</span>
                     <span className="font-medium ml-2">
                       {formData.panel_count ? formatCurrency(formData.support_structure_cost_per_panel * formData.panel_count) : formatCurrency(0)}
                     </span>
@@ -927,20 +941,20 @@ const CotizacionModal = ({
                 </div>
 
                 {/* Material eléctrico */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                <div className="bg-muted p-4 rounded-lg">
+                  <Label htmlFor="electrical_material_cost_per_kw" className="text-sm">
                     Material eléctrico (* kW a instalar)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="electrical_material_cost_per_kw"
                     type="number"
                     value={formData.electrical_material_cost_per_kw}
                     onChange={(e) => handleInputChange('electrical_material_cost_per_kw', parseFloat(e.target.value) || 0)}
                     placeholder="Ingrese el costo por kW"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     min="0"
                   />
                   <div className="mt-2">
-                    <span className="text-slate-600">Total:</span>
+                    <span className="text-muted-foreground">Total:</span>
                     <span className="font-medium ml-2">
                       {formData.power_kwp ? formatCurrency(formData.electrical_material_cost_per_kw * parseFloat(formData.power_kwp)) : formatCurrency(0)}
                     </span>
@@ -949,15 +963,15 @@ const CotizacionModal = ({
 
                 {/* Valor de sobre estructura */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <Label htmlFor="overhead_structure_value" className="text-sm">
                     Valor de sobre estructura (opcional)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="overhead_structure_value"
                     type="number"
                     value={formData.overhead_structure_value}
                     onChange={(e) => handleInputChange('overhead_structure_value', parseFloat(e.target.value) || 0)}
                     placeholder="Ingrese el valor de sobre estructura"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     min="0"
                   />
                 </div>
@@ -972,93 +986,85 @@ const CotizacionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header del Modal */}
-        <div className="p-6 border-b border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">{titles[mode]}</h2>
-              <div className="flex items-center gap-2 mt-2">
-                {[1, 2].map(step => (
-                  <div key={step} className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step === currentStep 
-                        ? 'bg-green-600 text-white' 
-                        : step < currentStep 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {step}
-                    </div>
-                    {step < 2 && (
-                      <ChevronRight className="w-4 h-4 text-slate-400 mx-2" />
-                    )}
-                  </div>
-                ))}
+    <Dialog open={show} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{titles[mode]}</DialogTitle>
+          <DialogDescription>
+            Complete la información requerida para {mode === 'create' ? 'crear' : mode === 'edit' ? 'editar' : 'ver'} la cotización.
+          </DialogDescription>
+          <div className="flex items-center gap-2 mt-4">
+            {[1, 2].map(step => (
+              <div key={step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step === currentStep
+                    ? 'bg-primary text-primary-foreground'
+                    : step < currentStep
+                    ? 'bg-muted text-foreground'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {step}
+                </div>
+                {step < 2 && (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground mx-2" />
+                )}
               </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            ))}
           </div>
-        </div>
-        
-        {/* Contenido del Modal */}
+        </DialogHeader>
+
         <form onSubmit={(e) => {
           e.preventDefault();
           if (currentStep === 2) {
             const transformedData = transformFormData(formData);
-            onSubmit(transformedData); // Pass transformed data to parent onSubmit
+            onSubmit(transformedData);
           }
-        }} className="p-6">
+        }} className="space-y-6">
           {renderStepContent()}
-          
-          {/* Botones de Navegación */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={currentStep === 1 ? onClose : handlePrevStep}
-              className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              {currentStep === 1 ? 'Cancelar' : 'Volver'}
-            </button>
-            
-            {currentStep < 2 ? (
-              <button
-                type="button"
-                onClick={handleNextStep}
-                disabled={!canProceedToNextStep()}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                Continuar
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Creando...</span>
-                  </>
-                ) : (
-                  <>
-                    Guardar Cotización
-                  </>
-                )}
-              </button>
-            )}
-          </div>
         </form>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={currentStep === 1 ? onClose : handlePrevStep}
+          >
+            {currentStep === 1 ? 'Cancelar' : 'Volver'}
+          </Button>
+
+          {currentStep < 2 ? (
+            <Button
+              type="button"
+              onClick={handleNextStep}
+              disabled={!canProceedToNextStep()}
+            >
+              Continuar
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              onClick={() => {
+                if (currentStep === 2) {
+                  const transformedData = transformFormData(formData);
+                  onSubmit(transformedData);
+                }
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                'Guardar Cotización'
+              )}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

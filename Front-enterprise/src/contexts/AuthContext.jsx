@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { useNavigate } from 'react-router-dom';
 import { authUtils } from '../utils/authUtils';
 import apiService from '../services/api';
+import { useTheme } from './ThemeContext';
 
 const AuthContext = createContext();
 
@@ -17,18 +18,26 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { loadUserTheme } = useTheme();
 
   useEffect(() => {
     // Check if user is already authenticated on app load
     const token = authUtils.getToken();
     const userData = authUtils.getCurrentUser();
-    
+
     if (token && userData) {
       setUser(userData);
     }
-    
+
     setLoading(false);
   }, []);
+
+  // Load user theme when user changes
+  useEffect(() => {
+    if (user) {
+      loadUserTheme(user);
+    }
+  }, [user, loadUserTheme]);
 
   const login = async (email, password) => {
     try {

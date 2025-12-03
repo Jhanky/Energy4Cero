@@ -42,8 +42,8 @@ class ErrorBoundary extends React.Component {
               <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-12 h-12 text-white" />
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">¡Ups!</h1>
-              <h2 className="text-2xl font-semibold text-gray-700 mb-4">Algo salió mal</h2>
+              <h1 className="text-4xl font-bold text-foreground mb-2">¡Ups!</h1>
+              <h2 className="text-2xl font-semibold text-muted-foreground mb-4">Algo salió mal</h2>
               <p className="text-gray-600 mb-8">
                 Ha ocurrido un error inesperado en la aplicación. Hemos sido notificados y estamos trabajando para solucionarlo.
               </p>

@@ -25,6 +25,29 @@ import { cotizacionesService } from '../../../services/cotizacionesService';
 import { productosService } from '../../../services/productosService';
 import apiService from '../../../services/api';
 
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/ui/card";
+import { Button } from "@/ui/button";
+import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/ui/table";
+import { Badge } from "@/ui/badge";
+import { Separator } from "@/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
+import { Textarea } from "@/ui/textarea";
+import { toast } from "sonner";
+import { Notification } from '../../../shared/ui';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/ui/alert-dialog";
+
 const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,13 +59,17 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
   const [editingType, setEditingType] = useState(null); // 'suministro' o 'complementario'
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [editingPercentage, setEditingPercentage] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
   const [productos, setProductos] = useState({
     panels: [],
     inverters: [],
     batteries: []
   });
   const [loadingProductos, setLoadingProductos] = useState(false);
+
+  // Estado para notificaciones
+  const [notification, setNotification] = useState(null);
 
   // Función para cargar productos desde la API
   const loadProductos = async (cotizacionData = null) => {
@@ -79,10 +106,7 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
-      setNotification({
-        type: 'error',
-        message: 'Error al cargar los productos disponibles'
-      });
+      toast.error('Error al cargar los productos disponibles');
     } finally {
       setLoadingProductos(false);
     }
@@ -115,17 +139,11 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
             // Cargar productos después de tener la cotización
             await loadProductos(transformedCotizacion);
           } else {
-            setNotification({
-              type: 'error',
-              message: response.message || 'Error al cargar la cotización'
-            });
+            toast.error(response.message || 'Error al cargar la cotización');
           }
         }
       } catch (error) {
-        setNotification({
-          type: 'error',
-          message: error.message || 'Error de conexión al cargar la cotización'
-        });
+        toast.error(error.message || 'Error de conexión al cargar la cotización');
       } finally {
         setLoading(false);
       }
@@ -134,10 +152,7 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
     if (effectiveId || propCotizacion) {
       initializeCotizacion();
     } else {
-      setNotification({
-        type: 'error',
-        message: 'No se proporcionó ID de cotización ni datos desde props'
-      });
+      toast.error('No se proporcionó ID de cotización ni datos desde props');
       setLoading(false);
     }
   }, [effectiveId, propCotizacion]);
@@ -659,15 +674,8 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
         setEditingType(null);
 
         // Mostrar notificación de éxito
-        setNotification({
-          type: 'success',
-          message: 'Cotización actualizada exitosamente'
-        });
-
-        // Ocultar notificación después de 3 segundos
-        setTimeout(() => {
-          setNotification(null);
-        }, 3000);
+        // Mostrar notificación de éxito
+        toast.success('Cotización actualizada exitosamente');
       } else {
         throw new Error(response.message || 'Error desconocido del backend');
       }
@@ -675,27 +683,23 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
     } catch (error) {
       console.error('❌ Error al guardar los cambios:', error);
 
-      setNotification({
-        type: 'error',
-        message: error.message || 'Error al guardar los cambios'
-      });
-
-      // Ocultar notificación de error después de 5 segundos
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
+      toast.error(error.message || 'Error al guardar los cambios');
     }
   };
 
-  // Función para cancelar todos los cambios
+  // Función para cancelar todos los cambios (trigger)
   const handleCancelAllChanges = () => {
-    if (window.confirm('¿Estás seguro de que quieres descartar todos los cambios sin guardar?')) {
-      setCotizacion(JSON.parse(JSON.stringify(cotizacionOriginal)));
-      setHasUnsavedChanges(false);
-      setEditingItem(null);
-      setEditingType(null);
-      setEditingPercentage(null);
-    }
+    setShowCancelConfirm(true);
+  };
+
+  // Función para confirmar la cancelación
+  const confirmCancelChanges = () => {
+    setCotizacion(JSON.parse(JSON.stringify(cotizacionOriginal)));
+    setHasUnsavedChanges(false);
+    setEditingItem(null);
+    setEditingType(null);
+    setEditingPercentage(null);
+    setShowCancelConfirm(false);
   };
 
   // Función auxiliar para generar PDF con datos específicos
@@ -1237,311 +1241,332 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigate('/cotizaciones')}
-            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-5 h-5" />
-          </button>
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">{cotizacion.numero}</h1>
-            <p className="text-slate-600 mt-1">Detalles de la cotización</p>
+            <h1 className="text-3xl font-bold text-foreground">{cotizacion.numero}</h1>
+            <p className="text-muted-foreground mt-1">Detalles de la cotización</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {hasUnsavedChanges && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-orange-100 text-orange-800 rounded-lg">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm font-medium">Cambios sin guardar</span>
-            </div>
+            <Badge variant="secondary" className="bg-orange-100 text-orange-800 hover:bg-orange-100 gap-2 px-3 py-1.5">
+              <Clock className="w-3 h-3" />
+              Cambios sin guardar
+            </Badge>
           )}
 
-          <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(cotizacion.estado)}`}>
-            <EstadoIcon className="w-4 h-4" />
+          <Badge variant="outline" className={`gap-1 px-3 py-1 ${getEstadoColor(cotizacion.estado)}`}>
+            <EstadoIcon className="w-3 h-3" />
             {getEstadoLabel(cotizacion.estado)}
-          </span>
+          </Badge>
 
           {hasUnsavedChanges && (
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 onClick={handleSaveAllChanges}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                className="bg-green-600 hover:bg-green-700 gap-2"
               >
                 <Save className="w-4 h-4" />
                 Guardar Cambios
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
                 onClick={handleCancelAllChanges}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                className="gap-2"
               >
                 <X className="w-4 h-4" />
                 Cancelar
-              </button>
+              </Button>
             </div>
           )}
 
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleDownloadPDF}
-            className="p-2 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+            className="text-muted-foreground hover:text-purple-600 hover:bg-purple-50"
             title="Descargar Detalles de Cotización PDF"
           >
             <Download className="w-5 h-5" />
-          </button>
+          </Button>
 
-          <button className="p-2 text-slate-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Enviar al cliente">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-orange-600 hover:bg-orange-50"
+            title="Enviar al cliente"
+          >
             <Send className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Información General */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Información del Cliente */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Información del Cliente</h3>
+        {/* Información del Cliente */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Información del Cliente</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                {cotizacion.cliente.type === 'empresa' ? (
+                  <Building className="w-6 h-6 text-muted-foreground" />
+                ) : (
+                  <User className="w-6 h-6 text-muted-foreground" />
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">{cotizacion.cliente.name}</p>
+                <p className="text-sm text-muted-foreground">{cotizacion.cliente.type === 'empresa' ? 'Empresa' : 'Residencial'}</p>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-              {cotizacion.cliente.type === 'empresa' ? (
-                <Building className="w-6 h-6 text-slate-600" />
-              ) : (
-                <User className="w-6 h-6 text-slate-600" />
+            <div className="space-y-3">
+              <div>
+                <Label className="text-muted-foreground text-xs">Email</Label>
+                <p className="font-medium text-foreground">{cotizacion.cliente.email}</p>
+              </div>
+
+              <div>
+                <Label className="text-muted-foreground text-xs">Teléfono</Label>
+                <p className="font-medium text-foreground">{cotizacion.cliente.phone}</p>
+              </div>
+
+              <div>
+                <Label className="text-muted-foreground text-xs">Dirección</Label>
+                <p className="font-medium text-foreground">{cotizacion.cliente.full_address}</p>
+              </div>
+
+              {cotizacion.cliente.monthly_consumption && cotizacion.cliente.monthly_consumption > 0 && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Consumo Mensual</Label>
+                  <p className="font-medium text-foreground">{formatMonthlyConsumption(cotizacion.cliente.monthly_consumption)}</p>
+                </div>
+              )}
+
+              {cotizacion.cliente.document && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">{cotizacion.cliente.document_type || (cotizacion.cliente.type === 'empresa' ? 'NIT' : 'Cédula')}</Label>
+                  <p className="font-medium text-foreground">{cotizacion.cliente.document}</p>
+                </div>
+              )}
+
+              {cotizacion.cliente.nit && !cotizacion.cliente.document && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">NIT</Label>
+                  <p className="font-medium text-foreground">{cotizacion.cliente.nit}</p>
+                </div>
+              )}
+
+              {cotizacion.cliente.cedula && !cotizacion.cliente.document && (
+                <div>
+                  <Label className="text-muted-foreground text-xs">Cédula</Label>
+                  <p className="font-medium text-foreground">{cotizacion.cliente.cedula}</p>
+                </div>
               )}
             </div>
-            <div>
-              <p className="font-semibold text-slate-900">{cotizacion.cliente.name}</p>
-              <p className="text-sm text-slate-600">{cotizacion.cliente.type === 'empresa' ? 'Empresa' : 'Residencial'}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-slate-600">Email</p>
-              <p className="font-medium text-slate-900">{cotizacion.cliente.email}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-slate-600">Teléfono</p>
-              <p className="font-medium text-slate-900">{cotizacion.cliente.phone}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-slate-600">Dirección</p>
-              <p className="font-medium text-slate-900">{cotizacion.cliente.full_address}</p>
-            </div>
-
-            {cotizacion.cliente.monthly_consumption && cotizacion.cliente.monthly_consumption > 0 && (
-              <div>
-                <p className="text-sm text-slate-600">Consumo Mensual</p>
-                <p className="font-medium text-slate-900">{formatMonthlyConsumption(cotizacion.cliente.monthly_consumption)}</p>
-              </div>
-            )}
-
-            {cotizacion.cliente.document && (
-              <div>
-                <p className="text-sm text-slate-600">{cotizacion.cliente.document_type || (cotizacion.cliente.type === 'empresa' ? 'NIT' : 'Cédula')}</p>
-                <p className="font-medium text-slate-900">{cotizacion.cliente.document}</p>
-              </div>
-            )}
-
-            {cotizacion.cliente.nit && !cotizacion.cliente.document && (
-              <div>
-                <p className="text-sm text-slate-600">NIT</p>
-                <p className="font-medium text-slate-900">{cotizacion.cliente.nit}</p>
-              </div>
-            )}
-
-            {cotizacion.cliente.cedula && !cotizacion.cliente.document && (
-              <div>
-                <p className="text-sm text-slate-600">Cédula</p>
-                <p className="font-medium text-slate-900">{cotizacion.cliente.cedula}</p>
-              </div>
-            )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Información del Proyecto */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Información del Proyecto</h3>
-
-          <div className="space-y-4">
+        {/* Información del Proyecto */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Información del Proyecto</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-slate-600">Proyecto</p>
-              <p className="font-semibold text-slate-900">{cotizacion.proyecto}</p>
+              <Label className="text-muted-foreground text-xs">Proyecto</Label>
+              <p className="font-semibold text-foreground">{cotizacion.proyecto}</p>
             </div>
 
             <div className="flex items-center gap-2">
               <TipoSistemaIcon className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-slate-600">Tipo de Sistema</p>
-                <p className="font-medium text-slate-900">{getTipoSistemaLabel(cotizacion.tipo_sistema)}</p>
+                <Label className="text-muted-foreground text-xs">Tipo de Sistema</Label>
+                <p className="font-medium text-foreground">{getTipoSistemaLabel(cotizacion.tipo_sistema)}</p>
               </div>
             </div>
 
             <div>
-              <p className="text-sm text-slate-600">Tipo de Red</p>
-              <p className="font-medium text-slate-900">{cotizacion.tipo_red}</p>
+              <Label className="text-muted-foreground text-xs">Tipo de Red</Label>
+              <p className="font-medium text-foreground">{cotizacion.tipo_red}</p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-600">Requiere Financiación</p>
-              <p className="font-medium text-slate-900">{getFinancingText(cotizacion.requires_financing)}</p>
+              <Label className="text-muted-foreground text-xs">Requiere Financiación</Label>
+              <p className="font-medium text-foreground">{getFinancingText(cotizacion.requires_financing)}</p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-600">Potencia Total</p>
-              <p className="text-2xl font-bold text-green-600">{cotizacion.potencia_total} kW</p>
+              <Label className="text-muted-foreground text-xs">Potencia Total</Label>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{cotizacion.potencia_total} kW</p>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Información de la Cotización 2 */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Información de la Cotización</h3>
-            <button
+        {/* Información de la Cotización 2 */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg">Información de la Cotización</CardTitle>
+            <Button
               onClick={handleDownloadPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors text-sm"
+              className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 gap-2 h-8 text-xs"
               title="Descargar detalles de la cotización en PDF"
             >
-              <Download className="w-4 h-4" />
-              Descargar detalles
-            </button>
-          </div>
-
-          <div className="space-y-4">
+              <Download className="w-3 h-3" />
+              Descargar
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4 mt-4">
             <div>
-              <p className="text-sm text-slate-600">Vendedor</p>
-              <p className="font-medium text-slate-900">{cotizacion.vendedor}</p>
+              <Label className="text-muted-foreground text-xs">Vendedor</Label>
+              <p className="font-medium text-foreground">{cotizacion.vendedor}</p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-600">Fecha de Creación</p>
-              <p className="font-medium text-slate-900">{formatDate(cotizacion.fecha_creacion)}</p>
+              <Label className="text-muted-foreground text-xs">Fecha de Creación</Label>
+              <p className="font-medium text-foreground">{formatDate(cotizacion.fecha_creacion)}</p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-600">Fecha de Vencimiento</p>
-              <p className="font-medium text-slate-900">{formatDate(cotizacion.fecha_vencimiento)}</p>
+              <Label className="text-muted-foreground text-xs">Fecha de Vencimiento</Label>
+              <p className="font-medium text-foreground">{formatDate(cotizacion.fecha_vencimiento)}</p>
             </div>
 
-            <div className="pt-4 border-t border-slate-200">
-              <p className="text-sm text-slate-600">Valor Total</p>
-              <p className="text-2xl font-bold text-green-600">
+            <Separator />
+
+            <div>
+              <Label className="text-muted-foreground text-xs">Valor Total</Label>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {formatPrice(getResumenCostos()?.cotizacionFinal || 0)}
                 {(editingItem || editingPercentage) && (
-                  <span className="text-sm text-orange-600 ml-2">(editando...)</span>
+                  <span className="text-sm text-orange-600 dark:text-orange-400 ml-2">(editando...)</span>
                 )}
               </p>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabla de Suministros */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Suministros</h3>
-            <div className="flex items-center gap-3">
-              {loadingProductos && (
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                  Cargando productos...
-                </div>
-              )}
-              <p className="text-sm text-slate-500">💡 Doble clic en cualquier fila para editar</p>
-            </div>
+      {/* Tabla de Suministros */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between border-b px-6 py-4">
+          <CardTitle>Suministros</CardTitle>
+          <div className="flex items-center gap-3">
+            {loadingProductos && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                Cargando productos...
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">💡 Doble clic en cualquier fila para editar</p>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Tipo</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Descripción</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Cantidad</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Precio Unitario</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">% Utilidad</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Valor Parcial</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Utilidad</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[150px]">Tipo</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead className="text-right w-[100px]">Cantidad</TableHead>
+                <TableHead className="text-right w-[150px]">Precio Unitario</TableHead>
+                <TableHead className="text-right w-[100px]">% Utilidad</TableHead>
+                <TableHead className="text-right w-[150px]">Valor Parcial</TableHead>
+                <TableHead className="text-right w-[150px]">Utilidad</TableHead>
+                <TableHead className="text-right w-[150px]">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {cotizacion.suministros.map((item, index) => (
-                <tr
+                <TableRow
                   key={index}
-                  className="hover:bg-slate-50 cursor-pointer"
+                  className="cursor-pointer hover:bg-muted/50"
                   onDoubleClick={() => handleDoubleClick(item, index, 'suministro')}
                   title="Doble clic para editar"
                 >
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      {item.tipo === 'Panel Solar' && <Sun className="w-4 h-4 text-yellow-500" />}
-                      {item.tipo === 'Inversor' && <Zap className="w-4 h-4 text-blue-500" />}
-                      {item.tipo === 'Batería' && <Battery className="w-4 h-4 text-green-500" />}
-                      <span className="font-medium text-slate-900">{item.tipo}</span>
+                      {item.tipo === 'Panel Solar' && <Sun className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />}
+                      {item.tipo === 'Inversor' && <Zap className="w-4 h-4 text-blue-500 dark:text-blue-400" />}
+                      {item.tipo === 'Batería' && <Battery className="w-4 h-4 text-green-500 dark:text-green-400" />}
+                      <span className="font-medium">{item.tipo}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
+                  </TableCell>
+                  <TableCell>
                     {editingItem && editingItem.originalIndex === index && editingType === 'suministro' ? (
-                      <select
+                      <Select
                         value={editingItem.descripcion}
-                        onChange={(e) => {
-                          const selectedSuministro = getSuministrosByType(item.tipo).find(s => s.name === e.target.value);
-                          handleSuministroChange('descripcion', e.target.value);
+                        onValueChange={(value) => {
+                          const selectedSuministro = getSuministrosByType(item.tipo).find(s => s.name === value);
+                          handleSuministroChange('descripcion', value);
                           if (selectedSuministro) {
                             handleSuministroChange('precio_unitario', selectedSuministro.precio);
                           }
                         }}
-                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       >
-                        {getSuministrosByType(item.tipo).map(suministro => (
-                          <option key={suministro.id} value={suministro.name}>
-                            {suministro.name}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full h-8">
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getSuministrosByType(item.tipo).map(suministro => (
+                            <SelectItem key={suministro.id} value={suministro.name || `item-${suministro.id}`}>
+                              {suministro.name || `Item #${suministro.id}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
-                      <span className="text-slate-900">{item.descripcion}</span>
+                      <span>{item.descripcion}</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     {editingItem && editingItem.originalIndex === index && editingType === 'suministro' ? (
-                      <input
+                      <Input
                         type="number"
                         value={editingItem.cantidad || 0}
                         onChange={(e) => handleSuministroChange('cantidad', parseInt(e.target.value) || 0)}
                         onBlur={handleFinishEditing}
                         onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
                         min="0"
-                        className="w-20 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-right"
+                        className="h-8 text-right"
                       />
                     ) : (
-                      <span className="font-medium text-slate-900">{item.cantidad.toLocaleString()}</span>
+                      <span className="font-medium">{item.cantidad.toLocaleString()}</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     {editingItem && editingItem.originalIndex === index && editingType === 'suministro' ? (
-                      <input
+                      <Input
                         type="number"
                         value={editingItem.precio_unitario || 0}
                         onChange={(e) => handleSuministroChange('precio_unitario', parseInt(e.target.value) || 0)}
                         onBlur={handleFinishEditing}
                         onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
                         min="0"
-                        className="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-right"
+                        className="h-8 text-right"
                       />
                     ) : (
-                      <span className="text-slate-900">{formatPrice(item.precio_unitario)}</span>
+                      <span>{formatPrice(item.precio_unitario)}</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     {editingItem && editingItem.originalIndex === index && editingType === 'suministro' ? (
-                      <input
+                      <Input
                         type="number"
                         value={editingItem.porcentaje_utilidad || 0}
                         onChange={(e) => handleSuministroChange('porcentaje_utilidad', parseFloat(e.target.value) || 0)}
@@ -1549,110 +1574,108 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
                         onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
                         min="0"
                         step="0.1"
-                        className="w-16 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-right"
+                        className="h-8 text-right"
                       />
                     ) : (
-                      <span className="text-slate-900">{item.porcentaje_utilidad}%</span>
+                      <span>{item.porcentaje_utilidad}%</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="font-medium text-slate-900">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-medium">
                       {formatPrice(editingItem && editingItem.originalIndex === index && editingType === 'suministro'
                         ? editingItem.valor_parcial
                         : item.valor_parcial)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-slate-900">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span>
                       {formatPrice(editingItem && editingItem.originalIndex === index && editingType === 'suministro'
                         ? editingItem.utilidad
                         : item.utilidad)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="font-bold text-green-600">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-bold text-green-600 dark:text-green-400">
                       {formatPrice(editingItem && editingItem.originalIndex === index && editingType === 'suministro'
                         ? editingItem.total
                         : item.total)}
                     </span>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Tabla de Items Complementarios */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Items Complementarios</h3>
-            <p className="text-sm text-slate-500">💡 Doble clic en cualquier fila para editar</p>
-          </div>
-        </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between border-b px-6 py-4">
+          <CardTitle>Items Complementarios</CardTitle>
+          <p className="text-sm text-muted-foreground">💡 Doble clic en cualquier fila para editar</p>
+        </CardHeader>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Descripción</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Cantidad</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">Unidad</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Precio Unitario</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">% Utilidad</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Valor Parcial</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Utilidad</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Descripción</TableHead>
+                <TableHead className="text-right w-[100px]">Cantidad</TableHead>
+                <TableHead className="w-[100px]">Unidad</TableHead>
+                <TableHead className="text-right w-[150px]">Precio Unitario</TableHead>
+                <TableHead className="text-right w-[100px]">% Utilidad</TableHead>
+                <TableHead className="text-right w-[150px]">Valor Parcial</TableHead>
+                <TableHead className="text-right w-[150px]">Utilidad</TableHead>
+                <TableHead className="text-right w-[150px]">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {cotizacion.items_complementarios.map((item, index) => (
-                <tr
+                <TableRow
                   key={index}
-                  className="hover:bg-slate-50 cursor-pointer"
+                  className="cursor-pointer hover:bg-muted/50"
                   onDoubleClick={() => handleDoubleClick(item, index, 'complementario')}
                   title="Doble clic para editar"
                 >
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-slate-900">{item.descripcion}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  <TableCell>
+                    <span className="font-medium">{item.descripcion}</span>
+                  </TableCell>
+                  <TableCell className="text-right">
                     {editingItem && editingItem.originalIndex === index && editingType === 'complementario' ? (
-                      <input
+                      <Input
                         type="number"
                         value={editingItem.cantidad || 0}
                         onChange={(e) => handleSuministroChange('cantidad', parseInt(e.target.value) || 0)}
                         onBlur={handleFinishEditing}
                         onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
                         min="0"
-                        className="w-20 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-right"
+                        className="h-8 text-right"
                       />
                     ) : (
-                      <span className="font-medium text-slate-900">{item.cantidad.toLocaleString()}</span>
+                      <span className="font-medium">{item.cantidad.toLocaleString()}</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-slate-900">{item.unidad}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  </TableCell>
+                  <TableCell>
+                    <span>{item.unidad}</span>
+                  </TableCell>
+                  <TableCell className="text-right">
                     {editingItem && editingItem.originalIndex === index && editingType === 'complementario' ? (
-                      <input
+                      <Input
                         type="number"
                         value={editingItem.precio_unitario || 0}
                         onChange={(e) => handleSuministroChange('precio_unitario', parseInt(e.target.value) || 0)}
                         onBlur={handleFinishEditing}
                         onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
                         min="0"
-                        className="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-right"
+                        className="h-8 text-right"
                       />
                     ) : (
-                      <span className="text-slate-900">{formatPrice(item.precio_unitario)}</span>
+                      <span>{formatPrice(item.precio_unitario)}</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     {editingItem && editingItem.originalIndex === index && editingType === 'complementario' ? (
-                      <input
+                      <Input
                         type="number"
                         value={editingItem.porcentaje_utilidad || 0}
                         onChange={(e) => handleSuministroChange('porcentaje_utilidad', parseFloat(e.target.value) || 0)}
@@ -1660,245 +1683,237 @@ const DetalleCotizacion = ({ cotizacionId, cotizacion: propCotizacion }) => {
                         onKeyDown={(e) => e.key === 'Enter' && handleFinishEditing()}
                         min="0"
                         step="0.1"
-                        className="w-16 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-right"
+                        className="h-8 text-right"
                       />
                     ) : (
-                      <span className="text-slate-900">{item.porcentaje_utilidad}%</span>
+                      <span>{item.porcentaje_utilidad}%</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="font-medium text-slate-900">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-medium">
                       {formatPrice(editingItem && editingItem.originalIndex === index && editingType === 'complementario'
                         ? editingItem.valor_parcial
                         : item.valor_parcial)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-slate-900">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span>
                       {formatPrice(editingItem && editingItem.originalIndex === index && editingType === 'complementario'
                         ? editingItem.utilidad
                         : item.utilidad)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="font-bold text-green-600">
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="font-bold text-green-600 dark:text-green-400">
                       {formatPrice(editingItem && editingItem.originalIndex === index && editingType === 'complementario'
                         ? editingItem.total
                         : item.total)}
                     </span>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Resumen de Costos */}
       {getResumenCostos() && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Resumen de Costos</h3>
-              <p className="text-sm text-slate-500">💡 Doble clic en los porcentajes para editar</p>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between border-b px-6 py-4">
+            <CardTitle>Resumen de Costos</CardTitle>
+            <p className="text-sm text-muted-foreground">💡 Doble clic en los porcentajes para editar</p>
+          </CardHeader>
+
+          <CardContent className="p-6 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="font-medium">{formatPrice(getResumenCostos().subtotal)}</span>
             </div>
-          </div>
 
-          <div className="p-6">
-            <div className="space-y-3">
+            <div className="flex justify-between items-center bg-muted/50 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Gestión Comercial</span>
+                {editingPercentage === 'porcentaje_gestion_comercial' ? (
+                  <Input
+                    type="number"
+                    value={cotizacion.porcentaje_gestion_comercial || 3}
+                    onChange={(e) => handlePercentageChange('porcentaje_gestion_comercial', e.target.value)}
+                    onBlur={handlePercentageBlur}
+                    onKeyDown={handlePercentageKeyDown}
+                    min="0"
+                    step="0.1"
+                    className="w-20 h-8"
+                  />
+                ) : (
+                  <span
+                    className="text-muted-foreground cursor-pointer hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/20 px-2 py-1 rounded"
+                    onDoubleClick={() => handlePercentageDoubleClick('porcentaje_gestion_comercial')}
+                    title="Doble clic para editar"
+                  >
+                    ({cotizacion.porcentaje_gestion_comercial || 3}%)
+                  </span>
+                )}
+              </div>
+              <span>{formatPrice(getResumenCostos().gestionComercial)}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Subtotal 2</span>
+              <span className="text-green-600 dark:text-green-400 font-semibold">{formatPrice(getResumenCostos().subtotal2)}</span>
+            </div>
+
+            <div className="flex justify-between items-center bg-muted/50 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Administración</span>
+                {editingPercentage === 'porcentaje_administracion' ? (
+                  <Input
+                    type="number"
+                    value={cotizacion.porcentaje_administracion || 8}
+                    onChange={(e) => handlePercentageChange('porcentaje_administracion', e.target.value)}
+                    onBlur={handlePercentageBlur}
+                    onKeyDown={handlePercentageKeyDown}
+                    min="0"
+                    step="0.1"
+                    className="w-20 h-8"
+                  />
+                ) : (
+                  <span
+                    className="text-muted-foreground cursor-pointer hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/20 px-2 py-1 rounded"
+                    onDoubleClick={() => handlePercentageDoubleClick('porcentaje_administracion')}
+                    title="Doble clic para editar"
+                  >
+                    ({cotizacion.porcentaje_administracion || 8}%)
+                  </span>
+                )}
+              </div>
+              <span>{formatPrice(getResumenCostos().administracion)}</span>
+            </div>
+
+            <div className="flex justify-between items-center bg-muted/50 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Imprevistos</span>
+                {editingPercentage === 'porcentaje_imprevistos' ? (
+                  <Input
+                    type="number"
+                    value={cotizacion.porcentaje_imprevistos || 2}
+                    onChange={(e) => handlePercentageChange('porcentaje_imprevistos', e.target.value)}
+                    onBlur={handlePercentageBlur}
+                    onKeyDown={handlePercentageKeyDown}
+                    min="0"
+                    step="0.1"
+                    className="w-20 h-8"
+                  />
+                ) : (
+                  <span
+                    className="text-muted-foreground cursor-pointer hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/20 px-2 py-1 rounded"
+                    onDoubleClick={() => handlePercentageDoubleClick('porcentaje_imprevistos')}
+                    title="Doble clic para editar"
+                  >
+                    ({cotizacion.porcentaje_imprevistos || 2}%)
+                  </span>
+                )}
+              </div>
+              <span>{formatPrice(getResumenCostos().imprevistos)}</span>
+            </div>
+
+            <div className="flex justify-between items-center bg-muted/50 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Utilidad</span>
+                {editingPercentage === 'porcentaje_utilidad' ? (
+                  <Input
+                    type="number"
+                    value={cotizacion.porcentaje_utilidad || 5}
+                    onChange={(e) => handlePercentageChange('porcentaje_utilidad', e.target.value)}
+                    onBlur={handlePercentageBlur}
+                    onKeyDown={handlePercentageKeyDown}
+                    min="0"
+                    step="0.1"
+                    className="w-20 h-8"
+                  />
+                ) : (
+                  <span
+                    className="text-muted-foreground cursor-pointer hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/20 px-2 py-1 rounded"
+                    onDoubleClick={() => handlePercentageDoubleClick('porcentaje_utilidad')}
+                    title="Doble clic para editar"
+                  >
+                    ({cotizacion.porcentaje_utilidad || 5}%)
+                  </span>
+                )}
+              </div>
+              <span>{formatPrice(getResumenCostos().utilidad)}</span>
+            </div>
+
+            <div className="flex justify-between items-center bg-muted/50 px-4 py-2 rounded-lg">
+              <span className="text-muted-foreground">IVA sobre la utilidad (19%)</span>
+              <span>{formatPrice(getResumenCostos().ivaUtilidad)}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Subtotal 3</span>
+              <span className="text-green-600 dark:text-green-400 font-semibold">{formatPrice(getResumenCostos().subtotal3)}</span>
+            </div>
+
+            <div className="flex justify-between items-center bg-muted/50 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Retenciones</span>
+                {editingPercentage === 'porcentaje_retencion' ? (
+                  <Input
+                    type="number"
+                    value={cotizacion.porcentaje_retencion || 3.5}
+                    onChange={(e) => handlePercentageChange('porcentaje_retencion', e.target.value)}
+                    onBlur={handlePercentageBlur}
+                    onKeyDown={handlePercentageKeyDown}
+                    min="0"
+                    step="0.1"
+                    className="w-20 h-8"
+                  />
+                ) : (
+                  <span
+                    className="text-muted-foreground cursor-pointer hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/20 px-2 py-1 rounded"
+                    onDoubleClick={() => handlePercentageDoubleClick('porcentaje_retencion')}
+                    title="Doble clic para editar"
+                  >
+                    ({cotizacion.porcentaje_retencion || 3.5}%)
+                  </span>
+                )}
+              </div>
+              <span>{formatPrice(getResumenCostos().retenciones)}</span>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
               <div className="flex justify-between items-center">
-                <span className="text-slate-600">Subtotal</span>
-                <span className="text-slate-900 font-medium">{formatPrice(getResumenCostos().subtotal)}</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-600">Gestión Comercial</span>
-                  {editingPercentage === 'porcentaje_gestion_comercial' ? (
-                    <input
-                      type="number"
-                      value={cotizacion.porcentaje_gestion_comercial || 3}
-                      onChange={(e) => handlePercentageChange('porcentaje_gestion_comercial', e.target.value)}
-                      onBlur={handlePercentageBlur}
-                      onKeyDown={handlePercentageKeyDown}
-                      min="0"
-                      step="0.1"
-                      className="w-16 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                  ) : (
-                    <span
-                      className="text-slate-600 cursor-pointer hover:text-green-600 hover:bg-green-50 px-2 py-1 rounded"
-                      onDoubleClick={() => handlePercentageDoubleClick('porcentaje_gestion_comercial')}
-                      title="Doble clic para editar"
-                    >
-                      ({cotizacion.porcentaje_gestion_comercial || 3}%)
-                    </span>
-                  )}
-                </div>
-                <span className="text-slate-900">{formatPrice(getResumenCostos().gestionComercial)}</span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Subtotal 2</span>
-                <span className="text-green-600 font-semibold">{formatPrice(getResumenCostos().subtotal2)}</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-600">Administración</span>
-                  {editingPercentage === 'porcentaje_administracion' ? (
-                    <input
-                      type="number"
-                      value={cotizacion.porcentaje_administracion || 8}
-                      onChange={(e) => handlePercentageChange('porcentaje_administracion', e.target.value)}
-                      onBlur={handlePercentageBlur}
-                      onKeyDown={handlePercentageKeyDown}
-                      min="0"
-                      step="0.1"
-                      className="w-16 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                  ) : (
-                    <span
-                      className="text-slate-600 cursor-pointer hover:text-green-600 hover:bg-green-50 px-2 py-1 rounded"
-                      onDoubleClick={() => handlePercentageDoubleClick('porcentaje_administracion')}
-                      title="Doble clic para editar"
-                    >
-                      ({cotizacion.porcentaje_administracion || 8}%)
-                    </span>
-                  )}
-                </div>
-                <span className="text-slate-900">{formatPrice(getResumenCostos().administracion)}</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-600">Imprevistos</span>
-                  {editingPercentage === 'porcentaje_imprevistos' ? (
-                    <input
-                      type="number"
-                      value={cotizacion.porcentaje_imprevistos || 2}
-                      onChange={(e) => handlePercentageChange('porcentaje_imprevistos', e.target.value)}
-                      onBlur={handlePercentageBlur}
-                      onKeyDown={handlePercentageKeyDown}
-                      min="0"
-                      step="0.1"
-                      className="w-16 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                  ) : (
-                    <span
-                      className="text-slate-600 cursor-pointer hover:text-green-600 hover:bg-green-50 px-2 py-1 rounded"
-                      onDoubleClick={() => handlePercentageDoubleClick('porcentaje_imprevistos')}
-                      title="Doble clic para editar"
-                    >
-                      ({cotizacion.porcentaje_imprevistos || 2}%)
-                    </span>
-                  )}
-                </div>
-                <span className="text-slate-900">{formatPrice(getResumenCostos().imprevistos)}</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-600">Utilidad</span>
-                  {editingPercentage === 'porcentaje_utilidad' ? (
-                    <input
-                      type="number"
-                      value={cotizacion.porcentaje_utilidad || 5}
-                      onChange={(e) => handlePercentageChange('porcentaje_utilidad', e.target.value)}
-                      onBlur={handlePercentageBlur}
-                      onKeyDown={handlePercentageKeyDown}
-                      min="0"
-                      step="0.1"
-                      className="w-16 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                  ) : (
-                    <span
-                      className="text-slate-600 cursor-pointer hover:text-green-600 hover:bg-green-50 px-2 py-1 rounded"
-                      onDoubleClick={() => handlePercentageDoubleClick('porcentaje_utilidad')}
-                      title="Doble clic para editar"
-                    >
-                      ({cotizacion.porcentaje_utilidad || 5}%)
-                    </span>
-                  )}
-                </div>
-                <span className="text-slate-900">{formatPrice(getResumenCostos().utilidad)}</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-lg">
-                <span className="text-slate-600">IVA sobre la utilidad (19%)</span>
-                <span className="text-slate-900">{formatPrice(getResumenCostos().ivaUtilidad)}</span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Subtotal 3</span>
-                <span className="text-green-600 font-semibold">{formatPrice(getResumenCostos().subtotal3)}</span>
-              </div>
-
-              <div className="flex justify-between items-center bg-slate-50 px-4 py-2 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-600">Retenciones</span>
-                  {editingPercentage === 'porcentaje_retencion' ? (
-                    <input
-                      type="number"
-                      value={cotizacion.porcentaje_retencion || 3.5}
-                      onChange={(e) => handlePercentageChange('porcentaje_retencion', e.target.value)}
-                      onBlur={handlePercentageBlur}
-                      onKeyDown={handlePercentageKeyDown}
-                      min="0"
-                      step="0.1"
-                      className="w-16 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    />
-                  ) : (
-                    <span
-                      className="text-slate-600 cursor-pointer hover:text-green-600 hover:bg-green-50 px-2 py-1 rounded"
-                      onDoubleClick={() => handlePercentageDoubleClick('porcentaje_retencion')}
-                      title="Doble clic para editar"
-                    >
-                      ({cotizacion.porcentaje_retencion || 3.5}%)
-                    </span>
-                  )}
-                </div>
-                <span className="text-slate-900">{formatPrice(getResumenCostos().retenciones)}</span>
-              </div>
-
-              <div className="border-t border-slate-200 pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-900 font-semibold text-lg">Cotización del proyecto</span>
-                  <span className="text-green-600 font-bold text-xl">{formatPrice(getResumenCostos().cotizacionFinal)}</span>
-                </div>
+                <span className="font-semibold text-lg">Cotización del proyecto</span>
+                <span className="text-green-600 dark:text-green-400 font-bold text-xl">{formatPrice(getResumenCostos().cotizacionFinal)}</span>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
+
+
+
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres descartar todos los cambios sin guardar? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelChanges}>Continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Notificación */}
-      {notification && (
-        <div className="fixed bottom-4 right-4 z-50 max-w-md animate-in slide-in-from-right">
-          <div className={`flex items-center gap-3 p-4 border rounded-lg shadow-lg ${notification.type === 'success'
-            ? 'bg-green-50 border-green-200 text-green-800'
-            : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center ${notification.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-              {notification.type === 'success' ? (
-                <CheckCircle className="w-3 h-3 text-green-600" />
-              ) : (
-                <XCircle className="w-3 h-3 text-red-600" />
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="font-medium">{notification.message}</p>
-            </div>
-            <button
-              onClick={() => setNotification(null)}
-              className="text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Notification
+        notification={notification}
+        onClose={() => setNotification(null)}
+      />
+
     </div>
   );
 };

@@ -22,13 +22,37 @@ class BatteryController extends Controller
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('model', 'like', "%{$search}%");
+                    $q->where('model', 'like', "%{$search}%")
+                      ->orWhere('brand', 'like', "%{$search}%");
                 });
             }
 
             if ($request->filled('is_active')) {
                 $query->where('is_active', $request->is_active === 'true');
+            }
+
+            // Filtro de marca
+            if ($request->filled('brand')) {
+                $query->where('brand', $request->brand);
+            }
+
+            // Filtro de capacidad
+            if ($request->filled('capacity_range')) {
+                $range = $request->capacity_range;
+                switch ($range) {
+                    case '0-50':
+                        $query->where('ah_capacity', '>=', 0)->where('ah_capacity', '<=', 50);
+                        break;
+                    case '50-100':
+                        $query->where('ah_capacity', '>=', 50)->where('ah_capacity', '<=', 100);
+                        break;
+                    case '100-200':
+                        $query->where('ah_capacity', '>=', 100)->where('ah_capacity', '<=', 200);
+                        break;
+                    case '200+':
+                        $query->where('ah_capacity', '>=', 200);
+                        break;
+                }
             }
 
             // Ordenamiento
@@ -72,7 +96,6 @@ class BatteryController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:batteries,name',
                 'model' => 'required|string|max:255|unique:batteries,model',
                 'brand' => 'required|string|max:255',
                 'type' => 'required|string|max:255',
@@ -145,7 +168,6 @@ class BatteryController extends Controller
             $battery = Battery::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:batteries,name,' . $id . ',battery_id',
                 'model' => 'required|string|max:255|unique:batteries,model,' . $id . ',battery_id',
                 'brand' => 'required|string|max:255',
                 'type' => 'required|string|max:255',

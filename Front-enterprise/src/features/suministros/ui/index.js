@@ -4,7 +4,4 @@ export { default as SuministrosTable } from './SuministrosTable';
 export { default as SuministrosFilters } from './SuministrosFilters';
 export { default as SuministrosStats } from './SuministrosStats';
 export { default as SuministrosDashboard } from './SuministrosDashboard';
-export { default as PanelModal } from './PanelModal';
-export { default as InverterModal } from './InverterModal';
-export { default as BatteryModal } from './BatteryModal';
-export { default as SuministroDeleteModal } from './SuministroDeleteModal';
+

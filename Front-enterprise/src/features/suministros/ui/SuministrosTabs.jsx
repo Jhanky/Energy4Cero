@@ -20,7 +20,7 @@ const SuministrosTabs = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
       <div className="flex space-x-4">
         {tabs.map((tab) => (
           <button
@@ -28,8 +28,8 @@ const SuministrosTabs = ({ activeTab, onTabChange }) => {
             onClick={() => onTabChange(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200
               ${activeTab === tab.id
-                ? 'bg-green-500 text-white shadow-md'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'text-muted-foreground hover:bg-muted'
               }`}
           >
             {tab.icon}

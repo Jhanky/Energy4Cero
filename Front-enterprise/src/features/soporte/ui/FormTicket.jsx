@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Calendar, User, AlertTriangle, Wrench, FolderKanban, Search, FileText, Upload, Trash2 } from 'lucide-react';
-import { 
+import {
   tiposTicket,
   estadosTicket,
   prioridades,
@@ -37,7 +37,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
     tecnicoAsignado: [],
     archivos: []
   });
-  
+
   const [busquedaTecnico, setBusquedaTecnico] = useState('');
   const [tecnicosFiltrados, setTecnicosFiltrados] = useState([]);
   const [todosTecnicos, setTodosTecnicos] = useState([]);
@@ -90,7 +90,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
           activo: user.is_active !== false, // Suponiendo que si no está explícitamente inactivo, está activo
           avatar: user.avatar || getRolIcono(user.position || user.role?.name) // Usar avatar del backend o el icono del rol
         }));
-        
+
         setTodosTecnicos(tecnicosTransformados);
         setTecnicosFiltrados(tecnicosTransformados);
       } else {
@@ -117,7 +117,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
     if (termino.trim() === '') {
       setTecnicosFiltrados(todosTecnicos);
     } else {
-      const tecnicos = todosTecnicos.filter(tecnico => 
+      const tecnicos = todosTecnicos.filter(tecnico =>
         tecnico.nombre.toLowerCase().includes(termino.toLowerCase()) ||
         tecnico.cargo.toLowerCase().includes(termino.toLowerCase()) ||
         tecnico.departamento.toLowerCase().includes(termino.toLowerCase())
@@ -149,12 +149,12 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'proyectoId') {
       console.log('Valor del proyecto seleccionado:', value, typeof value);
       console.log('Lista de proyectos actual:', proyectos);
       console.log('IDs de proyectos en la lista:', proyectos.map(p => p.id));
-      
+
       // Intentar encontrar el proyecto con conversión de tipos
       let proyectoSeleccionado = proyectos.find(p => p.id === value);
       if (!proyectoSeleccionado) {
@@ -163,7 +163,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
       if (!proyectoSeleccionado) {
         proyectoSeleccionado = proyectos.find(p => String(p.id) === value); // Convertir a string
       }
-      
+
       console.log('Proyecto seleccionado:', proyectoSeleccionado);
       if (proyectoSeleccionado) {
         console.log('Cliente del proyecto:', proyectoSeleccionado.client);
@@ -172,14 +172,14 @@ const FormTicket = ({ onSubmit, onCancel }) => {
       } else {
         console.log('No se encontró el proyecto en la lista');
       }
-      
-      const nombreCliente = proyectoSeleccionado ? 
-        (proyectoSeleccionado.client?.name || 
-         proyectoSeleccionado.client_name || 
-         '') : '';
-         
+
+      const nombreCliente = proyectoSeleccionado ?
+        (proyectoSeleccionado.client?.name ||
+          proyectoSeleccionado.client_name ||
+          '') : '';
+
       console.log('Nombre final del cliente a asignar:', nombreCliente);
-      
+
       setFormData(prev => ({
         ...prev,
         [name]: value,
@@ -195,17 +195,17 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Transformar los datos para que coincidan con los campos esperados por el backend
       const proyectoSeleccionado = formData.proyectoId ? proyectos.find(p => p.id == formData.proyectoId) : null;
-      
+
       // Validar que el proyecto tenga un cliente válido antes de enviar
       if (!proyectoSeleccionado) {
         alert('No se encontró el proyecto seleccionado.');
         return;
       }
-      
+
       // Verificar que el client_id exista en el proyecto
       const clientIdFromProject = proyectoSeleccionado.client_id || proyectoSeleccionado.client?.id;
       if (!clientIdFromProject) {
@@ -227,7 +227,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
       // Enviar el ticket al backend
       const response = await ticketService.createTicket(ticketData);
-      
+
       if (response.success) {
         // Llamar al callback con los datos del ticket creado
         onSubmit(response.data); // Asumiendo que el backend devuelve el ticket creado en response.data
@@ -254,7 +254,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    
+
     // Validar cada archivo
     const archivosValidos = files.filter(file => {
       const maxSize = 10 * 1024 * 1024; // 10MB
@@ -266,20 +266,20 @@ const FormTicket = ({ onSubmit, onCancel }) => {
         'image/gif',
         'image/webp'
       ];
-      
+
       if (file.size > maxSize) {
         alert(`El archivo ${file.name} es demasiado grande. El tamaño máximo permitido es 10MB.`);
         return false;
       }
-      
+
       if (!allowedTypes.includes(file.type)) {
         alert(`El archivo ${file.name} no es un tipo válido. Solo se permiten PDF e imágenes.`);
         return false;
       }
-      
+
       return true;
     });
-    
+
     // Agregar los archivos válidos al estado
     const archivosConInfo = archivosValidos.map(file => ({
       id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -289,12 +289,12 @@ const FormTicket = ({ onSubmit, onCancel }) => {
       archivo: file,
       fecha: new Date().toISOString()
     }));
-    
+
     setFormData(prev => ({
       ...prev,
       archivos: [...prev.archivos, ...archivosConInfo]
     }));
-    
+
     // Limpiar el input de archivo
     e.target.value = '';
   };
@@ -308,17 +308,17 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+      <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Wrench className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <Wrench className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">Crear Nuevo Ticket</h2>
+            <h2 className="text-xl font-semibold text-foreground">Crear Nuevo Ticket</h2>
           </div>
           <button
             onClick={onCancel}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+            className="p-1 text-muted-foreground hover:text-muted-foreground rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -327,13 +327,13 @@ const FormTicket = ({ onSubmit, onCancel }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Proyecto
               </label>
               {loadingProyectos ? (
                 <div className="flex items-center justify-center py-2">
                   <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                  <span className="text-xs text-slate-500">Cargando...</span>
+                  <span className="text-xs text-muted-foreground">Cargando...</span>
                 </div>
               ) : (
                 <select
@@ -341,7 +341,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                   value={formData.proyectoId}
                   onChange={handleChange}
                   required
-                  className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                 >
                   <option value="">Seleccionar proyecto</option>
                   {proyectos.map(proyecto => (
@@ -354,12 +354,12 @@ const FormTicket = ({ onSubmit, onCancel }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Cliente
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400" />
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <input
                   type="text"
@@ -367,7 +367,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                   value={formData.cliente}
                   onChange={handleChange}
                   required
-                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full pl-10 pr-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                   placeholder="Nombre del cliente"
                   readOnly
                 />
@@ -377,7 +377,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Tipo
               </label>
               <select
@@ -385,7 +385,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                 value={formData.tipo}
                 onChange={handleChange}
                 required
-                className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               >
                 <option value="">Seleccionar tipo</option>
                 {tiposTicket.map(tipo => (
@@ -397,7 +397,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Prioridad
               </label>
               <select
@@ -405,7 +405,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                 value={formData.prioridad}
                 onChange={handleChange}
                 required
-                className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               >
                 <option value="">Seleccionar prioridad</option>
                 {prioridades.map(prioridad => (
@@ -416,11 +416,11 @@ const FormTicket = ({ onSubmit, onCancel }) => {
               </select>
               {formData.prioridad && (
                 <div className="mt-1">
-                  <span 
+                  <span
                     className={`inline-block w-3 h-3 rounded-full mr-2`}
                     style={{ backgroundColor: prioridades.find(p => p.id == formData.prioridad)?.color }}
                   ></span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {prioridades.find(p => p.id == formData.prioridad)?.nombre}
                   </span>
                 </div>
@@ -428,49 +428,49 @@ const FormTicket = ({ onSubmit, onCancel }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Técnicos Asignados
               </label>
               <div className="relative usuarios-dropdown">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input
                     type="text"
                     value={busquedaTecnico}
                     onChange={(e) => handleBusquedaTecnico(e.target.value)}
                     placeholder="Buscar técnico por nombre, cargo o departamento..."
-                    className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
                     onFocus={() => setMostrarListaTecnicos(busquedaTecnico.length > 0)}
                   />
                 </div>
-                
+
                 {/* Lista desplegable de técnicos */}
                 {mostrarListaTecnicos && tecnicosFiltrados.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-card border border-input rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {tecnicosFiltrados.map((tecnico) => (
                       <button
                         key={tecnico.id}
                         type="button"
                         onClick={() => seleccionarTecnico(tecnico)}
-                        className="w-full px-4 py-3 text-left hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                        className="w-full px-4 py-3 text-left hover:bg-muted/50 border-b border-border last:border-b-0"
                       >
-                        <p className="font-medium text-slate-900">{tecnico.nombre}</p>
-                        <p className="text-sm text-slate-600">{tecnico.cargo}</p>
+                        <p className="font-medium text-foreground">{tecnico.nombre}</p>
+                        <p className="text-sm text-muted-foreground">{tecnico.cargo}</p>
                       </button>
                     ))}
                   </div>
                 )}
-                
+
                 {mostrarListaTecnicos && tecnicosFiltrados.length === 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg p-4 text-center text-slate-500">
+                  <div className="absolute z-10 w-full mt-1 bg-card border border-input rounded-lg shadow-lg p-4 text-center text-muted-foreground">
                     No se encontraron técnicos
                   </div>
                 )}
               </div>
-              
+
               {formData.tecnicoAsignado.length > 0 && (
                 <div className="space-y-2 mt-3">
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-foreground">
                     Técnicos seleccionados ({formData.tecnicoAsignado.length})
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -481,13 +481,13 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                       return (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm"
+                          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-lg text-sm"
                         >
                           {nombreMostrar}
                           <button
                             type="button"
                             onClick={() => eliminarTecnico(tecnicoId)}
-                            className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-200 rounded"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:text-blue-300 p-1 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -501,7 +501,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Título
             </label>
             <input
@@ -510,13 +510,13 @@ const FormTicket = ({ onSubmit, onCancel }) => {
               value={formData.titulo}
               onChange={handleChange}
               required
-              className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               placeholder="Título del ticket"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Descripción
             </label>
             <textarea
@@ -525,16 +525,16 @@ const FormTicket = ({ onSubmit, onCancel }) => {
               onChange={handleChange}
               required
               rows={4}
-              className="block w-full py-2 px-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full py-2 px-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring"
               placeholder="Descripción detallada del problema"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Adjuntar Documentos
             </label>
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+            <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
               <input
                 type="file"
                 id="file-upload"
@@ -544,14 +544,14 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                 multiple
               />
               <div className="flex flex-col items-center">
-                <Upload className="w-10 h-10 text-slate-400 mb-2" />
+                <Upload className="w-10 h-10 text-muted-foreground mb-2" />
                 <label
                   htmlFor="file-upload"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+                  className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 cursor-pointer"
                 >
                   Seleccionar Archivos
                 </label>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-muted-foreground">
                   PDF, JPG, PNG (máx. 10MB cada uno)
                 </p>
               </div>
@@ -559,22 +559,22 @@ const FormTicket = ({ onSubmit, onCancel }) => {
 
             {formData.archivos.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-sm font-medium text-slate-700">
+                <p className="text-sm font-medium text-foreground">
                   Archivos adjuntos ({formData.archivos.length})
                 </p>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {formData.archivos.map((archivo) => (
                     <div
                       key={archivo.id}
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-border"
                     >
                       <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                        <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {archivo.nombre}
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-muted-foreground">
                             {archivo.tipo.split('/')[1].toUpperCase()} • {archivo.tamaño}
                           </p>
                         </div>
@@ -582,7 +582,7 @@ const FormTicket = ({ onSubmit, onCancel }) => {
                       <button
                         type="button"
                         onClick={() => eliminarArchivo(archivo.id)}
-                        className="p-1 text-red-600 hover:bg-red-100 rounded-full"
+                        className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -599,13 +599,13 @@ const FormTicket = ({ onSubmit, onCancel }) => {
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium rounded-lg border border-slate-300 hover:bg-slate-50"
+              className="px-4 py-2 text-muted-foreground hover:text-foreground font-medium rounded-lg border border-input hover:bg-muted/50"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Crear Ticket

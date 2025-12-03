@@ -1,45 +1,26 @@
-import React, { useState } from "react"
+"use client"
 
-const Collapsible = ({ children, open, onOpenChange, ...props }) => {
-  const [isOpen, setIsOpen] = useState(open || false)
-  
-  const handleToggle = () => {
-    const newOpen = !isOpen
-    setIsOpen(newOpen)
-    onOpenChange?.(newOpen)
-  }
+import * as React from "react"
+import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
+import { cn } from "@/lib/utils"
 
-  return (
-    <div {...props}>
-      {React.Children.map(children, child => {
-        if (child.type === CollapsibleTrigger) {
-          return React.cloneElement(child, { onClick: handleToggle, isOpen })
-        }
-        if (child.type === CollapsibleContent) {
-          return React.cloneElement(child, { isOpen })
-        }
-        return child
-      })}
-    </div>
-  )
-}
+const Collapsible = CollapsiblePrimitive.Root
 
-const CollapsibleTrigger = ({ children, onClick, isOpen, ...props }) => {
-  return (
-    <div onClick={onClick} {...props}>
-      {typeof children === 'function' ? children({ isOpen }) : children}
-    </div>
-  )
-}
+const CollapsibleTrigger = CollapsiblePrimitive.CollapsibleTrigger
 
-const CollapsibleContent = ({ children, isOpen, ...props }) => {
-  if (!isOpen) return null
-  
-  return (
-    <div {...props}>
-      {children}
-    </div>
-  )
-}
+const CollapsibleContent = React.forwardRef(({ className, children, ...props }, ref) => (
+    <CollapsiblePrimitive.CollapsibleContent
+        ref={ref}
+        className={cn(
+            "overflow-hidden transition-all duration-300 ease-in-out",
+            "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down",
+            className
+        )}
+        {...props}
+    >
+        {children}
+    </CollapsiblePrimitive.CollapsibleContent>
+))
+CollapsibleContent.displayName = "CollapsibleContent"
 
 export { Collapsible, CollapsibleTrigger, CollapsibleContent }

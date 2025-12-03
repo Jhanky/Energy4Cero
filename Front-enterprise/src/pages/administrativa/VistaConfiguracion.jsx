@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { 
-  Settings, 
-  Moon, 
-  Sun, 
-  Monitor, 
-  Bell, 
-  Globe, 
-  Shield, 
-  Database, 
-  Palette, 
+import {
+  Settings,
+  Moon,
+  Sun,
+  Monitor,
+  Bell,
+  Globe,
+  Shield,
+  Database,
+  Palette,
   Save,
   RefreshCw,
   Eye,
@@ -17,12 +17,25 @@ import {
   VolumeX
 } from 'lucide-react';
 import { Notification } from '../../shared/ui';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const VistaConfiguracion = () => {
+  const { theme, updateUserTheme } = useTheme();
+
+  // Mapear tema actual a valores de UI
+  const getCurrentThemeUI = () => {
+    const themeMapUI = {
+      'light': 'claro',
+      'dark': 'oscuro',
+      'system': 'sistema'
+    };
+    return themeMapUI[theme] || 'sistema';
+  };
+
   // Estados para las configuraciones
   const [configuracion, setConfiguracion] = useState({
     // Apariencia
-    tema: 'claro', // 'claro', 'oscuro', 'sistema'
+    tema: getCurrentThemeUI(), // 'claro', 'oscuro', 'sistema'
     colorPrimario: 'green',
     densidad: 'normal', // 'compacto', 'normal', 'espacioso'
     
@@ -70,6 +83,26 @@ const VistaConfiguracion = () => {
       ...prev,
       [key]: value
     }));
+  };
+
+  // Función para cambiar tema
+  const handleThemeChange = async (themeValue) => {
+    // Mapear valores de UI a backend
+    const themeMap = {
+      'claro': 'light',
+      'oscuro': 'dark',
+      'sistema': 'system'
+    };
+
+    const backendTheme = themeMap[themeValue];
+    const result = await updateUserTheme(backendTheme);
+
+    if (result.success) {
+      updateConfig('tema', themeValue);
+      showNotification('success', 'Tema actualizado exitosamente');
+    } else {
+      showNotification('error', result.message || 'Error al actualizar tema');
+    }
   };
 
   // Función para guardar configuración
@@ -184,7 +217,7 @@ const VistaConfiguracion = () => {
                 ].map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}
-                    onClick={() => updateConfig('tema', value)}
+                    onClick={() => handleThemeChange(value)}
                     className={`p-3 border-2 rounded-lg text-center transition-all ${
                       configuracion.tema === value
                         ? 'border-green-500 bg-green-50 text-green-700'

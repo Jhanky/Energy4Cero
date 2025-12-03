@@ -44,12 +44,36 @@ class ProjectController extends Controller
                 $query->where('department', $request->department);
             }
 
+            if ($request->has('client_id') && $request->client_id) {
+                $query->where('client_id', $request->client_id);
+            }
+
             $perPage = $request->get('per_page', 15);
             $projects = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
+            // Calcular estadísticas
+            $stats = [
+                'total' => Project::count(),
+                'active' => Project::whereNotIn('current_state_id', [12, 13])->count(), // No suspendidos ni cancelados
+                'completed' => Project::where('current_state_id', 11)->count(), // Conectado operando
+                'in_progress' => Project::whereNotIn('current_state_id', [11, 12, 13])->count(), // No completados, suspendidos ni cancelados
+                'total_value' => Project::sum('contract_value')
+            ];
+
             return response()->json([
                 'success' => true,
-                'data' => $projects,
+                'data' => [
+                    'projects' => $projects->items(),
+                    'pagination' => [
+                        'current_page' => $projects->currentPage(),
+                        'per_page' => $projects->perPage(),
+                        'total' => $projects->total(),
+                        'last_page' => $projects->lastPage(),
+                        'from' => $projects->firstItem(),
+                        'to' => $projects->lastItem()
+                    ],
+                    'stats' => $stats
+                ],
                 'message' => 'Proyectos obtenidos exitosamente'
             ]);
         } catch (\Exception $e) {

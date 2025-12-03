@@ -2,7 +2,8 @@ import React from 'react';
 import { Outlet, useLocation, useNavigate, Navigate, Link } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, BarChart3, DollarSign, Leaf, Users, ShoppingCart, Calculator, Wrench, HelpCircle, Settings, Truck, Building2, LogOut, Package, FileText, Receipt, Shield, Key } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { Sidebar, SidebarBody, SidebarSection, SidebarSectionItem, SidebarLink } from '../shared/ui/CustomSidebar';
+import { SidebarProvider, SidebarInset } from "@/ui/sidebar";
+import { AppSidebar } from "../shared/ui/AppSidebar";
 import { Button } from '../ui/button';
 import { useState } from 'react';
 
@@ -166,105 +167,23 @@ function Layout() {
     setOpenSection(openSection === sectionId ? null : sectionId);
   };
 
+  const filteredSections = menuSections
+    .filter(section => hasVisiblePages(section))
+    .map(section => ({
+      ...section,
+      paginas: getFilteredPages(section.paginas)
+    }));
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100">
-      {/* Sidebar */}
-      <Sidebar>
-        <SidebarBody>
-          {/* Logo en el sidebar */}
-          <Link to="/" className="px-4 py-4 border-b border-sidebar-border flex-shrink-0 block hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Leaf className="w-5 h-5 text-white" />
-              </div>
-              <div className="overflow-hidden">
-                <h1 className="text-lg font-bold text-sidebar-foreground truncate">Enterprise</h1>
-                <p className="text-xs text-sidebar-foreground/70 truncate">Sistema de Gestión</p>
-              </div>
-            </div>
-          </Link>
+    <SidebarProvider defaultOpen={false}>
+      <AppSidebar menuSections={filteredSections} onLogout={logout} />
+      <SidebarInset>
 
-          {/* Navegación del Sidebar - ocupa espacio disponible */}
-          <div className="flex-1 overflow-y-auto px-2 py-4">
-            <div className="space-y-1">
-              {menuSections
-                .filter(section => hasVisiblePages(section))
-                .map((section) => {
-                  const filteredPages = getFilteredPages(section.paginas);
-                  const isSectionActive = hasActivePageInSection(section);
-
-                  // Si la sección tiene solo una página, mostrar como enlace directo
-                  if (filteredPages.length === 1) {
-                    const pagina = filteredPages[0];
-                    return (
-                      <SidebarLink
-                        key={section.id}
-                        link={{
-                          label: section.nombre,
-                          href: pagina.path,
-                          icon: <section.icono className="w-4 h-4" />
-                        }}
-                        className="border-b border-sidebar-border pb-2 mb-2 last:border-b-0"
-                      />
-                    );
-                  }
-
-                  // Si tiene múltiples páginas, mostrar como sección expandible
-                  return (
-                    <SidebarSection
-                      key={section.id}
-                      title={section.nombre}
-                      icon={section.icono}
-                      open={openSection === section.id || isSectionActive}
-                      onToggle={() => handleSectionToggle(section.id)}
-                      isActive={isSectionActive}
-                      className="border-b border-sidebar-border pb-2 mb-2 last:border-b-0"
-                    >
-                      {filteredPages.map((pagina) => (
-                        <SidebarSectionItem
-                          key={pagina.id}
-                          link={{
-                            label: pagina.nombre,
-                            href: pagina.path,
-                            icon: <pagina.icono className="w-4 h-4" />
-                          }}
-                        />
-                      ))}
-                    </SidebarSection>
-                  );
-                })}
-            </div>
-          </div>
-
-          {/* Botón de cerrar sesión */}
-          <div className="border-t border-sidebar-border p-4 flex-shrink-0">
-            <Button
-              onClick={async () => {
-                await logout();
-              }}
-              variant="destructive"
-              className="w-full justify-start px-3 py-3 h-auto"
-              title="Cerrar sesión"
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm font-medium ml-3">
-                Cerrar Sesión
-              </span>
-            </Button>
-          </div>
-        </SidebarBody>
-      </Sidebar>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-[99%] mx-auto px-4 sm:px-6 py-8">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </div>
+        <div className="flex-1 flex flex-col gap-4 p-4 pt-0">
+          <Outlet />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 

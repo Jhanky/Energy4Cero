@@ -251,8 +251,8 @@ function VistaHerramientas() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Herramientas</h1>
-          <p className="text-gray-600 mt-1">Administra las herramientas del sistema</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Herramientas</h1>
+          <p className="text-muted-foreground mt-1">Administra las herramientas del sistema</p>
         </div>
         <Button onClick={openCreateDialog} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -274,46 +274,46 @@ function VistaHerramientas() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Activas</CardTitle>
-            <Wrench className="h-4 w-4 text-green-600" />
+            <Wrench className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En Bodegas</CardTitle>
-            <Wrench className="h-4 w-4 text-blue-600" />
+            <Wrench className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.in_warehouses}</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.in_warehouses}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">En Proyectos</CardTitle>
-            <Wrench className="h-4 w-4 text-orange-600" />
+            <Wrench className="h-4 w-4 text-orange-600 dark:text-orange-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.in_projects}</div>
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.in_projects}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Asignar</CardTitle>
-            <Wrench className="h-4 w-4 text-gray-600" />
+            <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.unassigned}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.unassigned}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactivas</CardTitle>
-            <Wrench className="h-4 w-4 text-red-600" />
+            <Wrench className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.inactive}</div>
           </CardContent>
         </Card>
       </div>
@@ -327,7 +327,7 @@ function VistaHerramientas() {
           <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Buscar herramientas..."
                   value={searchTerm}
@@ -336,7 +336,7 @@ function VistaHerramientas() {
                 />
               </div>
             </div>
-            <Select value={filters.location_type || "none"} onValueChange={(value) => setFilters({...filters, location_type: value === "none" ? "" : value})}>
+            <Select value={filters.location_type || "none"} onValueChange={(value) => setFilters({ ...filters, location_type: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Ubicación" />
               </SelectTrigger>
@@ -347,7 +347,7 @@ function VistaHerramientas() {
                 <SelectItem value="unassigned">Sin Asignar</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filters.tool_state_id || "none"} onValueChange={(value) => setFilters({...filters, tool_state_id: value === "none" ? "" : value})}>
+            <Select value={filters.tool_state_id || "none"} onValueChange={(value) => setFilters({ ...filters, tool_state_id: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
@@ -381,14 +381,14 @@ function VistaHerramientas() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
                       <div className="flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
                         Cargando...
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : tools.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No se encontraron herramientas
                     </TableCell>
                   </TableRow>
@@ -444,7 +444,7 @@ function VistaHerramientas() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(tool)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                             title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -562,7 +562,7 @@ function VistaHerramientas() {
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="tool_state_id">Estado *</Label>
-                <Select value={formData.tool_state_id} onValueChange={(value) => setFormData({...formData, tool_state_id: value})}>
+                <Select value={formData.tool_state_id} onValueChange={(value) => setFormData({ ...formData, tool_state_id: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar estado" />
                   </SelectTrigger>
@@ -577,7 +577,7 @@ function VistaHerramientas() {
               </div>
               <div>
                 <Label htmlFor="warehouse_id">Bodega</Label>
-                <Select value={formData.warehouse_id || "none"} onValueChange={(value) => setFormData({...formData, warehouse_id: value === "none" ? "" : value, project_id: (value !== "none" && value) ? '' : formData.project_id})}>
+                <Select value={formData.warehouse_id || "none"} onValueChange={(value) => setFormData({ ...formData, warehouse_id: value === "none" ? "" : value, project_id: (value !== "none" && value) ? '' : formData.project_id })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar bodega" />
                   </SelectTrigger>
@@ -593,7 +593,7 @@ function VistaHerramientas() {
               </div>
               <div>
                 <Label htmlFor="project_id">Proyecto</Label>
-                <Select value={formData.project_id || "none"} onValueChange={(value) => setFormData({...formData, project_id: value === "none" ? "" : value, warehouse_id: (value !== "none" && value) ? '' : formData.warehouse_id})}>
+                <Select value={formData.project_id || "none"} onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value, warehouse_id: (value !== "none" && value) ? '' : formData.warehouse_id })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar proyecto" />
                   </SelectTrigger>
@@ -643,14 +643,14 @@ function VistaHerramientas() {
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Mover Herramienta</DialogTitle>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               {selectedTool ? `Mover "${selectedTool.name}" a una nueva ubicación` : ''}
             </p>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="move-warehouse">Bodega</Label>
-              <Select value={moveData.warehouse_id || "none"} onValueChange={(value) => setMoveData({...moveData, warehouse_id: value === "none" ? "" : value, project_id: (value !== "none" && value) ? '' : moveData.project_id})}>
+              <Select value={moveData.warehouse_id || "none"} onValueChange={(value) => setMoveData({ ...moveData, warehouse_id: value === "none" ? "" : value, project_id: (value !== "none" && value) ? '' : moveData.project_id })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar bodega" />
                 </SelectTrigger>
@@ -666,7 +666,7 @@ function VistaHerramientas() {
             </div>
             <div>
               <Label htmlFor="move-project">Proyecto</Label>
-              <Select value={moveData.project_id || "none"} onValueChange={(value) => setMoveData({...moveData, project_id: value === "none" ? "" : value, warehouse_id: (value !== "none" && value) ? '' : moveData.warehouse_id})}>
+              <Select value={moveData.project_id || "none"} onValueChange={(value) => setMoveData({ ...moveData, project_id: value === "none" ? "" : value, warehouse_id: (value !== "none" && value) ? '' : moveData.warehouse_id })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar proyecto" />
                 </SelectTrigger>

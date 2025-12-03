@@ -351,8 +351,8 @@ function VistaMateriales() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Materiales</h1>
-          <p className="text-gray-600 mt-1">Administra el inventario de materiales consumibles</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Materiales</h1>
+          <p className="text-muted-foreground mt-1">Administra el inventario de materiales consumibles</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="flex items-center gap-2">
@@ -413,10 +413,10 @@ function VistaMateriales() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Asignar</CardTitle>
-            <Package className="h-4 w-4 text-gray-600" />
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.unassigned}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.unassigned}</div>
           </CardContent>
         </Card>
         <Card>
@@ -440,10 +440,10 @@ function VistaMateriales() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
-            <Package className="h-4 w-4 text-gray-600" />
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
           </CardContent>
         </Card>
       </div>
@@ -457,7 +457,7 @@ function VistaMateriales() {
           <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-gray-400'}`} />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-muted-foreground'}`} />
                 <Input
                   placeholder="Buscar materiales..."
                   value={searchTerm}
@@ -472,7 +472,7 @@ function VistaMateriales() {
                 )}
               </div>
             </div>
-            <Select value={filters.category || "none"} onValueChange={(value) => setFilters({...filters, category: value === "none" ? "" : value})}>
+            <Select value={filters.category || "none"} onValueChange={(value) => setFilters({ ...filters, category: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
@@ -485,7 +485,7 @@ function VistaMateriales() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filters.warehouse_id || "none"} onValueChange={(value) => setFilters({...filters, warehouse_id: value === "none" ? "" : value})}>
+            <Select value={filters.warehouse_id || "none"} onValueChange={(value) => setFilters({ ...filters, warehouse_id: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Bodega" />
               </SelectTrigger>
@@ -498,7 +498,7 @@ function VistaMateriales() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filters.stock_status || "none"} onValueChange={(value) => setFilters({...filters, stock_status: value === "none" ? "" : value})}>
+            <Select value={filters.stock_status || "none"} onValueChange={(value) => setFilters({ ...filters, stock_status: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Estado de Stock" />
               </SelectTrigger>
@@ -535,13 +535,13 @@ function VistaMateriales() {
                   ))
                 ) : materials.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       No se encontraron materiales
                     </TableCell>
                   </TableRow>
                 ) : (
                   materials.map((material) => (
-                    <TableRow key={material.id} className="transition-all duration-200 hover:bg-gray-50">
+                    <TableRow key={material.id} className="transition-all duration-200 hover:bg-muted/50">
                       <TableCell className="font-medium">{material.product_id}</TableCell>
                       <TableCell>{material.description}</TableCell>
                       <TableCell className="font-mono">{material.quantity}</TableCell>
@@ -599,7 +599,7 @@ function VistaMateriales() {
           {/* Información de paginación y controles */}
           {!loading && materials.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Mostrando {pagination.from}-{pagination.to} de {pagination.total} materiales
               </div>
               <div className="flex items-center gap-4">
@@ -650,11 +650,11 @@ function VistaMateriales() {
 
                       return (
                         <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => loadMaterials(pageNum, undefined, debouncedSearchTerm)}
-                        isActive={pageNum === pagination.current_page}
-                        className="cursor-pointer"
-                      >
+                          <PaginationLink
+                            onClick={() => loadMaterials(pageNum, undefined, debouncedSearchTerm)}
+                            isActive={pageNum === pagination.current_page}
+                            className="cursor-pointer"
+                          >
                             {pageNum}
                           </PaginationLink>
                         </PaginationItem>
@@ -694,7 +694,7 @@ function VistaMateriales() {
               </div>
               <div>
                 <Label htmlFor="category">Categoría *</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
@@ -732,7 +732,7 @@ function VistaMateriales() {
               </div>
               <div>
                 <Label htmlFor="unit_measure">Unidad/Medida *</Label>
-                <Select value={formData.unit_measure} onValueChange={(value) => setFormData({...formData, unit_measure: value})}>
+                <Select value={formData.unit_measure} onValueChange={(value) => setFormData({ ...formData, unit_measure: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar unidad" />
                   </SelectTrigger>
@@ -747,7 +747,7 @@ function VistaMateriales() {
               </div>
               <div>
                 <Label htmlFor="warehouse_id">Bodega</Label>
-                <Select value={formData.warehouse_id || "none"} onValueChange={(value) => setFormData({...formData, warehouse_id: value === "none" ? "" : value})}>
+                <Select value={formData.warehouse_id || "none"} onValueChange={(value) => setFormData({ ...formData, warehouse_id: value === "none" ? "" : value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar bodega" />
                   </SelectTrigger>
@@ -811,7 +811,7 @@ function VistaMateriales() {
               </div>
               <div>
                 <Label htmlFor="edit-category">Categoría *</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
@@ -849,7 +849,7 @@ function VistaMateriales() {
               </div>
               <div>
                 <Label htmlFor="edit-unit_measure">Unidad/Medida *</Label>
-                <Select value={formData.unit_measure} onValueChange={(value) => setFormData({...formData, unit_measure: value})}>
+                <Select value={formData.unit_measure} onValueChange={(value) => setFormData({ ...formData, unit_measure: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar unidad" />
                   </SelectTrigger>
@@ -864,7 +864,7 @@ function VistaMateriales() {
               </div>
               <div>
                 <Label htmlFor="edit-warehouse_id">Bodega</Label>
-                <Select value={formData.warehouse_id || "none"} onValueChange={(value) => setFormData({...formData, warehouse_id: value === "none" ? "" : value})}>
+                <Select value={formData.warehouse_id || "none"} onValueChange={(value) => setFormData({ ...formData, warehouse_id: value === "none" ? "" : value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar bodega" />
                   </SelectTrigger>

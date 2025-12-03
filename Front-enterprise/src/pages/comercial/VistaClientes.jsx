@@ -95,7 +95,7 @@ const VistaClientes = () => {
   // Función para mostrar notificaciones
   const showNotification = (type, message) => {
     setNotification({ type, message });
-    
+
     // Cerrar automáticamente la notificación después de 3 segundos
     setTimeout(() => {
       setNotification(null);
@@ -254,12 +254,12 @@ const VistaClientes = () => {
       notes: '',
       is_active: true
     });
-    
+
     // Cargar usuarios si no están cargados
     if (users.length === 0) {
       loadData();
     }
-    
+
     setShowModal(true);
   };
 
@@ -305,27 +305,27 @@ const VistaClientes = () => {
     try {
       // Buscar cliente con el valor específico
       const response = await dataService.getClients({ [field]: value });
-      
+
       if (response && response.success) {
         let existingClients = [];
-        
+
         if (response.data && response.data.clients && Array.isArray(response.data.clients)) {
           existingClients = response.data.clients;
         } else if (response.data && Array.isArray(response.data)) {
           existingClients = response.data;
         }
-        
+
         // Filtrar para excluir al cliente actual en modo edición
-        const filteredClients = currentClientId 
+        const filteredClients = currentClientId
           ? existingClients.filter(client => client.client_id !== currentClientId && client[field] === value)
           : existingClients.filter(client => client[field] === value);
-          
+
         return filteredClients.length > 0 ? filteredClients[0] : null;
       }
     } catch (error) {
       console.error(`Error verificando existencia de ${field}:`, error);
     }
-    
+
     return null;
   };
 
@@ -339,7 +339,7 @@ const VistaClientes = () => {
       if (!formData.name?.trim()) {
         throw new Error('El nombre es obligatorio');
       }
-      
+
       if (!formData.email?.trim()) {
         throw new Error('El email es obligatorio');
       }
@@ -398,7 +398,7 @@ const VistaClientes = () => {
         city_id: formData.city_id || null,
         responsible_user_id: loggedInUser?.id,
       };
-      
+
       if (modalMode === 'create') {
         response = await dataService.createClient(clientDataToSend);
       } else {
@@ -417,7 +417,7 @@ const VistaClientes = () => {
         throw new Error(response?.message || response?.error || 'Error al procesar el cliente');
       }
     } catch (error) {
-      
+
       showNotification('error', error.message || 'Error al procesar el cliente');
     } finally {
       setIsSubmitting(false);
@@ -508,8 +508,8 @@ const VistaClientes = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Gestión de Clientes</h1>
-          <p className="text-slate-600 mt-1">Administra la base de datos de clientes</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Clientes</h1>
+          <p className="text-muted-foreground mt-1">Administra la base de datos de clientes</p>
         </div>
         <div className="flex gap-3">
           {selectedClients.length > 0 && (
@@ -550,11 +550,11 @@ const VistaClientes = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Total Clientes</p>
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-sm font-medium text-muted-foreground">Total Clientes</p>
+              <p className="text-2xl font-bold text-foreground">
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.total}
               </p>
             </div>
@@ -563,11 +563,11 @@ const VistaClientes = () => {
             </div>
           </div>
         </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Activos</p>
+              <p className="text-sm font-medium text-muted-foreground">Activos</p>
               <p className="text-2xl font-bold text-green-600">
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : stats.active}
               </p>
@@ -577,11 +577,11 @@ const VistaClientes = () => {
             </div>
           </div>
         </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Residenciales</p>
+              <p className="text-sm font-medium text-muted-foreground">Residenciales</p>
               <p className="text-2xl font-bold text-purple-600">
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (stats.residential || 0)}
               </p>
@@ -592,10 +592,10 @@ const VistaClientes = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Comerciales</p>
+              <p className="text-sm font-medium text-muted-foreground">Comerciales</p>
               <p className="text-2xl font-bold text-orange-600">
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (stats.commercial || 0)}
               </p>
@@ -675,7 +675,7 @@ const VistaClientes = () => {
                   <SkeletonTable columns={10} rows={pagination.per_page || 15} asRows={true} />
                 ) : clientes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       No se encontraron clientes
                     </TableCell>
                   </TableRow>
@@ -683,7 +683,7 @@ const VistaClientes = () => {
                   clientes.map((cliente) => {
                     const TypeIcon = getTypeIcon(cliente.client_type);
                     return (
-                      <TableRow key={cliente.id} className="transition-all duration-200 hover:bg-gray-50">
+                      <TableRow key={cliente.id} className="transition-all duration-200 hover:bg-muted/50">
                         <TableCell>
                           <input
                             type="checkbox"
@@ -694,10 +694,10 @@ const VistaClientes = () => {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <div className="text-sm font-medium text-slate-900">
+                            <div className="text-sm font-medium text-foreground">
                               {cliente.nic || '-'}
                             </div>
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-muted-foreground">
                               ID: {cliente.id}
                             </div>
                           </div>
@@ -708,7 +708,7 @@ const VistaClientes = () => {
                               {TypeIcon && <TypeIcon className="w-5 h-5 text-white" />}
                             </div>
                             <div>
-                              <p className="font-medium text-slate-900">{cliente.name}</p>
+                              <p className="font-medium text-foreground">{cliente.name}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -719,12 +719,12 @@ const VistaClientes = () => {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Mail className="w-4 h-4" />
                               {cliente.email}
                             </div>
                             {cliente.phone && (
-                              <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Phone className="w-4 h-4" />
                                 {cliente.phone}
                               </div>
@@ -733,21 +733,21 @@ const VistaClientes = () => {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <MapPin className="w-4 h-4" />
                               {cliente.location?.city || '-'}
                             </div>
-                            <div className="text-sm text-slate-500">
+                            <div className="text-sm text-muted-foreground">
                               {cliente.location?.department || '-'}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <div className="text-sm font-medium text-slate-900">
+                            <div className="text-sm font-medium text-foreground">
                               {cliente.responsibleUser?.name || 'No asignado'}
                             </div>
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-muted-foreground">
                               {cliente.responsibleUser?.email || '-'}
                             </div>
                           </div>
@@ -758,12 +758,12 @@ const VistaClientes = () => {
                               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                               </svg>
-                              <span className="font-medium text-slate-900">
+                              <span className="font-medium text-foreground">
                                 {cliente.monthly_consumption ? `${cliente.monthly_consumption} kW/h` : '-'}
                               </span>
                             </div>
                             {cliente.location && (
-                              <div className="flex items-center gap-1 text-xs text-slate-500">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
@@ -781,14 +781,14 @@ const VistaClientes = () => {
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => handleEdit(cliente)}
-                              className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-2 text-muted-foreground hover:text-green-600 hover:bg-green-50/10 rounded-lg transition-colors"
                               title="Editar cliente"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(cliente)}
-                              className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50/10 rounded-lg transition-colors"
                               title="Eliminar cliente"
                             >
                               <Trash2 className="w-4 h-4" />

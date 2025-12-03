@@ -414,8 +414,8 @@ function VistaRoles() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Roles</h1>
-          <p className="text-gray-600 mt-1">Administra los roles y permisos del sistema</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Roles</h1>
+          <p className="text-muted-foreground mt-1">Administra los roles y permisos del sistema</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={openCreateDialog} className="flex items-center gap-2">
@@ -439,19 +439,19 @@ function VistaRoles() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Activos</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
+            <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
-            <UserX className="h-4 w-4 text-red-600" />
+            <UserX className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.inactive}</div>
           </CardContent>
         </Card>
         <Card>
@@ -476,7 +476,7 @@ function VistaRoles() {
           <div className="flex flex-wrap gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-gray-400'}`} />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-200 ${loading && searchTerm ? 'text-blue-500 animate-pulse' : 'text-muted-foreground'}`} />
                 <Input
                   placeholder="Buscar roles..."
                   value={searchTerm}
@@ -491,7 +491,7 @@ function VistaRoles() {
                 )}
               </div>
             </div>
-            <Select value={filters.is_active || "none"} onValueChange={(value) => setFilters({...filters, is_active: value === "none" ? "" : value})}>
+            <Select value={filters.is_active || "none"} onValueChange={(value) => setFilters({ ...filters, is_active: value === "none" ? "" : value })}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
@@ -523,26 +523,26 @@ function VistaRoles() {
                   ))
                 ) : roles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No se encontraron roles
                     </TableCell>
                   </TableRow>
                 ) : (
                   roles.map((role) => (
-                    <TableRow key={role.role_id} className="transition-all duration-200 hover:bg-gray-50">
+                    <TableRow key={role.role_id} className="transition-all duration-200 hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                             <Shield className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{role.name}</p>
-                            <p className="text-sm text-slate-600">@{role.slug}</p>
+                            <p className="font-medium text-foreground">{role.name}</p>
+                            <p className="text-sm text-muted-foreground">@{role.slug}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm text-slate-600">{role.description || 'Sin descripción'}</p>
+                        <p className="text-sm text-muted-foreground">{role.description || 'Sin descripción'}</p>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -560,7 +560,7 @@ function VistaRoles() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-slate-500" />
+                          <Users className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm font-medium">{role.users_count || 0}</span>
                         </div>
                       </TableCell>
@@ -607,7 +607,7 @@ function VistaRoles() {
           {/* Paginación */}
           {!loading && roles.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 Mostrando {pagination.from}-{pagination.to} de {pagination.total} roles
               </div>
               <div className="flex items-center gap-4">
@@ -739,7 +739,7 @@ function VistaRoles() {
 
                   return entries.map(([module, permissions]) => (
                     <div key={module} className="space-y-2">
-                      <h4 className="font-medium text-sm text-gray-900 capitalize">{module}</h4>
+                      <h4 className="font-medium text-sm text-foreground capitalize">{module}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-4">
                         {permissions.map((permission) => {
                           // Asegurar que permission.key sea un string válido
@@ -753,7 +753,7 @@ function VistaRoles() {
                                 id={`create-${permissionKey}`}
                                 checked={formData.permissions.includes(permissionKey)}
                                 onChange={() => handlePermissionChange(permissionKey)}
-                                className="rounded border-gray-300"
+                                className="rounded border-input"
                               />
                               <Label htmlFor={`create-${permissionKey}`} className="text-sm">
                                 {permissionLabel}

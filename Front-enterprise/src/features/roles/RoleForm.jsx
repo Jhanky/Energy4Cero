@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Save, 
-  Plus, 
-  Shield, 
-  AlertTriangle, 
-  Check, 
+import {
+  X,
+  Save,
+  Plus,
+  Shield,
+  AlertTriangle,
+  Check,
   Minus,
   Users,
   FileText,
   Calendar
 } from 'lucide-react';
 
-const RoleForm = ({ 
+const RoleForm = ({
   show = false,
   mode = 'create', // create, edit, view
   role = null,
@@ -27,7 +27,7 @@ const RoleForm = ({
     permissions: [],
     is_active: true
   });
-  
+
   const [errors, setErrors] = useState({});
   const [availablePermissions] = useState([
     'users.create', 'users.read', 'users.update', 'users.delete',
@@ -68,7 +68,7 @@ const RoleForm = ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
+
     // Limpiar error si existe
     if (errors[name]) {
       setErrors(prev => ({
@@ -83,16 +83,16 @@ const RoleForm = ({
     setFormData(prev => {
       const permissions = [...prev.permissions];
       const index = permissions.indexOf(permission);
-      
+
       if (index >= 0) {
         permissions.splice(index, 1);
       } else {
         permissions.push(permission);
       }
-      
+
       return { ...prev, permissions };
     });
-    
+
     // Limpiar error si existe
     if (errors.permissions) {
       setErrors(prev => ({
@@ -121,12 +121,12 @@ const RoleForm = ({
   // Agrupar permisos por categoría
   const groupPermissionsByCategory = () => {
     const grouped = {};
-    
+
     availablePermissions.forEach(permission => {
       const parts = permission.split('.');
       const category = parts[0];
       const action = parts[1];
-      
+
       if (!grouped[category]) {
         grouped[category] = {
           name: getCategoryName(category),
@@ -134,14 +134,14 @@ const RoleForm = ({
           permissions: []
         };
       }
-      
+
       grouped[category].permissions.push({
         id: permission,
         action: action,
         label: getActionLabel(action)
       });
     });
-    
+
     return grouped;
   };
 
@@ -191,21 +191,21 @@ const RoleForm = ({
   // Validar formulario
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'El nombre es obligatorio';
     }
-    
+
     if (!formData.slug.trim()) {
       newErrors.slug = 'El slug es obligatorio';
     } else if (!/^[a-z0-9\-]+$/.test(formData.slug)) {
       newErrors.slug = 'El slug solo puede contener letras minúsculas, números y guiones';
     }
-    
+
     if (formData.permissions.length === 0) {
       newErrors.permissions = 'Debes seleccionar al menos un permiso';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -213,11 +213,11 @@ const RoleForm = ({
   // Manejar envío del formulario
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     if (onSubmit) {
       onSubmit(formData);
     }
@@ -237,7 +237,7 @@ const RoleForm = ({
   const handleNameChange = (e) => {
     const name = e.target.value;
     handleInputChange(e);
-    
+
     // Solo generar slug si es modo creación y el slug está vacío
     if (mode === 'create' && !formData.slug) {
       setFormData(prev => ({
@@ -250,32 +250,32 @@ const RoleForm = ({
   if (!show) return null;
 
   const groupedPermissions = groupPermissionsByCategory();
-  const title = mode === 'create' ? 'Crear Nuevo Rol' : 
-                mode === 'edit' ? 'Editar Rol' : 'Detalles del Rol';
+  const title = mode === 'create' ? 'Crear Nuevo Rol' :
+    mode === 'edit' ? 'Editar Rol' : 'Detalles del Rol';
   const isViewMode = mode === 'view';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Cabecera */}
-        <div className="p-6 border-b border-slate-200">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
                 <Shield className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  {mode === 'create' ? 'Crea un nuevo rol con sus permisos' : 
-                   mode === 'edit' ? 'Edita la información del rol' : 
-                   'Visualiza los detalles del rol'}
+                <h2 className="text-xl font-bold text-foreground">{title}</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {mode === 'create' ? 'Crea un nuevo rol con sus permisos' :
+                    mode === 'edit' ? 'Edita la información del rol' :
+                      'Visualiza los detalles del rol'}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 text-muted-foreground hover:text-muted-foreground rounded-lg hover:bg-slate-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -288,7 +288,7 @@ const RoleForm = ({
             {/* Información básica */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Nombre del Rol *
                 </label>
                 <input
@@ -296,9 +296,8 @@ const RoleForm = ({
                   name="name"
                   value={formData.name}
                   onChange={handleNameChange}
-                  className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    errors.name ? 'border-red-300 bg-red-50' : ''
-                  } ${isViewMode ? 'bg-slate-50' : ''}`}
+                  className={`w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring ${errors.name ? 'border-red-300 bg-red-50' : ''
+                    } ${isViewMode ? 'bg-muted/50' : ''}`}
                   placeholder="Ej: Administrador"
                   disabled={isViewMode}
                   required
@@ -312,7 +311,7 @@ const RoleForm = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Slug (Identificador) *
                 </label>
                 <input
@@ -320,9 +319,8 @@ const RoleForm = ({
                   name="slug"
                   value={formData.slug}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    errors.slug ? 'border-red-300 bg-red-50' : ''
-                  } ${isViewMode ? 'bg-slate-50' : ''}`}
+                  className={`w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring ${errors.slug ? 'border-red-300 bg-red-50' : ''
+                    } ${isViewMode ? 'bg-muted/50' : ''}`}
                   placeholder="ej-administrador"
                   disabled={isViewMode}
                   required
@@ -333,14 +331,14 @@ const RoleForm = ({
                     {errors.slug}
                   </p>
                 )}
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Usado para identificar el rol en el sistema
                 </p>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Descripción
               </label>
               <textarea
@@ -348,9 +346,8 @@ const RoleForm = ({
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                  isViewMode ? 'bg-slate-50' : ''
-                }`}
+                className={`w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-ring ${isViewMode ? 'bg-muted/50' : ''
+                  }`}
                 placeholder="Descripción del rol y sus responsabilidades..."
                 disabled={isViewMode}
               />
@@ -358,7 +355,7 @@ const RoleForm = ({
 
             {!isViewMode && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Estado
                 </label>
                 <div className="flex items-center">
@@ -367,10 +364,10 @@ const RoleForm = ({
                     name="is_active"
                     checked={formData.is_active}
                     onChange={handleInputChange}
-                    className="h-5 w-5 text-green-600 border-slate-300 rounded focus:ring-green-500"
+                    className="h-5 w-5 text-primary border-input rounded focus:ring-ring"
                     disabled={isViewMode}
                   />
-                  <span className="ml-2 text-sm text-slate-700">
+                  <span className="ml-2 text-sm text-foreground">
                     Rol activo
                   </span>
                 </div>
@@ -379,14 +376,13 @@ const RoleForm = ({
 
             {isViewMode && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Estado
                 </label>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  formData.is_active 
-                    ? 'bg-green-100 text-green-800' 
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${formData.is_active
+                    ? 'bg-primary/20 text-primary'
                     : 'bg-red-100 text-red-800'
-                }`}>
+                  }`}>
                   {formData.is_active ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
@@ -395,7 +391,7 @@ const RoleForm = ({
             {/* Permisos */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <label className="block text-sm font-medium text-slate-700">
+                <label className="block text-sm font-medium text-foreground">
                   Permisos del Rol *
                 </label>
                 {!isViewMode && (
@@ -404,7 +400,7 @@ const RoleForm = ({
                       type="button"
                       onClick={selectAllPermissions}
                       disabled={isSubmitting}
-                      className="flex items-center gap-1 text-sm text-slate-600 hover:text-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Plus className="w-4 h-4" />
                       Seleccionar Todos
@@ -414,7 +410,7 @@ const RoleForm = ({
                       type="button"
                       onClick={deselectAllPermissions}
                       disabled={isSubmitting}
-                      className="flex items-center gap-1 text-sm text-slate-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Minus className="w-4 h-4" />
                       Deseleccionar Todos
@@ -425,25 +421,25 @@ const RoleForm = ({
 
               <div className="space-y-4">
                 {Object.entries(groupedPermissions).map(([category, group]) => {
-                  const allSelected = group.permissions.every(p => 
+                  const allSelected = group.permissions.every(p =>
                     formData.permissions.includes(p.id)
                   );
-                  const someSelected = group.permissions.some(p => 
+                  const someSelected = group.permissions.some(p =>
                     formData.permissions.includes(p.id)
                   ) && !allSelected;
 
                   return (
-                    <div key={category} className="border border-slate-200 rounded-lg overflow-hidden">
-                      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                    <div key={category} className="border border-border rounded-lg overflow-hidden">
+                      <div className="bg-muted/50 px-4 py-3 border-b border-border">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <span className="text-xl">{group.icon}</span>
-                            <span className="font-medium text-slate-900">{group.name}</span>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-800">
+                            <span className="font-medium text-foreground">{group.name}</span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground">
                               {group.permissions.length} permisos
                             </span>
                           </div>
-                          
+
                           {!isViewMode && (
                             <button
                               type="button"
@@ -452,7 +448,7 @@ const RoleForm = ({
                                   // Deseleccionar todos los permisos de esta categoría
                                   setFormData(prev => ({
                                     ...prev,
-                                    permissions: prev.permissions.filter(p => 
+                                    permissions: prev.permissions.filter(p =>
                                       !group.permissions.some(gp => gp.id === p)
                                     )
                                   }));
@@ -470,62 +466,59 @@ const RoleForm = ({
                                 }
                               }}
                               disabled={isSubmitting}
-                              className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
-                                allSelected 
-                                  ? 'bg-green-100 text-green-800' 
+                              className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${allSelected
+                                  ? 'bg-primary/20 text-primary'
                                   : someSelected
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                              } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-muted text-muted-foreground hover:bg-slate-300'
+                                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               {allSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
                             </button>
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {group.permissions.map(permission => {
                             const isSelected = formData.permissions.includes(permission.id);
-                            
+
                             if (isViewMode) {
                               return (
-                                <div 
+                                <div
                                   key={permission.id}
-                                  className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                                    isSelected
-                                      ? 'bg-green-50 border-green-200'
-                                      : 'bg-slate-50 border-slate-200'
-                                  }`}
+                                  className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${isSelected
+                                      ? 'bg-primary/10 border-primary/20'
+                                      : 'bg-muted/50 border-border'
+                                    }`}
                                 >
                                   <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                                     {isSelected ? (
-                                      <Check className="w-4 h-4 text-green-600" />
+                                      <Check className="w-4 h-4 text-primary" />
                                     ) : (
-                                      <X className="w-4 h-4 text-slate-400" />
+                                      <X className="w-4 h-4 text-muted-foreground" />
                                     )}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-medium text-slate-900">
+                                    <p className="text-sm font-medium text-foreground">
                                       {permission.label}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-muted-foreground">
                                       {permission.id}
                                     </p>
                                   </div>
                                 </div>
                               );
                             }
-                            
+
                             return (
-                              <label 
+                              <label
                                 key={permission.id}
-                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                                  isSelected
-                                    ? 'bg-green-50 border-green-200'
-                                    : 'bg-white border-slate-200 hover:bg-slate-50'
-                                } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected
+                                    ? 'bg-primary/10 border-primary/20'
+                                    : 'bg-card border-border hover:bg-muted/50'
+                                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                               >
                                 <input
                                   type="checkbox"
@@ -536,14 +529,14 @@ const RoleForm = ({
                                 />
                                 <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded border">
                                   {isSelected && (
-                                    <Check className="w-4 h-4 text-green-600" />
+                                    <Check className="w-4 h-4 text-primary" />
                                   )}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-slate-900">
+                                  <p className="text-sm font-medium text-foreground">
                                     {permission.label}
                                   </p>
-                                  <p className="text-xs text-slate-500">
+                                  <p className="text-xs text-muted-foreground">
                                     {permission.id}
                                   </p>
                                 </div>
@@ -556,7 +549,7 @@ const RoleForm = ({
                   );
                 })}
               </div>
-              
+
               {errors.permissions && (
                 <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                   <AlertTriangle className="w-4 h-4" />
@@ -567,13 +560,13 @@ const RoleForm = ({
           </div>
 
           {/* Botones de acción */}
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-border">
             {isViewMode ? (
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 text-muted-foreground border border-input rounded-lg hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cerrar
               </button>
@@ -583,14 +576,14 @@ const RoleForm = ({
                   type="button"
                   onClick={onClose}
                   disabled={isSubmitting}
-                  className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 text-muted-foreground border border-input rounded-lg hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <>

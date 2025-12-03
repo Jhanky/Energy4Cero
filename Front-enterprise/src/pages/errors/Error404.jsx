@@ -5,15 +5,15 @@ import { Button } from '../../ui/button';
 
 const Error404 = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         {/* Icono de error */}
         <div className="mb-8">
           <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-6xl font-bold text-gray-900 mb-2">404</h1>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Página no encontrada</h2>
+          <h1 className="text-6xl font-bold text-foreground mb-2">404</h1>
+          <h2 className="text-2xl font-semibold text-muted-foreground mb-4">Página no encontrada</h2>
           <p className="text-gray-600 mb-8">
             Lo sentimos, la página que estás buscando no existe o ha sido movida.
           </p>

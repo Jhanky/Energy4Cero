@@ -1,39 +1,38 @@
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 const Notification = ({ notification, onClose }) => {
-  if (!notification) return null;
+  useEffect(() => {
+    if (notification) {
+      const { type, message } = notification;
 
-  const icons = {
-    success: <CheckCircle className="w-5 h-5" />,
-    error: <XCircle className="w-5 h-5" />,
-    warning: <AlertTriangle className="w-5 h-5" />,
-    info: <Info className="w-5 h-5" />
-  };
+      // Map custom types to sonner methods
+      switch (type) {
+        case 'success':
+          toast.success(message);
+          break;
+        case 'error':
+          toast.error(message);
+          break;
+        case 'warning':
+          toast.warning(message);
+          break;
+        case 'info':
+          toast.info(message);
+          break;
+        default:
+          toast(message);
+      }
 
-  const styles = {
-    success: 'bg-green-50 text-green-800 border-green-200',
-    error: 'bg-red-50 text-red-800 border-red-200',
-    warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-    info: 'bg-blue-50 text-blue-800 border-blue-200'
-  };
+      // Call onClose immediately to clear the parent state, 
+      // as sonner manages its own visibility duration.
+      if (onClose) {
+        onClose();
+      }
+    }
+  }, [notification, onClose]);
 
-  return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-md animate-in slide-in-from-right">
-      <div className={`flex items-center gap-3 p-4 border rounded-lg shadow-lg ${styles[notification.type]}`}>
-        <div className="flex-shrink-0">
-          {icons[notification.type]}
-        </div>
-        <p className="flex-1 text-sm font-medium">{notification.message}</p>
-        <button
-          onClick={onClose}
-          className="flex-shrink-0 hover:opacity-70 transition-opacity"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export default Notification;
-
